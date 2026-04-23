@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.git/
+*.user
+*.suo
+README.md
+.gitignore
+*.log
+*.tmp
