@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
-
+using HandlebarsDotNet;
 using WebApplication1.Services.Emails.Exceptions;
 using WebApplication1.Services.Emails.TemplateService.Enitities;
 using WebApplication1.Services.QrCodeService;
 using WebApplication1.Services.Emails.EmailService.Entities;
-using static QRCoder.PayloadGenerator;
+using WebApplication1.Helpers;
 
 namespace WebApplication1.Services.Emails.TemplateService
 {
@@ -14,63 +14,205 @@ namespace WebApplication1.Services.Emails.TemplateService
         private readonly IWebHostEnvironment _environment;
         private readonly IQrCodeService _qrCodeService;
         private readonly EmailSettings _emailSettings;
+        private readonly IHandlebars _handlebars;
 
         public EmailTemplateService(IWebHostEnvironment environment, IQrCodeService qrCodeService, IOptions<EmailSettings> emailSettings)
         {
             _environment = environment;
             _qrCodeService = qrCodeService;
             _emailSettings = emailSettings.Value;
+
+            // Initialize Handlebars
+            _handlebars = Handlebars.Create();
+
+            // Register custom helpers
+            RegisterHelpers();
         }
 
+        private void RegisterHelpers()
+        {
+            // Register a helper for formatting currency
+            _handlebars.RegisterHelper("formatCurrency", (writer, context, parameters) =>
+            {
+                if (parameters.Length > 0)
+                {
+                    var value = parameters[0] as decimal?;
+                    if (value.HasValue)
+                    {
+                        writer.WriteSafeString(value.Value.ToString("N2"));
+                        return;
+                    }
+                }
+                writer.WriteSafeString("0.00");
+            });
+
+            // Register a helper for formatting dates using the extension method
+            _handlebars.RegisterHelper("formatDate", (writer, context, parameters) =>
+            {
+                if (parameters.Length > 0)
+                {
+                    var date = parameters[0] as DateTime?;
+                    var format = parameters.Length > 1 ? parameters[1]?.ToString() ?? "Standard" : "Standard";
+
+                    if (date.HasValue)
+                    {
+                        writer.WriteSafeString(date.Value.ToAlphanumericDate(format));
+                        return;
+                    }
+                }
+                writer.WriteSafeString(DateTime.Now.ToAlphanumericDate("Standard"));
+            });
+
+            // Register a helper for formatting dates with full format
+            _handlebars.RegisterHelper("formatDateFull", (writer, context, parameters) =>
+            {
+                if (parameters.Length > 0)
+                {
+                    var date = parameters[0] as DateTime?;
+                    if (date.HasValue)
+                    {
+                        writer.WriteSafeString(date.Value.ToAlphanumericDate("Full"));
+                        return;
+                    }
+                }
+                writer.WriteSafeString(DateTime.Now.ToAlphanumericDate("Full"));
+            });
+
+            // Register a helper for formatting dates with compact format
+            _handlebars.RegisterHelper("formatDateCompact", (writer, context, parameters) =>
+            {
+                if (parameters.Length > 0)
+                {
+                    var date = parameters[0] as DateTime?;
+                    if (date.HasValue)
+                    {
+                        writer.WriteSafeString(date.Value.ToAlphanumericDate("Compact"));
+                        return;
+                    }
+                }
+                writer.WriteSafeString(DateTime.Now.ToAlphanumericDate("Compact"));
+            });
+        }
 
         public async Task<string> RenderEmailTemplateAsync(AllEmailsTemplateModel model, string templateName)
         {
             var template = await GetTemplateAsync(templateName);
 
-            var qrCode = await GenerateVisitQrCodeAsync(model);
+           // var qrCode = await GenerateVisitQrCodeAsync(model);
 
-
-            var placeholders = new Dictionary<string, object>
+            // Build the data object for Handlebars with formatted dates
+            var data = new
             {
-                ["CompanyLogo"] = model.CompanyLogo,
-                ["CompanyName"] = model.CompanyName,
-                ["CompanyAddress"] = model.CompanyAddress,
-                ["CompanyPhone"] = model.CompanyPhone,
-                ["CompanyEmail"] = model.CompanyEmail,
-                // ["Date"] = model.VisitDate.ToString("dddd, MMMM dd, yyyy"),
-                //["Time"] = model.VisitTime.ToString(@"hh\:mm"),
-                ["AppName"] = model.AppName,
-                ["ReceiverName"] = model.ReceiverName,
-                ["ReceiverRole"] = model.ReceiverRole,
-                ["ReceiverUserName"] = model.ReceiverUserName,
-                ["ReceiverCode"] = model.ReceiverCode,
-                ["TemporaryPassword"] = model.TemporaryPassword,
-                ["MinPasswordLength"] = model.MinPasswordLength,
-                ["LoginUrl"] = model.LoginUrl,
-                ["SupportEmail"] = model.SupportEmail,
-                ["SupportPhone"] = model.SupportPhone,
-                ["SupportName"] = model.SupportName,
-                ["PinCode"] = model.PinCode,
-                ["QrCodeImageBase64"] = model.QrCodeImageBase64,
-                ["ValidityHours"] = model.ValidityHours,
-                ["ReceiverType"] = model.ReceiverType,
-                ["PinCode"] = model.PinCode,
-               
-                ["PrimaryEmail"] = model.PrimaryEmail,
-                ["SecondaryEmail"] = model.SecondaryEmail,
-                ["PrimaryPhoneNumber"] = model.PrimaryPhoneNumber,
-                ["SecondaryPhoneNumber"] = model.SecondaryPhoneNumber,
-                ["Address"] = model.Address,
-                ["ShopManagerName"] = model.ManagerName,
-                ["ShopManagerEmail"] = model.ManagerEmail,
-                ["ShopManagerPhone"] = model.ManagerPhone,
-                ["ShopManagerTitle"] = model.ManagerTitle
+                CompanyLogo = model.CompanyLogo,
+                CompanyName = model.CompanyName,
+                CompanyAddress = model.CompanyAddress,
+                CompanyPhone = model.CompanyPhone,
+                CompanyEmail = model.CompanyEmail,
+                AppName = model.AppName,
+                ReceiverName = model.ReceiverName,
+                ReceiverRole = model.ReceiverRole,
+                ReceiverUserName = model.ReceiverUserName,
+                ReceiverCode = model.ReceiverCode,
+                TemporaryPassword = model.TemporaryPassword,
+                MinPasswordLength = model.MinPasswordLength,
+                AppUrl = model.AppUrl,
+                SupportEmail = model.SupportEmail,
+                SupportPhone = model.SupportPhone,
+                SupportName = model.SupportName,
+                PinCode = model.PinCode,
+                QrCodeImageBase64 = model.QrCodeImageBase64,
+                ValidityHours = model.ValidityHours,
+                ReceiverType = model.ReceiverType,
+                PrimaryEmail = model.PrimaryEmail,
+                SecondaryEmail = model.SecondaryEmail,
+                PrimaryPhoneNumber = model.PrimaryPhoneNumber,
+                SecondaryPhoneNumber = model.SecondaryPhoneNumber,
+                Address = model.Address,
+                //PostalAddress = model.PostalAddress,
+                ShopManagerName = model.ManagerName,
+                ShopManagerEmail = model.ManagerEmail,
+                ShopManagerPhone = model.ManagerPhone,
+                ShopManagerTitle = model.ManagerTitle,
+                Token = model.Token,
+                Amount = model.Amount?.ToString("N2"),
+                Cost = model.Cost?.ToString("N2"),
+                Balance = model.Balance?.ToString("N2"),
+                // Format the date using the extension method
+                Date = model.Date?.ToAlphanumericDate("Standard"),
+                DateFull = model.Date?.ToAlphanumericDate("Full"),
+                DateCompact = model.Date?.ToAlphanumericDate("Compact"),
+                DateMonthYear = model.Date?.ToAlphanumericDate("MonthYear"),
+                DateAlphanumeric = model.Date?.ToAlphanumericDate("Alphanumeric"),
+                Reference = model.Reference,
+                //Reference = model.Reference,
+                Currency = model.Currency,
+                Items = model.Items ?? new List<EmailItem>()
             };
 
-            return await ProcessTemplateAsync(template, placeholders);
+            // Use Handlebars to render the template
+            return await ProcessTemplateWithHandlebarsAsync(template, data);
         }
 
+        private async Task<string> ProcessTemplateWithHandlebarsAsync(string template, object data)
+        {
+            try
+            {
+                // Compile the template
+                var compiledTemplate = _handlebars.Compile(template);
 
+                // Render with data
+                return compiledTemplate(data);
+            }
+            catch (Exception ex)
+            {
+                // If Handlebars fails, fall back to simple replacement
+                var placeholders = new Dictionary<string, object>();
+
+                foreach (var prop in data.GetType().GetProperties())
+                {
+                    var value = prop.GetValue(data);
+
+                    if (value is DateTime dt)
+                    {
+                        placeholders[prop.Name] = dt.ToAlphanumericDate("Standard");
+                    }
+                    else if (value is decimal dec)
+                    {
+                        placeholders[prop.Name] = dec.ToString("N2");
+                    }
+                    else if (value is List<EmailItem> items)
+                    {
+                        var itemsHtml = BuildItemsHtml(items);
+                        placeholders[prop.Name] = itemsHtml;
+                    }
+                    else
+                    {
+                        placeholders[prop.Name] = value?.ToString() ?? string.Empty;
+                    }
+                }
+
+                return await ProcessTemplateAsync(template, placeholders);
+            }
+        }
+
+       private string BuildItemsHtml(List<EmailItem> items)
+{
+    if (items == null || !items.Any())
+        return string.Empty;
+
+    var html = new System.Text.StringBuilder();
+    foreach (var item in items)
+    {
+        html.AppendLine($@"
+                <tr>
+                    <td>{System.Net.WebUtility.HtmlEncode(item.Name)}</td>
+                    <td>{item.Price}</td>
+                    <td style=""text-align: center;"">{item.Quantity}</td>
+                    <td>{item.Amount}</td>
+                </tr>");
+    }
+    return html.ToString();
+}
 
         public async Task<string> RenderWelcomeEmailTemplateAsync(WelcomeEmailTemplateModel model)
         {
@@ -81,13 +223,11 @@ namespace WebApplication1.Services.Emails.TemplateService
                 ["Name"] = model.Name,
                 ["Email"] = model.Email,
                 ["TemporaryPassword"] = model.TemporaryPassword,
-                ["LoginUrl"] = model.LoginUrl
+                ["AppUrl"] = model.AppUrl
             };
 
             return await ProcessTemplateAsync(template, placeholders);
         }
-
-
 
         private async Task<string> ProcessTemplateAsync(string template, Dictionary<string, object> model)
         {
@@ -95,16 +235,13 @@ namespace WebApplication1.Services.Emails.TemplateService
 
             foreach (var item in model)
             {
-                // Replace {{PropertyName}} format
                 var curlyPlaceholder = $"{{{{{item.Key}}}}}";
                 result = result.Replace(curlyPlaceholder, item.Value?.ToString() ?? string.Empty);
 
-                // Replace [PropertyName] format
                 var bracketPlaceholder = $"[{item.Key}]";
                 result = result.Replace(bracketPlaceholder, item.Value?.ToString() ?? string.Empty);
             }
 
-            // Handle conditional sections
             result = ProcessConditionalSections(result, model);
 
             return result;
@@ -112,7 +249,6 @@ namespace WebApplication1.Services.Emails.TemplateService
 
         private string ProcessConditionalSections(string template, Dictionary<string, object> model)
         {
-            // Handle conditional sections like [If:HasSpecialInstructions]...[/If:HasSpecialInstructions]
             var conditionalPattern = @"\[If:(\w+)\](.*?)\[\/If:\1\]";
             var matches = System.Text.RegularExpressions.Regex.Matches(template,
                 conditionalPattern, System.Text.RegularExpressions.RegexOptions.Singleline);
@@ -152,427 +288,428 @@ namespace WebApplication1.Services.Emails.TemplateService
             {
                 "EmpolyeeAppAccess" => GetEmployeeAppAccessTemplate(),
                 "BusinessPartnerAdded" => GetBusinessPartnerWelcomeTemplate(),
-                //"VisitReschedule" => GetVisitRescheduleTemplate(),
-                //"VisitCancellation" => GetVisitCancellationTemplate(),
-                //"VisitDeclined" => GetVisitDeclinedTemplate(),
+                "CustomerPayment" => GetPaymentConfirmationTemplate(),
+                "ItemsDelivery" => GetDeliveryEmailTemplate(),
                 _ => throw new ArgumentException($"Template '{templateName}' is not supported.")
             };
         }
 
-        private async Task<byte[]> GenerateVisitQrCodeAsync(AllEmailsTemplateModel model)
-        {
-            //var testBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-            var qrCodeData = $"PIN:{model.PinCode}";
-            var qrCodeBytes = _qrCodeService.GenerateQrCode(model?.PinCode) as byte[];
-
-            if (string.IsNullOrEmpty(Convert.ToBase64String(qrCodeBytes))) { throw new FailedToGenerateQrCodeException("Failed to generate QR code"); }
-            return qrCodeBytes;
-        }
-
+   
         private string GetEmployeeAppAccessTemplate()
         {
             return @"<!DOCTYPE html>
-    <html lang=""en"" xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:o=""urn:schemas-microsoft-com:office:office"">
-    <head>
-        <meta charset=""utf-8"">
-        <meta name=""x-apple-disable-message-reformatting"">
-        <meta http-equiv=""x-ua-compatible"" content=""ie=edge"">
-        <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
-        <meta name=""format-detection"" content=""telephone=no, date=no, address=no, email=no"">
-        <!--[if mso]>
-        <xml>
-            <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-        <style>
-            td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
-                font-family: ""Segoe UI"", sans-serif;
-                mso-line-height-rule: exactly;
-            }
-        </style>
-        <![endif]-->
+<html lang=""en"" xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:o=""urn:schemas-microsoft-com:office:office"">
+<head>
+    <meta charset=""utf-8"">
+    <meta name=""x-apple-disable-message-reformatting"">
+    <meta http-equiv=""x-ua-compatible"" content=""ie=edge"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
+    <meta name=""format-detection"" content=""telephone=no, date=no, address=no, email=no"">
+    <!--[if mso]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+    </xml>
+    <style>
+        td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
+            font-family: ""Segoe UI"", sans-serif;
+            mso-line-height-rule: exactly;
+        }
+    </style>
+    <![endif]-->
 
-        <style>
-            .hover-underline:hover {
-                text-decoration: underline !important;
-            }
+    <style>
+        .hover-underline:hover {
+            text-decoration: underline !important;
+        }
 
-            .credentials-container {
-                background-color: #f8f9fa;
-                padding: 25px;
-                border-radius: 8px;
-                margin: 20px 0;
-                border: 1px solid #e9ecef;
-            }
+        .credentials-container {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
 
-            .credential-row {
-                margin-bottom: 20px;
-                padding-bottom: 20px;
-                border-bottom: 1px dashed #dee2e6;
-            }
+        .credential-row {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #dee2e6;
+        }
 
-            .credential-row:last-child {
-                border-bottom: none;
-                margin-bottom: 0;
-                padding-bottom: 0;
-            }
+        .credential-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
 
-            .credential-label {
-                font-weight: 600;
-                color: #495057;
-                margin-bottom: 5px;
-                font-size: 14px;
-            }
+        .credential-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
 
+        .credential-value {
+            font-size: 22px;
+            font-weight: 500;
+            color: #1a3e6f;
+            letter-spacing: 0.5px;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+            padding: 10px 16px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #d1d9e6;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            line-height: 1.4;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 32px;
+            background-color: #2c5aa0;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.3px;
+            border: 1px solid #1e3f7a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #1e3f7a;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .url-text {
+            font-size: 12px;
+            color: #666;
+            margin: 6px 0 0 0;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+        }
+        
+        .security-notice {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+
+        .security-notice.important {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .security-notice.warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .security-notice.success {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .app-details {
+            background-color: #e7f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .step-by-step {
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .step-by-step li {
+            margin-bottom: 12px;
+            padding-left: 28px;
+            position: relative;
+            font-size: 14px;
+        }
+
+        .step-by-step li:before {
+            content: ""✓"";
+            color: #28a745;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 16px;
+        }
+
+        .password-requirements {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .password-requirements h4 {
+            color: #495057;
+            margin: 0 0 10px 0;
+            font-size: 15px;
+        }
+        
+        .password-requirements ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .support-info {
+            margin: 30px 0 20px 0;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
+            font-size: 14px;
+        }
+        
+        .reminders {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .reminders h4 {
+            color: #2c5aa0;
+            margin: 0 0 10px 0;
+            font-size: 15px;
+        }
+        
+        .reminders ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #2c5aa0;
+            font-size: 13px;
+        }
+        
+        .footer-note {
+            margin: 30px 0 0 0;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .powered-by {
+            margin: 20px 0 0 0;
+            text-align: center;
+            font-weight: 500;
+            color: #666;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .sm-w-full {
+                width: 100% !important;
+            }
+            
+            .sm-px-24 {
+                padding-left: 24px !important;
+                padding-right: 24px !important;
+            }
+            
             .credential-value {
-                font-size: 22px;
-                font-weight: 500;
-                color: #1a3e6f;
-                letter-spacing: 0.5px;
-                font-family: 'SF Mono', 'Menlo', 'Monaco', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
-                padding: 10px 16px;
-                background-color: #ffffff;
-                border-radius: 8px;
-                border: 1px solid #d1d9e6;
-                display: inline-block;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-                line-height: 1.4;
-            }
-
-            .button-container {
-                text-align: center;
-                margin: 25px 0;
+                font-size: 18px;
+                word-break: break-all;
+                padding: 8px 12px;
             }
             
             .button {
-                display: inline-block;
-                padding: 8px 20px;
-                background-color: #2c5aa0;
-                color: #ffffff !important;
-                text-decoration: none;
-                border-radius: 50px;
-                font-weight: 500;
-                font-size: 13px;
-                letter-spacing: 0.3px;
-                border: 1px solid #1e3f7a;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                transition: all 0.2s ease;
-                width: auto;
-                min-width: 140px;
-                max-width: 200px;
-            }
-
-            .button:hover {
-                background-color: #1e3f7a;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-                transform: translateY(-1px);
-            }
-            
-            .button:active {
-                transform: translateY(0);
-                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            }
-            
-            .url-text {
-                font-size: 11px;
-                color: #666;
-                margin: 6px 0 0 0;
-                word-break: break-all;
-                font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-            }
-            
-            .security-notice {
-                background-color: #fff3cd;
-                border-left: 4px solid #ffc107;
-                padding: 20px;
-                margin: 25px 0;
-                border-radius: 4px;
-            }
-
-            .security-notice.important {
-                background-color: #f8d7da;
-                border-left-color: #dc3545;
-            }
-
-            .security-notice.warning {
-                background-color: #fff3cd;
-                border-left-color: #ffc107;
-            }
-
-            .app-details {
-                background-color: #e7f3ff;
-                padding: 20px;
-                border-radius: 8px;
-                margin: 20px 0;
-            }
-
-            .step-by-step {
-                margin: 20px 0;
-                padding: 0;
-                list-style: none;
-            }
-
-            .step-by-step li {
-                margin-bottom: 12px;
-                padding-left: 28px;
-                position: relative;
-                font-size: 14px;
-            }
-
-            .step-by-step li:before {
-                content: ""✓"";
-                color: #28a745;
-                font-weight: bold;
-                position: absolute;
-                left: 0;
-                font-size: 16px;
-            }
-
-            .password-requirements {
-                background-color: #f8f9fa;
-                padding: 15px;
-                border-radius: 6px;
-                margin: 20px 0;
-            }
-            
-            .password-requirements h4 {
-                color: #495057;
-                margin: 0 0 10px 0;
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                padding: 12px;
                 font-size: 15px;
             }
             
-            .password-requirements ul {
-                margin: 0;
-                padding-left: 20px;
-                color: #666;
-                font-size: 13px;
+            h1 {
+                font-size: 24px !important;
             }
-            
-            .support-info {
-                margin: 30px 0 20px 0;
-                padding-top: 20px;
-                border-top: 2px solid #e9ecef;
-                font-size: 14px;
-            }
-            
-            .reminders {
-                background-color: #e7f3ff;
-                padding: 15px;
-                border-radius: 6px;
-                margin: 20px 0;
-            }
-            
-            .reminders h4 {
-                color: #2c5aa0;
-                margin: 0 0 10px 0;
-                font-size: 15px;
-            }
-            
-            .reminders ul {
-                margin: 0;
-                padding-left: 20px;
-                color: #2c5aa0;
-                font-size: 13px;
-            }
-            
-            .footer-note {
-                margin: 30px 0 0 0;
-                font-size: 12px;
-                color: #999;
-                text-align: center;
-                border-top: 1px solid #eee;
-                padding-top: 20px;
-            }
-            
-            .powered-by {
-                margin: 20px 0 0 0;
-                text-align: center;
-                font-weight: 500;
-                color: #666;
-                font-size: 12px;
-            }
-
-            @media (max-width: 600px) {
-                .sm-w-full {
-                    width: 100% !important;
-                }
-                
-                .sm-px-24 {
-                    padding-left: 24px !important;
-                    padding-right: 24px !important;
-                }
-                
-                .credential-value {
-                    font-size: 18px;
-                    word-break: break-all;
-                    padding: 8px 12px;
-                }
-                
-                .button {
-                    display: block;
-                    width: 100%;
-                    max-width: 100%;
-                    padding: 10px;
-                    font-size: 13px;
-                }
-                
-                h1 {
-                    font-size: 24px !important;
-                }
-            }
-        </style>
-    </head>
-
-    <body style=""margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;"">
-        <div role=""article"" aria-roledescription=""email"" aria-label=""Employee App Access"" lang=""en"">
-            <table style=""font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;"" width=""100%""
-                   cellpadding=""0"" cellspacing=""0"" role=""presentation"">
-                <tr>
-                    <td align=""center"" style=""background-color: #eceff1; font-family: 'Segoe UI', sans-serif;"">
-                        <table class=""sm-w-full"" style=""font-family: 'Segoe UI', sans-serif; width: 600px;"" width=""600""
-                               cellpadding=""0"" cellspacing=""0"" role=""presentation"">
-                            <tr>
-                                <td class=""sm-py-32 sm-px-24""
-                                    style=""font-family: 'Segoe UI', sans-serif; padding: 48px 10px 10px 10px; text-align: center;""
-                                    align=""center"">
-                                    <img src=""{{CompanyLogo}}"" alt=""{{CompanyName}}"" style=""max-height: 50px; width: auto;"">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td align=""center"" class=""sm-px-24"" style=""font-family: 'Segoe UI', sans-serif;"">
-                                    <table style=""font-family: 'Segoe UI', sans-serif; width: 100%;"" width=""100%""
-                                           cellpadding=""0"" cellspacing=""0"" role=""presentation"">
-                                        <tr>
-                                            <td class=""sm-px-24""
-                                                style=""background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.5; padding: 35px; text-align: left; color: #333333; box-shadow: 0 2px 8px rgba(0,0,0,0.1);""
-                                                align=""left"">
-
-                                                <h1 style=""font-size: 26px; color: #2c5aa0; text-align: center; margin: 0 0 15px 0; font-weight: 600;"">
-                                                    Welcome to {{AppName}}!
-                                                </h1>
-
-                                                <p style=""margin: 0 0 15px; font-size: 15px;"">
-                                                    Hello <strong>{{ReceiverName}}</strong>,
-                                                </p>
-                                                
-                                                <p style=""margin: 0 0 15px; font-size: 15px;"">
-                                                    You have been offered the <strong>{{ReceiverRole}}</strong> role at <strong>{{CompanyName}}</strong>.
-                                                    Your account has been created for <strong>{{AppName}}</strong>. Please find your login credentials below. 
-                                                    For security reasons, you will be required to change your password upon first login.
-                                                </p>
-
-                                                <div class=""app-details"">
-                                                    <h3 style=""color: #2c5aa0; margin: 0; font-size: 17px;"">
-                                                        Application Access Information
-                                                    </h3>
-                                                </div>
-
-                                                <div class=""credentials-container"">
-                                                    <h3 style=""color: #2c5aa0; margin: 0 0 15px 0; text-align: center; font-size: 18px;"">
-                                                        Your Login Credentials
-                                                    </h3>
-
-                                                    <div class=""credential-row"">
-                                                        <div class=""credential-label"">ReceiverUserName / Email:</div>
-                                                        <div class=""credential-value"">{{ReceiverUserName}}</div>
-                                                    </div>
-
-                                                    <div class=""credential-row"">
-                                                        <div class=""credential-label"">Temporary Password:</div>
-                                                        <div class=""credential-value"">{{TemporaryPassword}}</div>
-                                                    </div>
-                                                </div>
-
-                                                <div class=""button-container"">
-                                                    <a href=""{{LoginUrl}}"" class=""button"">
-                                                        Access {{AppName}}
-                                                    </a>
-                                                    <div class=""url-text"">
-                                                        {{LoginUrl}}
-                                                    </div>
-                                                </div>
-
-                                                <div class=""security-notice important"">
-                                                    <h4 style=""color: #721c24; margin: 0 0 8px 0; font-size: 16px;"">
-                                                        ⚠️ Password Change Required
-                                                    </h4>
-                                                    <p style=""margin: 0; color: #721c24; font-size: 14px;"">
-                                                        You must change your password immediately after logging in. 
-                                                        This is a mandatory requirement </strong>.
-                                                    </p>
-                                                </div>
-
-                                                <div class=""security-notice warning"">
-                                                    <h4 style=""color: #856404; margin: 0 0 12px 0; font-size: 16px;"">
-                                                        📋 First-Time Login Instructions
-                                                    </h4>
-                                                    <ol class=""step-by-step"">
-                                                        <li>Click the ""Access {{AppName}}"" button above</li>
-                                                        <li>Enter your username/email and the temporary password</li>
-                                                        <li>Create a new password meeting security requirements</li>
-                                                        <li>Confirm your new password and complete setup</li>
-                                                        <li>Set up security questions if prompted</li>
-                                                    </ol>
-                                                </div>
-
-                                                <div class=""password-requirements"">
-                                                    <h4>🔒 Password Requirements:</h4>
-                                                    <ul>
-                                                        <li>Minimum {{MinPasswordLength}} characters</li>
-                                                        <li>At least one uppercase letter (A-Z)</li>
-                                                        <li>At least one lowercase letter (a-z)</li>
-                                                        <li>At least one number (0-9)</li>
-                                                        <li>At least one special character (!@#$%^&*)</li>
-                                                    </ul>
-                                                </div>
-
-                                                <div class=""support-info"">
-                                                    <h4 style=""color: #2c5aa0; margin: 0 0 12px 0; font-size: 15px;"">
-                                                        Need Help?
-                                                    </h4>
-                                                    <p style=""margin: 0 0 3px; font-size: 13px;"">
-                                                        <strong>IT Support:</strong> {{SupportName}}
-                                                    </p>
-                                                    <p style=""margin: 0 0 3px; font-size: 13px;"">
-                                                        <strong>Email:</strong> <a href=""mailto:{{SupportEmail}}"" style=""color: #2c5aa0; text-decoration: none;"">{{SupportEmail}}</a>
-                                                    </p>
-                                                    <p style=""margin: 0 0 3px; font-size: 13px;"">
-                                                        <strong>Phone:</strong> {{SupportPhone}}
-                                                    </p>
-                                                </div>
-
-                                                <div class=""reminders"">
-                                                    <h4>📌 Important Reminders:</h4>
-                                                    <ul>
-                                                        <li>Never share your password with anyone</li>
-                                                        <li>We will never ask for your password via email</li>
-                                                        <li>Log out when using shared computers</li>
-                                                        <li>Report suspicious activity immediately</li>
-                                                        <!-- The access expiry list item has been removed as requested -->
-                                                    </ul>
-                                                </div>
-
-                                                <div class=""footer-note"">
-                                                    This is an automated message from {{CompanyName}}. Please do not reply to this email.
-                                                </div>
-
-                                                <div class=""powered-by"">
-                                                    Powered by Abibeck Software Solutions
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </body>
-    </html>";
         }
+    </style>
+</head>
+
+<body style=""margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;"">
+    <div role=""article"" aria-roledescription=""email"" aria-label=""Employee App Access"" lang=""en"">
+        <table style=""font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;"" width=""100%""
+               cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+            <tr>
+                <td align=""center"" style=""background-color: #eceff1; font-family: 'Segoe UI', sans-serif;"">
+                    <table class=""sm-w-full"" style=""font-family: 'Segoe UI', sans-serif; width: 600px;"" width=""600""
+                           cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+                        <tr>
+                            <td class=""sm-py-32 sm-px-24""
+                                style=""font-family: 'Segoe UI', sans-serif; padding: 48px 10px 10px 10px; text-align: center;""
+                                align=""center"">
+                                <img src=""{{CompanyLogo}}"" alt=""{{CompanyName}}"" style=""max-height: 50px; width: auto;"">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align=""center"" class=""sm-px-24"" style=""font-family: 'Segoe UI', sans-serif;"">
+                                <table style=""font-family: 'Segoe UI', sans-serif; width: 100%;"" width=""100%""
+                                       cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+                                    <tr>
+                                        <td class=""sm-px-24""
+                                            style=""background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.5; padding: 35px; text-align: left; color: #333333; box-shadow: 0 2px 8px rgba(0,0,0,0.1);""
+                                            align=""left"">
+
+                                            <h1 style=""font-size: 26px; color: #2c5aa0; text-align: center; margin: 0 0 15px 0; font-weight: 600;"">
+                                                Welcome to {{AppName}}!
+                                            </h1>
+
+                                            <p style=""margin: 0 0 15px; font-size: 15px;"">
+                                                Hello <strong>{{ReceiverName}}</strong>,
+                                            </p>
+                                            
+                                            <p style=""margin: 0 0 15px; font-size: 15px;"">
+                                                You have been offered the <strong>{{ReceiverRole}}</strong> role at <strong>{{CompanyName}}</strong>.
+                                                Your account has been created for <strong>{{AppName}}</strong>. 
+                                                Please click the button below to set up your password and activate your account.
+                                            </p>
+
+                                            <div class=""app-details"">
+                                                <h3 style=""color: #2c5aa0; margin: 0; font-size: 17px;"">
+                                                    Application Access Information
+                                                </h3>
+                                            </div>
+
+                                            <div class=""credentials-container"">
+                                                <h3 style=""color: #2c5aa0; margin: 0 0 15px 0; text-align: center; font-size: 18px;"">
+                                                    Your Account Details
+                                                </h3>
+
+                                                <div class=""credential-row"">
+                                                    <div class=""credential-label"">Email / Username:</div>
+                                                    <div class=""credential-value"">{{ReceiverUserName}}</div>
+                                                </div>
+
+                                                <div class=""credential-row"">
+                                                    <div class=""credential-label"">Employee Code:</div>
+                                                    <div class=""credential-value"">{{PinCode}}</div>
+                                                </div>
+
+                                                <div class=""credential-row"" style=""border-bottom: none; margin-bottom: 0; padding-bottom: 0;"">
+                                                    <div class=""credential-label"">Role:</div>
+                                                    <div class=""credential-value"" style=""font-family: 'Segoe UI', sans-serif; font-size: 18px; letter-spacing: normal;"">
+                                                        {{ReceiverRole}}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class=""security-notice success"">
+                                                <h4 style=""color: #155724; margin: 0 0 8px 0; font-size: 16px;"">
+                                                    🔐 Set Up Your Password
+                                                </h4>
+                                                <p style=""margin: 0; color: #155724; font-size: 14px;"">
+                                                    Click the button below to set up your password. This link will expire in 24 hours for security reasons.
+                                                </p>
+                                            </div>
+
+                                            <div class=""button-container"">
+                                                <a href=""{{AppUrl}}"" class=""button"">
+                                                    Set Up Your Password
+                                                </a>
+                                                <div class=""url-text"">
+                                                    Or copy and paste this URL into your browser:
+                                                    <br>
+                                                    {{AppUrl}}
+                                                </div>
+                                            </div>
+
+                                            <div class=""security-notice warning"">
+                                                <h4 style=""color: #856404; margin: 0 0 12px 0; font-size: 16px;"">
+                                                    📋 First-Time Setup Instructions
+                                                </h4>
+                                                <ol class=""step-by-step"">
+                                                    <li>Click the ""Set Up Your Password"" button above</li>
+                                                    <li>Create a new password meeting the security requirements</li>
+                                                    <li>Confirm your new password</li>
+                                                    <li>Click ""Submit"" to complete your account setup</li>
+                                                    <li>You will be automatically redirected to the login page</li>
+                                                </ol>
+                                            </div>
+
+                                            <div class=""password-requirements"">
+                                                <h4>🔒 Password Requirements:</h4>
+                                                <ul>
+                                                    <li>Minimum {{MinPasswordLength}} characters</li>
+                                                    <li>At least one uppercase letter (A-Z)</li>
+                                                    <li>At least one lowercase letter (a-z)</li>
+                                                    <li>At least one number (0-9)</li>
+                                                    <li>At least one special character (!@#$%^&*)</li>
+                                                </ul>
+                                            </div>
+
+                                            <div class=""support-info"">
+                                                <h4 style=""color: #2c5aa0; margin: 0 0 12px 0; font-size: 15px;"">
+                                                    Need Help?
+                                                </h4>
+                                                <p style=""margin: 0 0 3px; font-size: 13px;"">
+                                                    <strong>IT Support:</strong> {{SupportName}}
+                                                </p>
+                                                <p style=""margin: 0 0 3px; font-size: 13px;"">
+                                                    <strong>Email:</strong> <a href=""mailto:{{SupportEmail}}"" style=""color: #2c5aa0; text-decoration: none;"">{{SupportEmail}}</a>
+                                                </p>
+                                                <p style=""margin: 0 0 3px; font-size: 13px;"">
+                                                    <strong>Phone:</strong> {{SupportPhone}}
+                                                </p>
+                                            </div>
+
+                                            <div class=""reminders"">
+                                                <h4>📌 Important Reminders:</h4>
+                                                <ul>
+                                                    <li>Never share your password with anyone</li>
+                                                    <li>We will never ask for your password via email</li>
+                                                    <li>Log out when using shared computers</li>
+                                                    <li>Report suspicious activity immediately</li>
+                                                    <li>This link expires in 24 hours</li>
+                                                </ul>
+                                            </div>
+
+                                            <div class=""footer-note"">
+                                                This is an automated message from {{CompanyName}}. Please do not reply to this email.
+                                            </div>
+
+                                            <div class=""powered-by"">
+                                                Powered by Abibeck Software Solutions
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>";
+        }
+
         private string GetBusinessPartnerWelcomeTemplate()
         {
             return """
@@ -904,7 +1041,6 @@ namespace WebApplication1.Services.Emails.TemplateService
                                                     prosperous business relationship.
                                                 </p>
 
-
                                                 <!-- Contact Information -->
                                                 <div class="contact-info">
                                                     <h3 style="color: #2c5aa0; margin: 0 0 15px 0; font-size: 18px;">
@@ -1007,5 +1143,820 @@ namespace WebApplication1.Services.Emails.TemplateService
     </html>
     """;
         }
+
+        private string GetPaymentConfirmationTemplate()
+        {
+            return """
+                                <!DOCTYPE html>
+                <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="x-apple-disable-message-reformatting">
+                    <meta http-equiv="x-ua-compatible" content="ie=edge">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+                    <!--[if mso]>
+                    <xml>
+                        <o:OfficeDocumentSettings>
+                            <o:PixelsPerInch>96</o:PixelsPerInch>
+                        </o:OfficeDocumentSettings>
+                    </xml>
+                    <style>
+                        td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
+                            font-family: "Segoe UI", sans-serif;
+                            mso-line-height-rule: exactly;
+                        }
+                    </style>
+                    <![endif]-->
+
+                    <style>
+                        .hover-underline:hover {
+                            text-decoration: underline !important;
+                        }
+
+                        .header-banner {
+                            background: linear-gradient(135deg, #2c5aa0 0%, #1e3f7a 100%);
+                            color: #ffffff;
+                            padding: 25px 30px;
+                            border-radius: 8px 8px 0 0;
+                            text-align: center;
+                            margin: -40px -40px 25px -40px;
+                        }
+
+                        .status-badge {
+                            display: inline-block;
+                            padding: 5px 16px;
+                            background-color: rgba(255,255,255,0.2);
+                            border-radius: 50px;
+                            font-size: 12px;
+                            font-weight: 600;
+                            letter-spacing: 0.5px;
+                            margin-top: 8px;
+                            color: #ffffff;
+                        }
+
+                        .payment-details {
+                            background-color: #f8f9fa;
+                            padding: 25px;
+                            border-radius: 8px;
+                            margin: 25px 0;
+                            border: 1px solid #e9ecef;
+                        }
+
+                        .detail-grid {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 20px;
+                            margin-top: 15px;
+                        }
+
+                        .detail-item {
+                            padding: 15px;
+                            background-color: #ffffff;
+                            border-radius: 6px;
+                            border-left: 4px solid #2c5aa0;
+                        }
+
+                        .detail-item.full-width {
+                            grid-column: span 2;
+                        }
+
+                        .detail-label {
+                            font-size: 12px;
+                            color: #666;
+                            margin-bottom: 5px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+
+                        .detail-value {
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: #333;
+                        }
+
+                        .amount-highlight {
+                            background: linear-gradient(135deg, #2c5aa0 0%, #1e3f7a 100%);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            text-align: center;
+                            margin: 20px 0;
+                        }
+
+                        .amount-highlight .label {
+                            font-size: 14px;
+                            opacity: 0.9;
+                        }
+
+                        .amount-highlight .amount {
+                            font-size: 36px;
+                            font-weight: 700;
+                            margin: 5px 0;
+                        }
+
+                        .items-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 15px 0;
+                            font-size: 14px;
+                        }
+
+                        .items-table th {
+                            background-color: #2c5aa0;
+                            color: #ffffff;
+                            padding: 10px 12px;
+                            text-align: left;
+                            font-weight: 600;
+                            font-size: 14px;
+                        }
+
+                        .items-table td {
+                            padding: 10px 12px;
+                            border-bottom: 1px solid #e9ecef;
+                            color: #333;
+                            font-size: 14px;
+                            word-wrap: break-word;
+                            word-break: break-word;
+                        }
+
+                        .items-table tr:nth-child(even) {
+                            background-color: #f8f9fa;
+                        }
+
+                        .items-table tr:hover {
+                            background-color: #e8f4f8;
+                        }
+
+                        .items-table td:last-child {
+                            text-align: right !important;
+                        }
+
+                        .action-button {
+                            display: block;
+                            width: 100%;
+                            max-width: 300px;
+                            margin: 0 auto;
+                            padding: 15px 40px;
+                            background-color: #2c5aa0;
+                            color: #ffffff;
+                            text-decoration: none;
+                            border-radius: 50px;
+                            font-weight: 600;
+                            font-size: 18px;
+                            text-align: center;
+                            transition: background-color 0.3s;
+                        }
+
+                        .action-button:hover {
+                            background-color: #1e3f7a;
+                        }
+
+                        .button-note {
+                            text-align: center;
+                            font-size: 13px;
+                            color: #666;
+                            margin-top: 15px;
+                        }
+
+                        .verification-box {
+                            background-color: #fff8e1;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin: 25px 0;
+                            border-left: 4px solid #ff9800;
+                        }
+
+                        .verification-box h4 {
+                            margin: 0 0 10px 0;
+                            color: #e65100;
+                            font-size: 15px;
+                        }
+
+                        .verification-box ul {
+                            margin: 0;
+                            padding-left: 20px;
+                        }
+
+                        .verification-box li {
+                            margin-bottom: 8px;
+                            color: #333;
+                            font-size: 14px;
+                        }
+
+                        .support-box {
+                            background-color: #e8f4f8;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin: 25px 0;
+                            border-left: 4px solid #2c5aa0;
+                            text-align: center;
+                        }
+
+                        .highlight-text {
+                            font-weight: 700;
+                            color: #2c5aa0;
+                        }
+
+                        @media (max-width: 600px) {
+                            .sm-w-full {
+                                width: 100% !important;
+                            }
+
+                            .sm-px-24 {
+                                padding-left: 24px !important;
+                                padding-right: 24px !important;
+                            }
+
+                            .detail-grid {
+                                grid-template-columns: 1fr;
+                            }
+
+                            .detail-item.full-width {
+                                grid-column: auto;
+                            }
+
+                            .header-banner {
+                                padding: 20px;
+                                margin: -20px -20px 20px -20px;
+                            }
+
+                            .header-banner h1 {
+                                font-size: 20px;
+                            }
+
+                            .header-banner p {
+                                font-size: 14px;
+                            }
+
+                            .amount-highlight .amount {
+                                font-size: 28px;
+                            }
+
+                            .items-table {
+                                font-size: 11px !important;
+                            }
+
+                            .items-table th {
+                                font-size: 10px !important;
+                                padding: 6px 8px !important;
+                            }
+
+                            .items-table td {
+                                font-size: 10px !important;
+                                padding: 6px 8px !important;
+                                word-wrap: break-word !important;
+                                word-break: break-word !important;
+                                max-width: 60px;
+                            }
+
+                            .items-table td:first-child {
+                                max-width: 80px;
+                            }
+
+                            .items-table td:nth-child(2) {
+                                max-width: 50px;
+                            }
+
+                            .items-table td:nth-child(3) {
+                                max-width: 30px;
+                                text-align: center !important;
+                            }
+
+                            .items-table td:last-child {
+                                max-width: 40px;
+                                text-align: right !important;
+                            }
+                        }
+                    </style>
+                </head>
+
+                <body style="margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;">
+                    <div role="article" aria-roledescription="email" aria-label="Payment Confirmation" lang="en">
+                        <table style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;" width="100%"
+                               cellpadding="0" cellspacing="0" role="presentation">
+                            <tr>
+                                <td align="center" style="background-color: #eceff1; font-family: 'Segoe UI', sans-serif;">
+                                    <table class="sm-w-full" style="font-family: 'Segoe UI', sans-serif; width: 600px;" width="600"
+                                           cellpadding="0" cellspacing="0" role="presentation">
+
+                                        <tr>
+                                            <td align="center" class="" style="font-family: 'Segoe UI', sans-serif;">
+                                                <table style="font-family: 'Segoe UI', sans-serif; width: 100%;" width="100%"
+                                                       cellpadding="0" cellspacing="0" role="presentation">
+                                                    <tr>
+                                                        <td class="sm-px-24"
+                                                            style="background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.6; padding: 40px; text-align: left; color: #333333; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"
+                                                            align="left">
+
+
+                                                            <!-- Greeting -->
+                                                            <p style="margin: 0 0 20px; font-size: 16px;">
+                                                                Dear <strong>{{ReceiverName}}</strong>,
+                                                            </p>
+
+                                                            <p style="margin: 0 0 20px; font-size: 16px;">
+                                                                Payment of <strong>{{Currency}} {{Amount}}</strong> has been successfully been made on <strong class="highlight-text">{{Date}}</strong>.
+                                                            </p>
+
+                                                            <!-- Payment Amount -->
+                                                            <div class="amount-highlight">
+                                                                <div class="label">Payment Amount</div>
+                                                                <div class="amount">{{Currency}} {{Amount}}</div>
+                                                                <div style="font-size: 14px; opacity: 0.9;">
+                                                                    Reference: {{Reference}}
+                                                                </div>
+                                                            </div>
+
+                                                            <div style="margin: 25px 0;">
+                                                                <div>Total Cost <strong>{{Cost}}</strong></div>
+                                                                <div>Balance/Debt <strong>{{Balance}}</strong></div>
+                                                            </div>
+
+                                                            <!-- Items Purchased -->
+                                                            <div>
+                                                                <h3 style="color: #2c5aa0; margin: 0 0 15px 0; font-size: 17px;">
+                                                                    Items Purchased
+                                                                </h3>
+                                                                <table class="items-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Item Name</th>
+                                                                            <th>Price</th>
+                                                                            <th style="text-align: center;">Qty</th>
+                                                                            <th style="text-align: right;">Amount</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {{#each Items}}
+                                                                        <tr>
+                                                                            <td>{{this.name}}</td>
+                                                                            <td>{{this.price}}</td>
+                                                                            <td style="text-align: center;">{{this.quantity}}</td>
+                                                                            <td style="text-align: right;">{{this.amount}}</td>
+                                                                        </tr>
+                                                                        {{/each}}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+
+                                                            <!-- Verification Message -->
+                                                            <div class="verification-box">
+                                                                <h4>⚠️ Please Verify Payment Amount</h4>
+                                                                <ul>
+                                                                    <li>
+                                                                        <strong>Confirm the payment amount</strong>
+                                                                    </li>
+                                                                    <li>
+                                                                        <strong>Report any discrepancies immediately</strong>
+                                                                    </li>
+                                                                    <li>
+                                                                        <strong>Please keep this confirmation record as it can be used as reference</strong>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+
+                                                            <!-- Support -->
+                                                            <div class="support-box">
+                                                                <p style="margin: 0; font-size: 15px; color: #2c5aa0;">
+                                                                    <strong>Need assistance?</strong> Contact our support team at 
+                                                                    <a href="mailto:{{CompanyEmail}}" style="color: #2c5aa0; text-decoration: underline;">{{CompanyEmail}}</a>
+                                                                    or call {{CompanyPhone}}
+                                                                </p>
+                                                            </div>
+
+                                                            <!-- Closing -->
+                                                            <p style="margin: 25px 0 5px 0; font-size: 16px;">
+                                                                Thank you for your business.
+                                                            </p>
+
+                                                            <p style="margin: 0 0 5px 0; font-size: 16px;">
+                                                                Best regards,
+                                                            </p>
+                                                            <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #2c5aa0;">
+                                                                {{CompanyName}}
+                                                            </p>
+
+                                                            <!-- Footer -->
+                                                            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; text-align: center; font-size: 12px; color: #999;">
+                                                                <p style="margin: 0 0 10px 0;">
+                                                                    {{CompanyName}} | {{CompanyAddress}} | {{CompanyPhone}} | {{CompanyEmail}}
+                                                                </p>
+                                                                <p style="margin: 0;">
+                                                                    This email was sent to {{PrimaryEmail}}
+                                                                </p>
+                                                                <p style="margin: 20px 0 0 0; font-weight: 600; color: #666;">
+                                                                    Powered by Abibeck Software Solutions
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                </body>
+                </html>
+                """;
+        }
+
+        private string GetDeliveryEmailTemplate()
+        {
+            return @"
+    <!DOCTYPE html>
+    <html lang=""en"" xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:o=""urn:schemas-microsoft-com:office:office"">
+    <head>
+        <meta charset=""utf-8"">
+        <meta name=""x-apple-disable-message-reformatting"">
+        <meta http-equiv=""x-ua-compatible"" content=""ie=edge"">
+        <meta name=""viewport"" content=""width=device-width, initial-scale=1"">
+        <meta name=""format-detection"" content=""telephone=no, date=no, address=no, email=no"">
+        <!--[if mso]>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+        <style>
+            td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
+                font-family: ""Segoe UI"", sans-serif;
+                mso-line-height-rule: exactly;
+            }
+        </style>
+        <![endif]-->
+
+        <style>
+            .hover-underline:hover {
+                text-decoration: underline !important;
+            }
+
+            .header-banner {
+                background: linear-gradient(135deg, #2c5aa0 0%, #1e3f7a 100%);
+                color: #ffffff;
+                padding: 25px 30px;
+                border-radius: 8px 8px 0 0;
+                text-align: center;
+                margin: -40px -40px 25px -40px;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 5px 16px;
+                background-color: rgba(255,255,255,0.2);
+                border-radius: 50px;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                margin-top: 8px;
+                color: #ffffff;
+            }
+
+            .delivery-details {
+                background-color: #f8f9fa;
+                padding: 25px;
+                border-radius: 8px;
+                margin: 25px 0;
+                border: 1px solid #e9ecef;
+            }
+
+            .detail-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+                margin-top: 15px;
+            }
+
+            .detail-item {
+                padding: 15px;
+                background-color: #ffffff;
+                border-radius: 6px;
+                border-left: 4px solid #2c5aa0;
+            }
+
+            .detail-item.full-width {
+                grid-column: span 2;
+            }
+
+            .detail-label {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 5px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .detail-value {
+                font-size: 16px;
+                font-weight: 600;
+                color: #333;
+            }
+
+            .delivery-highlight {
+                background: linear-gradient(135deg, #2c5aa0 0%, #1e3f7a 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+                margin: 20px 0;
+            }
+
+            .delivery-highlight .label {
+                font-size: 14px;
+                opacity: 0.9;
+            }
+
+            .delivery-highlight .reference {
+                font-size: 20px;
+                font-weight: 700;
+                margin: 5px 0;
+                letter-spacing: 1px;
+            }
+
+            .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+                font-size: 14px;
+            }
+
+            .items-table th {
+                background-color: #2c5aa0;
+                color: #ffffff;
+                padding: 10px 12px;
+                text-align: left;
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+            .items-table td {
+                padding: 10px 12px;
+                border-bottom: 1px solid #e9ecef;
+                color: #333;
+                font-size: 14px;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
+            .items-table tr:nth-child(even) {
+                background-color: #f8f9fa;
+            }
+
+            .items-table tr:hover {
+                background-color: #e8f4f8;
+            }
+
+            .items-table td:last-child {
+                text-align: center !important;
+            }
+
+            .verification-box {
+                background-color: #fff8e1;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 25px 0;
+                border-left: 4px solid #ff9800;
+            }
+
+            .verification-box h4 {
+                margin: 0 0 10px 0;
+                color: #e65100;
+                font-size: 15px;
+            }
+
+            .verification-box ul {
+                margin: 0;
+                padding-left: 20px;
+            }
+
+            .verification-box li {
+                margin-bottom: 8px;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .support-box {
+                background-color: #e8f4f8;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 25px 0;
+                border-left: 4px solid #2c5aa0;
+                text-align: center;
+            }
+
+            .highlight-text {
+                font-weight: 700;
+                color: #2c5aa0;
+            }
+
+            .success-icon {
+                font-size: 48px;
+                margin-bottom: 10px;
+            }
+
+            @media (max-width: 600px) {
+                .sm-w-full {
+                    width: 100% !important;
+                }
+
+                .sm-px-24 {
+                    padding-left: 24px !important;
+                    padding-right: 24px !important;
+                }
+
+                .detail-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .detail-item.full-width {
+                    grid-column: auto;
+                }
+
+                .header-banner {
+                    padding: 20px;
+                    margin: -20px -20px 20px -20px;
+                }
+
+                .header-banner h1 {
+                    font-size: 20px;
+                }
+
+                .header-banner p {
+                    font-size: 14px;
+                }
+
+                .delivery-highlight .reference {
+                    font-size: 16px;
+                }
+
+                .items-table {
+                    font-size: 11px !important;
+                }
+
+                .items-table th {
+                    font-size: 10px !important;
+                    padding: 6px 8px !important;
+                }
+
+                .items-table td {
+                    font-size: 10px !important;
+                    padding: 6px 8px !important;
+                    word-wrap: break-word !important;
+                    word-break: break-word !important;
+                    max-width: 60px;
+                }
+
+                .items-table td:first-child {
+                    max-width: 80px;
+                }
+
+                .items-table td:last-child {
+                    max-width: 40px;
+                    text-align: center !important;
+                }
+            }
+        </style>
+    </head>
+
+    <body style=""margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;"">
+        <div role=""article"" aria-roledescription=""email"" aria-label=""Delivery Confirmation"" lang=""en"">
+            <table style=""font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;"" width=""100%""
+                   cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+                <tr>
+                    <td align=""center"" style=""background-color: #eceff1; font-family: 'Segoe UI', sans-serif;"">
+                        <table class=""sm-w-full"" style=""font-family: 'Segoe UI', sans-serif; width: 600px;"" width=""600""
+                               cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+                            <tr>
+                                <td align=""center"" style=""font-family: 'Segoe UI', sans-serif;"">
+                                    <table style=""font-family: 'Segoe UI', sans-serif; width: 100%;"" width=""100%""
+                                           cellpadding=""0"" cellspacing=""0"" role=""presentation"">
+                                        <tr>
+                                            <td class=""sm-px-24""
+                                                style=""background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.6; padding: 40px; text-align: left; color: #333333; box-shadow: 0 2px 10px rgba(0,0,0,0.1);""
+                                                align=""left"">
+
+                                                <!-- Header Banner -->
+                                                <div class=""header-banner"">
+                                                    <div class=""success-icon"">📦</div>
+                                                    <h1 style=""margin: 0 0 5px 0; font-size: 24px; font-weight: 700;"">
+                                                        Delivery Confirmation
+                                                    </h1>
+                                                    <p style=""margin: 0; opacity: 0.9; font-size: 14px;"">
+                                                        Items have been successfully delivered
+                                                    </p>
+                                                    <div class=""status-badge"">✓ DELIVERED</div>
+                                                </div>
+
+                                                <!-- Greeting -->
+                                                <p style=""margin: 0 0 20px; font-size: 16px;"">
+                                                    Dear <strong>{{ReceiverName}}</strong>,
+                                                </p>
+
+                                                <p style=""margin: 0 0 20px; font-size: 16px;"">
+                                                    This is to confirm that Items have been successfully delivered on <strong class=""highlight-text"">{{Date}}</strong>.
+                                                </p>
+
+                                                <!-- Delivery Reference -->
+                                                <div class=""delivery-highlight"">
+                                                    <div class=""label"">Reference</div>
+                                                    <div class=""reference"">{{Reference}}</div>
+                                                    <div style=""font-size: 14px; opacity: 0.9; margin-top: 5px;"">
+                                                        Date: {{Date}}
+                                                    </div>
+                                                </div>
+
+
+                                                <!-- Items Delivered -->
+                                                <div>
+                                                    <h3 style=""color: #2c5aa0; margin: 0 0 15px 0; font-size: 17px;"">
+                                                        Items Delivered
+                                                    </h3>
+                                                    <table class=""items-table"">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Item Name</th>
+                                                                <th style=""text-align: center;"">Quantity</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {{#each Items}}
+                                                            <tr>
+                                                                <td>{{this.name}}</td>
+                                                                <td style=""text-align: center;"">{{this.quantity}}</td>
+                                                            </tr>
+                                                            {{/each}}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                <!-- Verification Message -->
+                                                <div class=""verification-box"">
+                                                    <h4>📋 Please Verify Your Delivery</h4>
+                                                    <ul>
+                                                        <li>
+                                                            <strong>Check all items</strong> against this delivery note
+                                                        </li>
+                                                        <li>
+                                                            <strong>Report any discrepancies</strong> within 24 hours
+                                                        </li>
+                                                        <li>
+                                                            <strong>Keep this confirmation</strong> as proof of delivery
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                <!-- Support -->
+                                                <div class=""support-box"">
+                                                    <p style=""margin: 0; font-size: 15px; color: #2c5aa0;"">
+                                                        <strong>Need assistance?</strong> Contact our support team at 
+                                                        <a href=""mailto:{{CompanyEmail}}"" style=""color: #2c5aa0; text-decoration: underline;"">{{CompanyEmail}}</a>
+                                                        or call {{CompanyPhone}}
+                                                    </p>
+                                                </div>
+
+                                                <!-- Closing -->
+                                                <p style=""margin: 25px 0 5px 0; font-size: 16px;"">
+                                                    Thank you for choosing {{CompanyName}}.
+                                                </p>
+
+                                                <p style=""margin: 0 0 5px 0; font-size: 16px;"">
+                                                    Best regards,
+                                                </p>
+                                                <p style=""margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #2c5aa0;"">
+                                                    {{CompanyName}}
+                                                </p>
+
+                                                <!-- Footer -->
+                                                <div style=""margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; text-align: center; font-size: 12px; color: #999;"">
+                                                    <p style=""margin: 0 0 10px 0;"">
+                                                        {{CompanyName}} | {{CompanyAddress}} | {{CompanyPhone}} | {{CompanyEmail}}
+                                                    </p>
+                                                    <p style=""margin: 0;"">
+                                                        This email was sent to {{PrimaryEmail}}
+                                                    </p>
+                                                    <p style=""margin: 20px 0 0 0; font-weight: 600; color: #666;"">
+                                                        Powered by Abibeck Software Solutions
+                                                    </p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </body>
+    </html>
+    ";
+        }
     }
+
+   
 }

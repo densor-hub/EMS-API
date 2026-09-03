@@ -7,12 +7,12 @@ namespace WebApplication1.Domain.Repository
     {
         IQueryable<Employee> GetAll();
         IQueryable<Employee> GetAllByCompanyId(Guid companyId);
+        Task<Employee> GetByCodeAsync(string Code);
         IQueryable<Employee> GetAllByLocationId(Guid locationId);
         Task<Employee> GetByIdAsync(Guid id);
         Task<Employee?> GetByIdAndLocationAsync(Guid id, Guid locationId);
         Task<Employee> CreateAsync(Employee createDto);
         Task<Employee> UpdateAsync(Employee updateDto);
         Task<bool> DeleteAsync(Guid id);
-        Task<string> GenerateCodeAsync(Guid locationId);
     }
 }

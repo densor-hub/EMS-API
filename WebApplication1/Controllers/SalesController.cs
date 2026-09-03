@@ -4,8 +4,7 @@ using WebApplication1.DTOs;
 using WebApplication1.Domain.Repository;
 using WebApplication1.Domain.QueryFilters;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Entities;
-using WebApplication1.DAL.Repository;
+using WebApplication1.Services.ControllerServices;
 using WebApplication1.Domain.DTO;
 
 namespace WebApplication1.Controllers
@@ -14,95 +13,78 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class SalesController : ControllerBase
     {
-        private readonly ISaleRepository _saleService;
+        private readonly ISaleService _saleService;
         private readonly ILocationRepository _locationRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITransactionRepository _transactionRepository;
+        private readonly ITransactionService _transactionService;
 
         public SalesController(
-            ISaleRepository saleService,
+            ISaleService saleService,
             ILocationRepository locationRepository,
             ICustomerRepository customerRepository,
             IUserRepository userRepository,
-            ITransactionRepository transactionRepository)
+            ITransactionRepository transactionRepository,
+            ITransactionService transactionService)
         {
             _saleService = saleService;
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
             _userRepository = userRepository;
             _transactionRepository = transactionRepository;
+            _transactionService = transactionService;
         }
 
         [HttpGet]
         public async Task<ActionResult<GetSaleDto>> GetAll([FromQuery] BrowseSalesFilters filter)
         {
-            var sales =  await _saleService.GetAllAsync(filter.LocationId, filter.GeneralStatus, filter.CustomerId, filter.SalesPersonId);
+            var sales =  await _saleService.GetAllAsync(filter.LocationId, filter.GeneralStatus, filter.Type, filter.CustomerId, filter.SalesPersonId);
             return Ok(sales);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<GetSaleDto>> GetById(Guid id)
+        [HttpGet("Generate-Receipt/{deliveryRequestId}")]
+        public async Task<ActionResult<GetSaleDto>> GenerateReceipt([FromRoute] string deliveryRequestId)
         {
-            var x = await _saleService.GetByIdAsync(id);
-            if (x == null)  return NotFound();
-
-            var dataToReturn =  new GetSaleDto
+            try
             {
-                Id = x.Id,
-                CustomerName = $"{x.Customer.FirstName} {x.Customer.LastName}",
-                CustomerId = x.CustomerId,
-                Date = x.CreatedAt,
-                LocationId = x.LocationId,
-                LocationName = x.Location.Name,
-                TaxAmount = x.Transaction.TaxAmount,
-                DiscountAmount = x.Transaction.DiscountAmount,
-                TotalAmount = x.Transaction.TotalAmount,
-                Items = x.Transaction.TransactionItems.Select(x => new TransactionItemDto
-                {
-                    ItemId = x.Item.Id,
-                    Quantity = x.Quantity,
-                    UnitPrice = x.UnitPrice,  // Purchase Price
-                    DeliveredQuantity = x.TransactionItemsDelivered.Sum(x => x.Quanity),
-                    ItemName = x.Item.Name,
-                    Code = x.Item.Code,
-                    CostPrice = x.Item.CostPrice
-                }).ToList(),
-                Payments = x.Transaction.TransactionPayments.Select(x => new TransactionPaymentsDto
-                {
-                    Amount = x.Amount,
-                    PaymentDate = x.PaymentDate,
-                    PaymentMethod = x.PaymentMethod
-                }).ToList()
+                var validGuid = Guid.TryParse(deliveryRequestId, out var id);
 
-
-            };
-            return Ok(dataToReturn);
+                
+                var sales = await _saleService.GenerateReceipt(validGuid ? id : Guid.Empty, deliveryRequestId );
+                return Ok(sales);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+   
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTransactionDto createDto)
+
+        [HttpPost("General")]
+        public async Task<ActionResult<TransactionCreatedReturnDataDto>> Create([FromBody] CreateTransactionDto createDto)
         {
             
             try
             {
                 if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment method");
-                if (!Enum.IsDefined(typeof(TransactinType), createDto.TransactinType)) return BadRequest("Invalid transaction type");
+                if (!Enum.IsDefined(typeof(TransactionResultsType), createDto.TransactionResultsType)) return BadRequest("Invalid transaction type");
 
                 var location = await _locationRepository.GetByIdAsync(createDto.LocationId);
                 if (location == null) BadRequest("Shop not found");
 
-                if ( createDto.BusinessPartnerId != Guid.Empty)
-                {
-                    var customer = await _customerRepository.GetByIdAsync(createDto.BusinessPartnerId);
-                    if (customer == null) BadRequest("Customer not found");
-                }
+                //this endpoint is only used for general sale where customers are not in the system
+                createDto.BusinessPartnerId = Guid.Empty;
+                createDto.TransactionResultsType = TransactionResultsType.Deposit;
 
                 var user = await  _userRepository.GetUserByRefreshTokenAsync();
-                var transNumber = await _saleService.CreateAsync(createDto, Guid.Parse(user.Id));
 
-                createDto.TransactionCode = transNumber;
-                return StatusCode(201,  createDto);
+
+                //use configuration to select which best fits
+               var results =  await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit); // Deposit becuase initail payment for QrCode, debit is done when Stock Person generates receipt
+
+                return StatusCode(201,  results);
             }
             catch (Exception ex)
             {
@@ -110,69 +92,34 @@ namespace WebApplication1.Controllers
             }
         }
 
-        //[HttpGet("ItemsDelivered")]
-        //public async Task<IActionResult> GetAllDeliveredToDate([FromQuery] Guid TransactionId)
-        //{
-        //    var purchases = await _transactionRepository.GetAllDeliveredItemsToDate(TransactionId);
-        //    return Ok(purchases);
-        //}
-
-        //[HttpPost("ConfirmDelivery")]
-        //public async Task<ActionResult> CreatConfirmRecievalePayment([FromBody] ConfirmTransactionDeliveryDTO createDto)
-        //{
-        //    try
-        //    {
-        //        if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
-
-
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //        await _transactionRepository.DeliverItems(createDto, Guid.Parse(user.Id));
-
-        //        return StatusCode(201);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
-
-        [HttpPost("Cancel")]
-        public async Task<IActionResult> Cancel([FromBody] CreateSaleCancellationDto cancellationDto)
+        [HttpPost("Customer/{customerId}")]
+        public async Task<ActionResult<TransactionCreatedReturnDataDto>> CreateCustomerSale([FromRoute] Guid customerId, [FromBody] CreateTransactionDto createDto)
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var saleId = await _saleService.CancellationAsync(cancellationDto, userId);
-                return CreatedAtAction(nameof(GetById), new { id = saleId }, cancellationDto);
+                if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment method");
+                if (!Enum.IsDefined(typeof(TransactionResultsType), createDto.TransactionResultsType)) return BadRequest("Invalid transaction type");
+
+                var location = await _locationRepository.GetByIdAsync(createDto.LocationId);
+                if (location == null) BadRequest("Shop not found");
+
+                var customer = await _customerRepository.GetByIdAsync(customerId);
+                if (customer == null) BadRequest("Customer not found");
+
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+
+                //every customer firstly has to deposit before delivery will be made our of that deposit
+                createDto.TransactionResultsType = TransactionResultsType.Deposit;
+                createDto.BusinessPartnerId = customerId;
+
+                var results = await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit);
+
+                return StatusCode(201, results);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteSale( [FromBody] UpdateSaleDto updateDto)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var sale = await _saleService.DeleteAsync(updateDto.Id, userId, updateDto.Notes);
-                if (sale == null)  return NotFound();
-                return Ok(sale);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-   
-
-        private Guid GetCurrentUserId()
-        {
-            var userIdClaim =  User.Claims.FirstOrDefault(c => c.Type == "userId");
-            return userIdClaim != null ? Guid.Parse(userIdClaim.Value) : Guid.Empty;
         }
     }
 }

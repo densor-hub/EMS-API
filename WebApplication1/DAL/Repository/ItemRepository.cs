@@ -6,6 +6,7 @@ using System.Security.Claims;
 using WebApplication1.Domain.Enums;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Helpers;
+using System.Linq;
 
 namespace WebApplication1.DAL.Repository
 {
@@ -22,20 +23,26 @@ namespace WebApplication1.DAL.Repository
             _userRepository = userRepository;
         }
 
-        public async Task<Item> GetByIdAsync(Guid id)
+        public async Task<Item?> GetByIdAsync(Guid id)
         {
             return await _context.Items
+                .Include(x=> x.TransactionItems)
+                .Include(x=> x.StockLockDownItems)
+                    .ThenInclude(x=> x.Submissions)
                  .Include(i => i.ItemLocations)
                     .ThenInclude(il => il.Location)
                 .FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        public  IQueryable<Item> GetAllAsync()
+        public  IQueryable<Item> GetAllAsync(bool checkStatus = true)
         {
             return _context.Items
+                .Include(x=> x.Company)
+                .Include(x => x.StockLockDownItems)
+                    .ThenInclude(x => x.Submissions)
                 .Include(i => i.ItemLocations)
                     .ThenInclude(il => il.Location)
-                .Where(i => i.Status) // Assuming you add Status property
+                .Where(i => checkStatus ?  i.Status : true) // Assuming you add Status property
                 .OrderByDescending(i => i.Name);
         }
 
@@ -56,30 +63,18 @@ namespace WebApplication1.DAL.Repository
 
         public IQueryable<Item> GetLowStockItems( Guid locationId)
         {
-            return _context.Items.Where(x => x.ItemLocations.Any(x => x.LocationId == locationId))
-                .Include(i => i.ItemLocations)
-                    .ThenInclude(il => il.Location)
-                .Include(i => i.StockLevel)  // ✅ Singular, not plural
-                .Where(i => (i.StockLevel.AvailableQuanity <= i.ReorderLevel) || (i.StockLevel.ActualQuantity <= i.ReorderLevel) && i.Status)
-                .OrderBy(i => i.StockLevel.ActualQuantity);
-        }
-
-        public async Task<IEnumerable<Item>> GetLowStockItemsActualQtyAsync(Guid locationId)
-        {
-            return await _context.Items.Where(x => x.ItemLocations.Any(x => x.LocationId == locationId))
-                .Include(i => i.ItemLocations)
-                    .ThenInclude(il => il.Location)
-                .Include(i => i.StockLevel)  // ✅ Singular, not plural
-                .Where(i => i.StockLevel.ActualQuantity <= i.ReorderLevel && i.Status)
-                .OrderBy(i => i.StockLevel.ActualQuantity)
-                .ToListAsync();
+            return _context.StockLevels
+                .Include(x => x.Location)
+                .Include(x => x.Item)
+                .Where(x => x.LocationId == locationId && x.AvailableQuanity <= x.Item.ReorderLevel || x.ActualQuantity <= x.Item.ReorderLevel)
+                .Select(x => x.Item);
+                //.OrderBy(i => i.S);
         }
 
         public async Task<Item> CreateAsync(Item item)
         {
 
             await _context.Items.AddAsync(item);
-            await _context.SaveChangesAsync();
 
             return item;
         }
@@ -88,8 +83,7 @@ namespace WebApplication1.DAL.Repository
         {
          
             _context.Items.Update(item);
-            await _context.SaveChangesAsync();
-
+            await Task.CompletedTask;
             return item;
         }
 
@@ -106,7 +100,6 @@ namespace WebApplication1.DAL.Repository
             item.SoftDelete(currentUserId);
 
             _context.Items.Update(item);
-            await _context.SaveChangesAsync();
 
             return true;
         }
@@ -141,29 +134,67 @@ namespace WebApplication1.DAL.Repository
         }
 
 
-        public async Task<string> GenerateCodeAsync(Guid locationId)
+        public async Task<string> AllItemsAreValid(List<Guid> itemIds, Guid locationId)
         {
-            var locationName = _context.Locations.Where(x => x.Id == locationId).Select(x => x.Name).FirstOrDefault();
-            var initials = StringExtensions.GetInitials(locationName);
+            if (itemIds == null || !itemIds.Any())
+                return string.Empty;
 
-            var totalCount = await _context.Employees.Where(x => x.EmployeeLocations.Any(el => el.LocationId == locationId)).CountAsync();
+            // Get the location name first
+            var location = await _context.Locations
+                .Where(l => l.Id == locationId)
+                .Select(l => l.Name)
+                .FirstOrDefaultAsync();
 
-            var number = totalCount + 1;
-            return $"ITM-{initials.ToUpper().Trim()}-{number:D3}";
-        }
+            var locationName = location ?? locationId.ToString();
 
-        public async Task<bool> AllItemsAreValid(List<Guid> itemIds, Guid locationId)
-        {
-
+            // Get all items with their locations
             var existingItems = await _context.Items
-                .Where(i => itemIds.Contains(i.Id) && i.ItemLocations.Any(x => x.Id == locationId))
-                .Select(i => i.Id)
+                .Include(x => x.ItemLocations)
+                .Where(i => itemIds.Contains(i.Id))
                 .ToListAsync();
 
-            var missingItems = itemIds.Except(existingItems).ToList();
-            return missingItems.Any();
+            var existingItemsIds = existingItems.Select(x => x.Id).ToList();
+            var missingItems = itemIds.Except(existingItemsIds).ToList();
+
+            if (missingItems.Any())
+                throw new Exception($"The following items do not exist in the system: {string.Join(", ", missingItems)}");
+
+            // Find items that are NOT in the specified location
+            var itemsNotInLocation = existingItems
+                .Where(x => !x.ItemLocations.Any(l => l.LocationId == locationId))
+                .Select(x => new { x.Id, x.Name })
+                .ToList();
+
+            if (itemsNotInLocation.Any())
+            {
+                var itemNames = string.Join(", ", itemsNotInLocation.Select(x => x.Name));
+                return $"{locationName} does not have access to the following items : {itemNames}";
+            }
+
+            return "ALL-VALID";
         }
 
+        public  async Task<StockLevel> GetItemStockLevel(Guid itemId, Guid locationId)
+        {
+            var item = await GetByIdAsync(itemId);
+            
+            if (item == null) item = await _context.TransactionItems
+                    .Include(x => x.Item)
+                    .Where(x => x.Id == itemId).Select(x=> x.Item).FirstOrDefaultAsync();
 
+            if (item == null) throw new Exception("Item not found");
+
+            var stockLevl = await _context.StockLevels
+                    .Include(x=> x.Location)
+                    .Include(x=> x.Item)
+                    .Where(x => x.ItemId == item.Id && x.LocationId == locationId).FirstOrDefaultAsync();
+
+            return stockLevl;
+        }
+
+        public async Task<bool> NameExist(string name, Guid ItemId)
+        {
+           return await _context.Items.AnyAsync(x=> x.Name.ToLower().Trim() == name.ToLower().Trim() && x.Id != ItemId);
+        }
     }
-}
+} 

@@ -19,12 +19,12 @@ namespace VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities
         public DateTime? SentAt { get; set; }
         public DateTime? LastAttemptAt { get; set; }
         public int RetryCount { get; set; }
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; } = null;
         public EmailQueueStatus Status { get; set; }
 
         // Foreign keys for tracking
-        public Guid? CustomerId { get; set; }
-        public Guid? EmployeeId { get; set; }
+        public Guid? ReceiverId { get; set; }
+        //public Guid? EmployeeId { get; set; }
 
         // Constants
         public const int MaxRetryAttempts = 3;

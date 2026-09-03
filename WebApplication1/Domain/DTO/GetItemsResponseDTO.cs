@@ -13,8 +13,10 @@ namespace WebApplication1.Domain.DTO
         public UnitOfMeasure UnitOfMeasure { get;  set; }
         public string? UnitOfMeasureName { get; set; }
         public int QuanityInUnit { get;  set; }
-        public decimal SellingPrice { get;  set; }
-        public decimal CostPrice { get;  set; }
+        public decimal? SellingPrice { get;  set; }
+        public decimal? CostPrice { get; set; }
+        public bool Locked { get; set; } = false;
+       // public decimal? CostPrice { get;  set; }
         public int ReorderLevel { get;  set; }
         public bool Status { get;  set; }
         public List<DropDownDTO>? Locations { get; set; }

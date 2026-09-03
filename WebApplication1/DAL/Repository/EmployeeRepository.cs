@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
-using WebApplication1.Helpers;
 
 namespace WebApplication1.DAL.Repository;
 
@@ -40,7 +39,6 @@ public class EmployeeRepository : IEmployeeRepository
     public async Task<Employee> CreateAsync(Employee employee)
     {
         _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
 
         return employee;
     }
@@ -48,7 +46,6 @@ public class EmployeeRepository : IEmployeeRepository
     public async Task<Employee> UpdateAsync(Employee employee)
     {
         _context.Employees.Update(employee);
-        await _context.SaveChangesAsync();
 
         return employee;
     }
@@ -60,24 +57,12 @@ public class EmployeeRepository : IEmployeeRepository
 
         employee.SoftDelete();
         _context.Employees.Update(employee);
-        await _context.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> ExistsAsync(Guid id)
     {
         return await _context.Employees.AnyAsync(e => e.Id == id);
-    }
-
-    public async Task<string> GenerateCodeAsync(Guid locationId)
-    {
-        var locationName = _context.Locations.Where(x=> x.Id== locationId).Select(x=> x.Name).FirstOrDefault();   
-        var initials = StringExtensions.GetInitials(locationName);
-
-        var totalCount = await _context.Employees.Where(x=> x.EmployeeLocations.Any(el=> el.LocationId == locationId)).CountAsync();
-
-        var number = totalCount + 1;
-        return $"EMP-{initials.ToUpper().Trim()}-{number:D3}";
     }
 
     public async Task<Employee?> GetByIdAndLocationAsync(Guid id, Guid locationId)
@@ -93,5 +78,10 @@ public class EmployeeRepository : IEmployeeRepository
     public IQueryable<Employee> GetAllByLocationId(Guid locationId)
     {
         return  _context.Employees.Where(e => e.EmployeeLocations.Any(el => el.LocationId == locationId));
+    }
+
+    public async Task<Employee> GetByCodeAsync(string Code)
+    {
+        return await _context.Employees.Where(x=> x.Code.ToUpper().Trim() == Code.ToUpper().Trim()).FirstOrDefaultAsync();
     }
 }

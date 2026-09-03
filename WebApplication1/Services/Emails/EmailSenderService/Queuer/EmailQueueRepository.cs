@@ -25,15 +25,14 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
             email.Status = EmailQueueStatus.Pending;
             email.RetryCount = 0;
 
-            await _context.Set<QueuedEmail>().AddAsync(email);
-            await _context.SaveChangesAsync();
+            await _context.QueuedEmails.AddAsync(email);
         }
 
         public async Task<List<QueuedEmail>> GetPendingAsync(int batchSize)
         {
             var now = DateTime.UtcNow;
 
-            return await _context.Set<QueuedEmail>()
+            return await _context.QueuedEmails
                 .Where(e => e.Status == EmailQueueStatus.Pending &&
                            (e.ScheduledFor == null || e.ScheduledFor <= now))
                 .OrderBy(e => e.CreatedAt)
@@ -43,14 +42,14 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
 
         public async Task UpdateAsync(QueuedEmail email)
         {
-            _context.Set<QueuedEmail>().Update(email);
+            _context.QueuedEmails.Update(email);
             await _context.SaveChangesAsync();
         }
 
         public async Task AddRangeAsync(IEnumerable<QueuedEmail> emails)
         {
             await _context.QueuedEmails.AddRangeAsync(emails);
-            await _context.SaveChangesAsync();
+           // await _context.SaveChangesAsync();
         }
 
         public async Task DeleteSentEmails()
@@ -58,7 +57,6 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
             var sentEmails = _context.QueuedEmails.Where(x => x.Status == EmailQueueStatus.Sent);
 
             _context.RemoveRange(sentEmails);
-
             await _context.SaveChangesAsync();
         }
     }

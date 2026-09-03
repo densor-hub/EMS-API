@@ -11,11 +11,16 @@ namespace WebApplication1.DAL.Configurations
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);
 
+            builder.HasKey(x => x.Id);
+
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
 
+            builder.HasIndex(x => new { x.ItemId, x.LocationId }).IsUnique();
+
             //builder.Property(s => s.ActualQuantity).HasColumnType("decimal(18,2)");
             //builder.Property(s => s.AvailableQuanity).HasColumnType("decimal(18,2)");
+
             builder.HasOne(x=>x.Location)
                 .WithMany(x=> x.StockLevels)
                 .HasForeignKey(x=> x.LocationId)
@@ -23,8 +28,8 @@ namespace WebApplication1.DAL.Configurations
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.Item)
-                .WithOne(x => x.StockLevel)
-                .HasForeignKey<StockLevel>(x => x.ItemId)
+                .WithMany(x => x.StockLevel)
+                .HasForeignKey(x => x.ItemId)
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
 

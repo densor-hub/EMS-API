@@ -9,30 +9,35 @@ namespace WebApplication1.Domain.Entities
         public string Description { get; private set; }
         public ItemsCategory Category { get; private set; }
         public UnitOfMeasure UnitOfMeasure { get; private set; }
-        public int QuanityInUnit { get; private set; }
+        public int QuantityInUnit { get; private set; }
         public decimal SellingPrice { get; private set; }
-        public decimal CostPrice { get; private set; }
+        public decimal? CostPrice { get; private set; } = 0;
         public int ReorderLevel { get; private set; }
         public bool Status { get; private set; }
         public Guid CompanyId { get; private set; }
         public   Company Company { get; private set; }
         // Foreign keys
-        public virtual StockLevel StockLevel { get; set; }
+        public Guid? CreatedAtLocationId { get; private set; }
+        public int IncrementalId { get; private set; }
+        public virtual Location CreatedAtLocation { get; private set; }
+        public virtual ICollection<StockLockDownItem> StockLockDownItems { get; private set; }
+        public ICollection < StockLevel> StockLevel { get; private set; }
+
         public ICollection<ItemLocation> ItemLocations { get; private set; }
-        public ICollection<TransactionItemDelivered> TransactionItemsDelivered { get; private set; }
+        //public ICollection<TransactionItemDelivered> TransactionItemsDelivered { get; private set; }
         public virtual ICollection<TransactionItem> TransactionItems { get; private set; }
-        public virtual ICollection<StockTakingItem> StockTakingItems { get; private set; }
-        public virtual ICollection<StockTransferItem> StockTransferItems { get; private set; }
-        
+        public virtual ICollection<SupplierItemCostPrice> SupplierItemCostPrices { get; private set; }
 
 
-        public Item()
+
+
+        private Item()
         {
             
         }
 
         private  Item(Guid id, string code, string name, string description, ItemsCategory category, UnitOfMeasure unit, int quantityInUnit,
-            decimal sellingPrice, decimal costPrice, int reorderLevel, bool status,  DateTime createdAt,Guid createdBy, Guid companyId )
+            decimal sellingPrice, int reorderLevel, bool status,  DateTime createdAt,Guid createdBy, Guid companyId, Guid createAtLocation, decimal? costPrice)
         {
             Id = id;
             Code = code;
@@ -40,7 +45,7 @@ namespace WebApplication1.Domain.Entities
             Description = description;
             Category = category;
             UnitOfMeasure = unit;
-            QuanityInUnit = quantityInUnit;
+            QuantityInUnit = quantityInUnit;
             SellingPrice = sellingPrice;
             CostPrice = costPrice;
             ReorderLevel = reorderLevel;
@@ -48,23 +53,23 @@ namespace WebApplication1.Domain.Entities
             CreatedAt = createdAt;
             CreatedBy = createdBy;
             CompanyId = companyId;
+            CreatedAtLocationId = createAtLocation;
         }
 
         public static Item Create(Guid id, string code, string name, string description, ItemsCategory category, UnitOfMeasure unit, int quantityInUnit,
-            decimal sellingPrice, decimal costPrice, int reorderLevel, bool status,DateTime createdAt, Guid createdBy, Guid companyId)
-        => new Item(id, code, name, description, category, unit, quantityInUnit, sellingPrice, costPrice, reorderLevel, status, createdAt, createdBy, companyId);
+            decimal sellingPrice,  int reorderLevel, bool status,DateTime createdAt, Guid createdBy, Guid companyId, Guid createAtLocation, decimal? costPrice)
+        => new Item(id, code, name, description, category, unit, quantityInUnit, sellingPrice, reorderLevel, status, createdAt, createdBy, companyId, createAtLocation, costPrice);
 
         public void Update(string code, string name, string description, ItemsCategory category, UnitOfMeasure unit, int quantityInUnit,
-            decimal sellingPrice, decimal costPrice, int reorderLevel, bool status, DateTime updatedAt, Guid uodatedBy)
+            decimal sellingPrice, int reorderLevel, bool status, DateTime updatedAt, Guid uodatedBy)
         {
             Code = code;
             Name = name;
             Description = description;
             Category = category;
             UnitOfMeasure = unit;
-            QuanityInUnit = quantityInUnit;
+            QuantityInUnit = quantityInUnit;
             SellingPrice = sellingPrice;
-            CostPrice = costPrice;
             ReorderLevel = reorderLevel;
             Status = status;
             UpdatedAt = updatedAt;
@@ -73,7 +78,8 @@ namespace WebApplication1.Domain.Entities
 
         public void SoftDelete(Guid deletedBy)
         {
-            Status = false;
+            GeneralStatus = GeneralStatus.SoftDeleted;
+            IsDeleted = true;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = deletedBy;
         }

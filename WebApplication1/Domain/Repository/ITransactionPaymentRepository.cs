@@ -6,10 +6,10 @@ namespace WebApplication1.Domain.Repository
 {
     public interface ITransactionPaymentRepository
     {
-        Task<TransactionPayment> GetByIdAsync(Guid id);
-        IQueryable<TransactionPayment> GetAllAsync();
-        IQueryable<TransactionPayment> GetByTransactionIdAsync(Guid transactionId);
-        Task<Guid> AddAsync(TransactionPayment transactionPayment);
+        Task<Payment> GetByIdAsync(Guid id);
+        IQueryable<Payment> GetAllAsync();
+        IQueryable<Payment> GetByTransactionIdAsync(Guid transactionId);
+        Task<Guid> AddAsync(Payment transactionPayment);
         Task<bool> DeleteAsync(Guid id, Guid userId);
 
     }

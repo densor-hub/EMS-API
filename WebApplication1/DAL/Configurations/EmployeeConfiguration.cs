@@ -23,18 +23,25 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(c => c.Address).HasMaxLength(500).IsRequired(false); 
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
-
-            //builder.HasOne(x => x.Location)
-            //    .WithMany(X => X.Employees)
-            //    .HasForeignKey(x => x.LocationId)
-            //    .IsRequired(true)
-            //    .OnDelete(DeleteBehavior.Restrict);
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
+            builder.HasOne(x => x.Company)
+                .WithMany(X => X.Employees)
+                .HasForeignKey(x => x.CompanyId)
+                .IsRequired(true)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.Position)
                 .WithMany(X => X.Employees)
                 .HasForeignKey(x => x.PositionId)
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(x => x.UserAccount)
+                .WithOne()
+                .HasForeignKey<Employee>(x => x.UserAccountId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

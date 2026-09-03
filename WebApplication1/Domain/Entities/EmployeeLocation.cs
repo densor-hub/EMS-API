@@ -7,13 +7,14 @@
         public Guid LocationId { get; private set; }
         public virtual Location Location { get; private set; }
         public bool Status { get; private set; }
+        public bool IsManager { get; private set; }
         //public bool status { get; private set; }
 
         public EmployeeLocation()
         {
             
         }
-        public EmployeeLocation(Guid id, Guid locationId, Guid employeeId, DateTime createdAt, Guid createdBy, bool status )
+        public EmployeeLocation(Guid id, Guid locationId, Guid employeeId, DateTime createdAt, Guid createdBy, bool status , bool isManager)
         {
             Id = id;
             LocationId = locationId;
@@ -21,11 +22,11 @@
             CreatedAt = createdAt;
             CreatedBy = createdBy;
             Status = status;
-
+            IsManager = isManager;
         }
 
-        public static EmployeeLocation Create(Guid id, Guid locationId, Guid employeeId, DateTime createdAt, Guid createdBy, bool status)
-            => new EmployeeLocation(id, locationId, employeeId, createdAt, createdBy, status);
+        public static EmployeeLocation Create(Guid id, Guid locationId, Guid employeeId, DateTime createdAt, Guid createdBy, bool status, bool isManager)
+            => new EmployeeLocation(id, locationId, employeeId, createdAt, createdBy, status, isManager);
 
         public void RemoveAccess()
         {
@@ -34,6 +35,11 @@
         public void ActivateAccess()
         {
             Status = true;
+        }
+
+        public void SetIsManager(bool isManager)
+        {
+            IsManager = isManager;
         }
     }
 }

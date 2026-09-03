@@ -44,6 +44,10 @@
               "target": "Package",
               "version": "[4.0.3, )"
             },
+            "Handlebars.Net": {
+              "target": "Package",
+              "version": "[2.4.3, )"
+            },
             "MailKit": {
               "target": "Package",
               "version": "[4.15.0, )"
@@ -72,6 +76,10 @@
               "target": "Package",
               "version": "[7.0.20, )"
             },
+            "NLog": {
+              "target": "Package",
+              "version": "[6.1.4, )"
+            },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[7.0.0, )"
@@ -80,9 +88,17 @@
               "target": "Package",
               "version": "[1.7.0, )"
             },
+            "StyleCop": {
+              "target": "Package",
+              "version": "[6.2.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.5.0, )"
+            },
+            "System.Data.SqlClient": {
+              "target": "Package",
+              "version": "[4.9.1, )"
             },
             "ZXing.Net": {
               "target": "Package",

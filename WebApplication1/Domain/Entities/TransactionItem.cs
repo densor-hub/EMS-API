@@ -13,6 +13,10 @@
         public Guid ItemId { get; private set; }
         public virtual Item Item { get; private set; }
         public ICollection <TransactionItemDelivered> TransactionItemsDelivered { get; private set; }
+        public ICollection<TransactionItemReceived> TransactionItemReceived { get; private set; }
+       // public ICollection<TransactionItemReceived> TransactionItemReceived { get; private set; }
+        //public ICollection<TransactionItemReversal> TransactionItemReversals { get; private set; }
+
 
         public TransactionItem()
         {
@@ -32,14 +36,40 @@
 
         }
 
+        private TransactionItem(Guid id, Guid tranasactionId, Guid itemId, int quantity, decimal unitPrice, decimal total, Guid createdBy, DateTime createdAt, int expectedQuantity, int actualQuantity, int variance)
+        {
+            Id = id;
+            TransactionId = tranasactionId;
+            ItemId = itemId;
+            Quantity = quantity;
+            UnitPrice = unitPrice;
+            Total = total;
+            CreatedBy = createdBy;
+            CreatedAt = createdAt;
+           
+
+        }
+
         public static TransactionItem Create(Guid id, Guid tranasactionId, Guid itemId, int quantity, decimal unitPrice, decimal total, Guid createdBy, DateTime createdAt)
         => new TransactionItem(id, tranasactionId, itemId, quantity, unitPrice, total, createdBy, createdAt);
 
-        public void SoftDelete(Guid updatedBy, DateTime updatedAt)
+        public static TransactionItem Create(Guid id, Guid tranasactionId, Guid itemId, int quantity, decimal unitPrice, decimal total, Guid createdBy, DateTime createdAt, int expectedQuantity, int actualQuantity, int variance)
+       => new TransactionItem(id, tranasactionId, itemId, quantity, unitPrice, total, createdBy, createdAt, expectedQuantity, actualQuantity, variance);
+
+        public void Cancel(Guid updatedBy, DateTime updatedAt)
         {
-            GeneralStatus = Enums.GeneralStatus.SoftDeleted;
+            GeneralStatus = Enums.GeneralStatus.Cancelled;
             UpdatedBy = updatedBy;
             UpdatedAt = updatedAt;
         }
+
+        public  void SetToPending ()
+        {
+            GeneralStatus = Enums.GeneralStatus.Pending;
+        }
+
+
+
+
     }
 }

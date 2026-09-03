@@ -15,7 +15,6 @@ namespace WebApplication1.DAL.Repository
         public async Task AddAsync(Position position)
         {
             await _context.Positions.AddAsync(position);
-           // await _context.SaveChangesAsync();
         }
 
         public IQueryable<Position> GetAll()
@@ -31,13 +30,18 @@ namespace WebApplication1.DAL.Repository
         public async Task UpdateAsync(Position position)
         {
              _context.Positions.Update(position);
-       //     await _context.SaveChangesAsync();
+            await Task.CompletedTask;
         }
 
         public async Task DeleteAsync(Position position)
         {
             _context.Positions.Remove(position);
-            await _context.SaveChangesAsync();
+            await Task.CompletedTask;
+        }
+
+        public async Task SaveChangesAsync()
+        {
+           await _context.SaveChangesAsync();
         }
     }
 }

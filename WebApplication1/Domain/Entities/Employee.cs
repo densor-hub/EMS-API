@@ -14,19 +14,21 @@ namespace WebApplication1.Domain.Entities
         public string Phone { get; private set; }
         public Guid CompanyId { get; private set; }
         public Company Company { get; private set; }
-        //public Guid LocationId { get; private set; }
-        // public Location Location { get; private set; }
+        public string? UserAccountId { get; private set; }
+        public int IncrementalId { get; private set; }
+        public virtual ApplicationUser UserAccount { get; private set; }
         public ICollection<EmployeeLocation> EmployeeLocations { get; private set; }
-        public ICollection<LocationPayments> LocationPaymentsReceiver { get; private set; }
-        public ICollection<LocationManangement> ShopManangement { get; set; }
-
+        public ICollection<EmployeeDisbursement> EmployeesDisbursements { get; private set; }
+        //public ICollection<LocationManangement> ShopManangement { get; set; }
+        public ICollection<VehicleAssignments> VehicleAssignments { get; private set; }
+            
         public Employee()
         {
             
         }
 
         private Employee(Guid id, string  firstname, string lastName, string email, string code, Guid positionId,  string phone,
-            DateTime hireDate, decimal salary, EmployeeStatus status, Guid companyId, string address, bool appUser, DateTime createdAt, Guid createdBy)
+            DateTime hireDate, decimal salary, EmployeeStatus status, Guid companyId, string address, bool appUser, DateTime createdAt, Guid createdBy, string userAccountId)
         {
             Id = id;
             FirstName = firstname;
@@ -44,11 +46,12 @@ namespace WebApplication1.Domain.Entities
             CreatedBy = createdBy;
             Phone = phone;
             CompanyId = companyId;
+            UserAccountId = userAccountId;
         }
 
         public static Employee Create(Guid id, string firstname, string lastName, string email, string code, Guid positionId, string phone,
-            DateTime hireDate, decimal salary, EmployeeStatus status, Guid companyId, string address, bool appUser, DateTime createdAt, Guid createdBy)
-       => new Employee(id, firstname, lastName, email, code, positionId,phone, hireDate, salary, status, companyId, address, appUser, createdAt, createdBy);
+            DateTime hireDate, decimal salary, EmployeeStatus status, Guid companyId, string address, bool appUser, DateTime createdAt, Guid createdBy, string userAccountId)
+       => new Employee(id, firstname, lastName, email, code, positionId,phone, hireDate, salary, status, companyId, address, appUser, createdAt, createdBy, userAccountId);
 
 
         public void Update (string firstname, string lastName, string email, Guid positionId, string phone, DateTime hireDate, decimal salary,

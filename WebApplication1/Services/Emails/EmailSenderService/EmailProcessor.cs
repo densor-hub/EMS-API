@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 using System.Text.Json;
 using WebApplication1.Services.Emails.TemplateService;
-using WebApplication1.Services.Emails.EmailSenderService.Sender;
+//using WebApplication1.Services.Emails.EmailSenderService.Sender;
 using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
 using WebApplication1.Services.Emails.EmailService.Queuer;
 using WebApplication1.Services.Emails.TemplateService.Enitities;

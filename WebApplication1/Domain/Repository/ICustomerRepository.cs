@@ -10,6 +10,7 @@ namespace WebApplication1.Domain.Repository
         Task<Customer> CreateAsync(Customer createDto);
         Task<Customer> UpdateAsync(Customer updateDto);
         Task<bool> DeleteAsync(Guid id);
-        Task<string> GenerateCodeAsync(Guid locationId);
+        Task<Customer> GetByCodeAsync(string Code);
+        Task SaveChangesAsync();
     }
 }

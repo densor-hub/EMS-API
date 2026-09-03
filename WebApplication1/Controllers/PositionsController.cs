@@ -119,7 +119,6 @@ namespace WebApplication1.Controllers
                 }
                
 
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return StatusCode(200, new { id = newPosition.Id });
@@ -142,6 +141,7 @@ namespace WebApplication1.Controllers
                     return BadRequest(ModelState);
 
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
+                if (user == null) return Unauthorized();
 
                 var position = await _positionRepository.GetByIdAsync(Dto.Id) ;
                 if (position == null) return NotFound($"Role not found");
@@ -177,7 +177,6 @@ namespace WebApplication1.Controllers
                 await _positionRepository.UpdateAsync(position);
 
 
-                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return Ok();
             }
@@ -198,6 +197,7 @@ namespace WebApplication1.Controllers
                 if (deleted == null) return NotFound($"Customer = not found");
 
                 await _positionRepository.DeleteAsync(deleted);
+                await _positionRepository.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception ex)

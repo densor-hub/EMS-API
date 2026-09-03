@@ -6,6 +6,7 @@ namespace WebApplication1.Domain.DTO
     public class StockTransfersDTO
     {
         public Guid Id { get; set; }
+        public Guid TransactionId { get; set; }
         public string TransactionCode { get;  set; }
         public string SupplierName { get; set; }
         public Guid? SupplierId { get; set; }

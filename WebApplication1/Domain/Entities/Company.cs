@@ -4,6 +4,7 @@
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
+        public Guid AdminId { get; private set; }
         public string PhoneNumber { get; private set; }
         public string? Address { get; private set; }
         public string Email { get; private set; }
@@ -11,11 +12,13 @@
         public string? TIN { get; private set; }
         public string? Website { get; private set; }
         public bool? Status { get; private set; } = true;
+        public int IncrementalId { get; private set; }
         public ICollection<Position> Positions { get; private set; }
-        public ICollection<ApplicationUser> Users { get; private set; }
+       //public ICollection<ApplicationUser> Users { get; private set; }
         public virtual ICollection<Location> Locations { get; private set; }
         public virtual ICollection<Supplier> Suppliers { get; private set; }
         public virtual ICollection<Item> Items { get; private set; }
+        public virtual ICollection<Employee> Employees { get; private set; }
        
 
         public Company()
@@ -47,6 +50,7 @@
             RegistrationNumber = registrationNumber;
             TIN = tin;
             Status = status;
+            AdminId = createdBy;
         }
 
         public static Company Create(Guid id, string name, string phoneNumber, string email,  bool status, DateTime createdAt)
@@ -71,6 +75,12 @@
         public Company Clone()
         {
             return (Company) MemberwiseClone();
+        }
+
+        public void UpdateCreatedBy (Guid createdById)
+        {
+            CreatedBy = createdById;
+            AdminId = createdById;
         }
     }
 }

@@ -22,15 +22,23 @@ namespace WebApplication1.DAL.Configurations
             // Primary Key
             builder.HasKey(c => c.Id);
 
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
+
             // Properties configuration
             builder.Property(c => c.Name).IsRequired().HasMaxLength(200);
             builder.Property(c => c.SellingPrice).IsRequired();
-            builder.Property(c => c.CostPrice).IsRequired();
+           // builder.Property(c => c.CostPrice).IsRequired();
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
 
             builder.HasIndex(x => x.Category);
-           
+
+            builder.HasOne(x => x.CreatedAtLocation)
+               .WithMany()
+               .HasForeignKey(x => x.CreatedAtLocationId)
+               .IsRequired(false)
+               .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

@@ -23,13 +23,11 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(u => u.FullName).IsRequired().HasMaxLength(100);
             builder.Property(u => u.CreatedAt).IsRequired();
             builder.Property(u => u.UpdatedAt).IsRequired(false);
-            builder.Property(u => u.Status)
-                .IsRequired()
-                .HasDefaultValue(true);
-
+            builder.Property(u => u.Status).IsRequired().HasDefaultValue(true);
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
             // Configure REQUIRED relationship with Company
             builder.HasOne(u => u.Company)
-                  .WithMany(c => c.Users)
+                  .WithMany()
                   .HasForeignKey(u => u.CompanyId)
                   .OnDelete(DeleteBehavior.Restrict)
                   .IsRequired(false);

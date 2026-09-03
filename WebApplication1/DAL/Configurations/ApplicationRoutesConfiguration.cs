@@ -4,9 +4,9 @@ using WebApplication1.Domain.Entities;
 
 namespace WebApplication1.DAL.Configurations
 {
-    public class ApplicationRoutesConfiguration : IEntityTypeConfiguration<ApplicationRoutes>
+    public class ApplicationRoutesConfiguration : IEntityTypeConfiguration<ApplicationRoute>
     {
-        public void Configure(EntityTypeBuilder<ApplicationRoutes> builder)
+        public void Configure(EntityTypeBuilder<ApplicationRoute> builder)
         {
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);

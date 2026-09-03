@@ -28,6 +28,9 @@ namespace WebApplication1.DAL.Configurations
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
 
+
+
+
         }
     }
 }

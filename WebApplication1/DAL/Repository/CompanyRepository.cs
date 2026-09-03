@@ -11,7 +11,7 @@ namespace WebApplication1.DAL.Repository
         {
             _context = context;
         }
-        public async Task<Company> GetByIdAsync(Guid? id)
+        public async Task<Company?> GetByIdAsync(Guid? id)
         {
             return await _context.Companies.Where(x=> x.Id == id).FirstOrDefaultAsync();
         }

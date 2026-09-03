@@ -15,11 +15,18 @@ using ERDMS.Modules.Messaging.Core.DAL.Repositories;
 using WebApplication1.Services.Emails.TemplateService;
 using WebApplication1.Services.QrCodeService;
 using WebApplication1.Services.Emails.EmailService.Entities;
-using WebApplication1.Services.Emails.EmailSenderService.Sender;
+//using WebApplication1.Services.Emails.EmailSenderService.Sender;
 using WebApplication1.Services.Emails.EmailService;
 using WebApplication1.Services;
 using WebApplication1.Services.Emails.EmailService.Queuer;
-using WebApplication1.Services.Implementations;
+using WebApplication1.Services.ControllerServices;
+using WebApplication1.Services.TokenService.Handlers;
+using WebApplication1.Repositories;
+using WebApplication1.Domain.Repositories;
+using WebApplication1.Domain.Interfaces;
+using WebApplication1.Infrastructure.Repositories;
+using WebApplication1.Services.ControllerServices.Implementations;
+using WebApplication1.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,27 +50,64 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // 3. Register services
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICouponRepository, CouponRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+builder.Services.AddScoped<IDisbursementExternalResponseRepository, DisbursementExternalResponseRepository>();
+builder.Services.AddScoped<IEmployeeLocationRepository, EmployeeLocationRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IFinancialDepositRepository, FinancialDepositRepository>();
+builder.Services.AddScoped<IFinancialServiceProviderContactPersonRepository, FinancialServiceProviderContactPersonRepository>();
+builder.Services.AddScoped<IFinancialServiceProviderRepository, FinancialServiceProviderRepository>();
+builder.Services.AddScoped<IItemLocationRepository, ItemLocationRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
-builder.Services.AddScoped<IItemLocationRepository, ItemLocationRepository>();
-builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<IEmployeeLocationRepository, EmployeeLocationRepository>();
-builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<IPositionRepository, PositionRepository>();
-builder.Services.AddScoped<IPasswordGenerator, PasswordGenerator>();
+
+builder.Services.AddScoped<IStockLockDownRequestRepository, StockLockDownRequestRepository>();
+builder.Services.AddScoped<IStockLockDownItemRepository, StockLockDownItemRepository>();
+builder.Services.AddScoped<IStockTakeItemSubmissionRepository, StockTakeItemSubmissionRepository>();
+
 builder.Services.AddScoped<ISupplierLocationRepository, SupplierLocationRepository>();
-builder.Services.AddScoped<ILocationManagementsRepository, LocationManagementRepository>();
-builder.Services.AddScoped<INotificationRepository, NotificationRepository>(); 
+builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
-builder.Services.AddScoped<IPurchaseRepository, PurchaseRepository>();
-builder.Services.AddScoped<ISaleRepository, SaleRepository>();
-builder.Services.AddScoped<ITransactionPaymentRepository, TransactionPaymentRepository>();
 builder.Services.AddScoped<ITransactionItemsDeliveredRepository, TransactionItemsDeliveredRepository>();
+builder.Services.AddScoped<ITransactionPaymentRepository, TransactionPaymentRepository>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVehicleAssignmentRepository, VehicleAssignmentRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+
+
+//notifications
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
+
+//Handler of services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IFinancialServiceProviderService, FinancialServiceProviderService>();
+builder.Services.AddScoped<IPurchaseService, PurchaseService>();
+builder.Services.AddScoped<ISaleService, SaleService>();
+builder.Services.AddScoped<IStockTransferService, StockTransferService>();
+builder.Services.AddScoped<IStockLockDownService, StockLockDownService>();
+builder.Services.AddScoped<IVehicleAssignmentService, VehicleAssignmentService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
+
+//Must be taken out
+builder.Services.AddScoped<IPasswordGenerator, PasswordGenerator>();
+
+
+//token generations
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPaymentTokenService, PaymentTokenService>();
+
 //builder.Services.AddScoped<IPurchaseCancellationRepository, >();
 
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();

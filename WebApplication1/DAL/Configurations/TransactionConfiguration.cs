@@ -11,23 +11,31 @@ namespace WebApplication1.DAL.Configurations
         {
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);
-
-            builder.Property(s => s.PaymentStatus).HasConversion<int>();
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
-            builder.Property(e => e.TransactionType).HasConversion<int>();
+            builder.Property(e => e.TransactionResultsType).HasConversion<int>();
 
             //builder.Property(s => s.SubTotal).HasColumnType("decimal(18,2)");
             builder.Property(s => s.TaxAmount).HasColumnType("decimal(18,2)");
-            builder.Property(s => s.DiscountAmount).HasColumnType("decimal(18,2)");
             builder.Property(s => s.TotalAmount).HasColumnType("decimal(18,2)");
             builder.Property(s => s.Notes).HasMaxLength(500);
 
-            //builder.HasOne(x=>x.Location)
-            //    .WithMany(x=> x.Transactions)
-            //    .HasForeignKey(x=> x.ShopId)
-            //    .IsRequired(true)
+            builder.HasIndex(x => x.CouponId);
+            //builder.HasIndex(x => x.TransactionType);
+            builder.HasIndex(x => x.TransactionType);
+
+            //builder.HasOne(x => x.Coupon)
+            //    .WithOne()
+            //    .HasForeignKey<Coupon>(x => x.TransactionId)
+            //    .IsRequired(false)
             //    .OnDelete(DeleteBehavior.Restrict);
+
+
+            builder.HasOne(x=> x.Location)
+                .WithMany(x=> x.Transactions)
+                .HasForeignKey(x=> x.LocationId)
+                .IsRequired(true)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

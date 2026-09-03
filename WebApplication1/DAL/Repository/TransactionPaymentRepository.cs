@@ -13,7 +13,7 @@ namespace WebApplication1.DAL.Repository
             _context = context;
 
         }
-        public async Task<Guid> AddAsync(TransactionPayment transactionPayment)
+        public async Task<Guid> AddAsync(Payment transactionPayment)
         {
             await _context.AddAsync(transactionPayment);
             await _context.SaveChangesAsync();
@@ -32,12 +32,12 @@ namespace WebApplication1.DAL.Repository
             return true;
         }
 
-        public IQueryable<TransactionPayment> GetAllAsync()
+        public IQueryable<Payment> GetAllAsync()
         {
             return _context.TransactionPayments;
         }
 
-        public async Task<TransactionPayment> GetByIdAsync(Guid id)
+        public async Task<Payment> GetByIdAsync(Guid id)
         {
             var item = await _context.TransactionPayments
                 .Include(x=> x.Transaction)
@@ -46,7 +46,7 @@ namespace WebApplication1.DAL.Repository
             return item;
         }
 
-        public IQueryable<TransactionPayment> GetByTransactionIdAsync(Guid transactionId)
+        public IQueryable<Payment> GetByTransactionIdAsync(Guid transactionId)
         {
             return _context.TransactionPayments.Where(x=> x.Id == transactionId);
         }

@@ -2,6 +2,8 @@
 
 namespace WebApplication1.Controllers
 {
+    
+
     public class StockTakeCreateDto
     {
         public Guid LocationId { get; set; }
@@ -48,10 +50,7 @@ namespace WebApplication1.Controllers
     {
         public Guid StockTransferId { get; set; }
         public string Comment { get;  set; }
-        public StockTakeStatus Stage { get; set; }
-        //public List<StockTakeItemDto>? ReceivedItems { get; set; }
-        //public string ConfirmationCode { get; set; }
-        //public bool ForceIt { get; set; }
+        public StockTransferEnum Stage { get; set; }
     }
 
  
@@ -59,5 +58,21 @@ namespace WebApplication1.Controllers
     public class StockTransferCancelDto
     {
         public Guid CancelledBy { get; set; }
+    }
+
+    public class StockTransferReceiveDto
+    {
+        public Guid TransactionId { get; set; }
+        public DateTime Date { get; set; }
+        public Guid LocationId { get; set; }
+        public string? Comment { get; set; }
+        public List<ReceivedItemDto> items { get; set; } = new();
+    }
+
+    public class ReceivedItemDto
+    {
+        public Guid ItemId { get; set; }
+        public int Quantity { get; set; }
+        
     }
 }

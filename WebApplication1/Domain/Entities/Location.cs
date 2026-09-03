@@ -16,6 +16,7 @@ namespace WebApplication1.Domain.Entities
         public bool Status { get; private set; }
         public LocationType? TypeOfLocation { get; private set; } //shop, warehouse
 
+        public int IncrementalId { get; private set; }
         // Foreign keys
         [Required]
         public Guid CompanyId { get; private set; }
@@ -24,19 +25,24 @@ namespace WebApplication1.Domain.Entities
         // Navigation properties
         public virtual Company Company { get; private set; }
         public virtual ICollection<Supplier> Suppliers { get; private set; }
-        public virtual ICollection <LocationManangement> LocationManangements { get; private set; } = null;
+       // public virtual ICollection <LocationManangement> LocationManangements { get; private set; } = null;
        /// public virtual ICollection<Employee> Employees { get; private set; }
         public virtual ICollection<ItemLocation> ItemLocations { get; private set; }
         public virtual ICollection<EmployeeLocation> EmployeeLocations { get; private set; }
         public virtual ICollection<SupplierLocation> SupplierLocations { get; private set; }
         public virtual ICollection<Customer> Customers { get; private set; }
-        public virtual ICollection<Purchase> Purchases { get; private set; }
-        public virtual ICollection<Sale> Sales { get; private set; }
-        public virtual ICollection<StockTaking> StockTakings { get; private set; }
-        public virtual ICollection<StockTransfer> StockTransfersFrom { get; private set; }
-        public virtual ICollection<StockTransfer> StockTransfersTo { get; private set; }
+        public virtual ICollection<Transaction> Transactions { get; private set; }
+        //public virtual ICollection<Purchase> Purchases { get; private set; }
+      //  public virtual ICollection<Sale> Sales { get; private set; }
+        public virtual ICollection<StockLockDownRequest> StockLockDownRequests { get; private set; }
+       // public virtual ICollection<StockTaking> StockTakings { get; private set; }
+        public virtual ICollection<StockTransfer> StockTransferRequests { get; private set; }
+        public virtual ICollection<StockTransfer> StockTransferResponds { get; private set; }
         public virtual ICollection<StockLevel> StockLevels { get; private set; }
-        public virtual ICollection<LocationPayments> LocationPayments { get; private set; }
+        public virtual ICollection<EmployeeDisbursement> EmployeeDisbursements { get; private set; }
+        public virtual ICollection<Coupon> Coupons { get; private set; }
+        public virtual ICollection<FinancialServiceProvider> Banks { get; private set; }
+        public virtual ICollection<Vehicle> Vehicles { get; private set; }
 
 
         public Location()

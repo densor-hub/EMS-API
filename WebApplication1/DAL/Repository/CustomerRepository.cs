@@ -37,7 +37,6 @@ public class CustomerRepository : ICustomerRepository
     public async Task<Customer> CreateAsync(Customer customer)
     {
         _context.Customers.Add(customer);
-        await _context.SaveChangesAsync();
 
         return customer;
     }
@@ -45,7 +44,6 @@ public class CustomerRepository : ICustomerRepository
     public async Task<Customer> UpdateAsync(Customer customer)
     {
         _context.Customers.Update(customer);
-        await _context.SaveChangesAsync();
 
         return customer;
     }
@@ -57,23 +55,23 @@ public class CustomerRepository : ICustomerRepository
             return false;
 
         _context.Customers.Remove(customer);
-        await _context.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> ExistsAsync(Guid id)
     {
-        return await _context.Employees.AnyAsync(e => e.Id == id);
+        return await _context.Customers.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<string> GenerateCodeAsync(Guid locationId)
+    
+
+    public async Task<Customer> GetByCodeAsync(string Code)
     {
-        var locationName = _context.Locations.Where(x=> x.Id== locationId).Select(x=> x.Name).FirstOrDefault();   
-        var initials = StringExtensions.GetInitials(locationName);
+        return await _context.Customers.Where(x => x.Code.ToUpper().Trim() == Code.ToUpper().Trim()).FirstOrDefaultAsync();
+    }
 
-        var totalCount = await _context.Customers.Where(x=> x.LocationId == locationId).CountAsync();
-
-        var number = totalCount + 1;
-        return $"CUS-{initials.ToUpper().Trim()}-{number:D3}";
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }

@@ -6,7 +6,7 @@
         public Guid PositionId { get; private set;}
         public Position Position { get; private set;}
         public Guid AppRouteId { get; private set;}
-        public ApplicationRoutes ApplicationRoutes { get; private set;}
+        public ApplicationRoute ApplicationRoutes { get; private set;}
         public DateTime CreatedAt { get; private set; }
         public Guid CreatedBy { get; private set; }
         public virtual ICollection<UserRoutes> UserRoutes { get; private set; }

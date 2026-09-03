@@ -24,6 +24,8 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(c => c.Status).IsRequired();
             builder.Property(e => e.TypeOfLocation).HasConversion<int>();
 
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
+
 
             builder.HasOne(x=> x.Company)
                 .WithMany(c=> c.Locations)

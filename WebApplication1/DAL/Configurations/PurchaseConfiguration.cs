@@ -14,6 +14,16 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
 
+            builder.HasIndex(x => x.PurcasedById);
+            builder.HasIndex(x => x.SupplierId);
+            builder.HasIndex(x => x.TransactionId);
+
+            builder.HasOne(x => x.Transaction)
+                .WithOne()
+                .HasForeignKey<Purchase>(x => x.TransactionId)
+                .IsRequired(true)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasOne(x=>x.PurcasedBy)
                 .WithMany(x=> x.Purchases)
                 .HasForeignKey(x=> x.PurcasedById)
@@ -26,17 +36,12 @@ namespace WebApplication1.DAL.Configurations
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.Transaction)
-                .WithOne()
-                .HasForeignKey<Purchase>(x => x.TransactionId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.Location)
-               .WithMany(x => x.Purchases)
-               .HasForeignKey(x => x.LocationId)
-               .IsRequired(true)
-               .OnDelete(DeleteBehavior.Restrict);
+            //builder.HasOne(x => x.Location)
+            //   .WithMany(x => x.Purchases)
+            //   .HasForeignKey(x => x.LocationId)
+            //   .IsRequired(true)
+            //   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

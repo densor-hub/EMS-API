@@ -4,6 +4,6 @@ namespace WebApplication1.Domain.Repository
 {
     public interface ICompanyRepository
     {
-        Task<Company> GetByIdAsync(Guid? id);
+        Task<Company?> GetByIdAsync(Guid? id);
     }
 }

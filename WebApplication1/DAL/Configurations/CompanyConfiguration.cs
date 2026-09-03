@@ -24,7 +24,7 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
             builder.Property(c => c.Status).IsRequired().HasDefaultValue(true);
-
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
 
 
         }

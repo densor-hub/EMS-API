@@ -9,5 +9,6 @@ namespace WebApplication1.Domain.Repository
         Task UpdateAsync(Position position);
         Task AddAsync(Position position);
         Task DeleteAsync(Position position);
+        Task SaveChangesAsync();
     }
 }

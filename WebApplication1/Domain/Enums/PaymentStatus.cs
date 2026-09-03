@@ -4,7 +4,7 @@
     {
         Pending ,
         Completed,
-        Partial, 
-        Refunded
+        Refunded, 
+        NotApplicable
     }
 }

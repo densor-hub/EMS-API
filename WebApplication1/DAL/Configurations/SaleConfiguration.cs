@@ -33,11 +33,11 @@ namespace WebApplication1.DAL.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.Location)
-               .WithMany(x => x.Sales)
-               .HasForeignKey(x => x.LocationId)
-               .IsRequired(true)
-               .OnDelete(DeleteBehavior.Restrict);
+            //builder.HasOne(x => x.Location)
+            //   .WithMany(x => x.Sales)
+            //   .HasForeignKey(x => x.LocationId)
+            //   .IsRequired(true)
+            //   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

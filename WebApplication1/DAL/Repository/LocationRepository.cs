@@ -3,7 +3,6 @@ using WebApplication1.DAL;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
 using System.Security.Claims;
-using WebApplication1.Helpers;
 
 namespace WebApplication1.DAL.Repository
 {
@@ -22,9 +21,6 @@ namespace WebApplication1.DAL.Repository
         {
             return await _context.Locations
                 .Include(l => l.Company)
-                .Include(l => l.LocationManangements)  // ✅ Fixed: Plural, includes all shop managements
-                    .ThenInclude(sm => sm.Manager)  // ✅ Then include the manager of each shop management
-                .Include(l => l.LocationManangements)    // ✅ Also include creator if needed
                     //.ThenInclude(sm => sm.CreatedByUser)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
@@ -33,8 +29,6 @@ namespace WebApplication1.DAL.Repository
         {
             return await _context.Locations
                 .Include(l => l.Company)
-                .Include(l => l.LocationManangements)
-                    .ThenInclude(sm => sm.Manager)
                 .Where(l => l.Status)
                 .OrderByDescending(l => l.CreatedAt)
                 .ToListAsync();
@@ -43,8 +37,7 @@ namespace WebApplication1.DAL.Repository
         public async Task<IEnumerable<Location>> GetByCompanyIdAsync(Guid companyId)
         {
             return await _context.Locations
-                .Include(l => l.LocationManangements)
-                    .ThenInclude(sm => sm.Manager)
+                .Include(l => l.EmployeeLocations)
                 .Where(l => l.CompanyId == companyId && l.Status)
                 .OrderBy(l => l.Name)
                 .ToListAsync();
@@ -73,17 +66,16 @@ namespace WebApplication1.DAL.Repository
         public async Task<bool> DeleteAsync(Guid id)
         {
             var location = await _context.Locations
-                .Include(l => l.LocationManangements)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             if (location == null)
                 return false;
 
-            // Check if location has active shop managements
-            if (location.LocationManangements != null && location.LocationManangements.Any(sm => sm.Status == true))
-            {
-                throw new InvalidOperationException("Cannot delete location with active shop managements");
-            }
+            //// Check if location has active shop managements
+            //if (location.EmployeeLocations != null || location.EmployeeDisbursements !=null )
+            //{
+            //    throw new InvalidOperationException("Cannot delete location with active shop managements");
+            //}
 
             location.SoftDelete(GetCurrentUserId());
 
@@ -123,26 +115,18 @@ namespace WebApplication1.DAL.Repository
             return _context.Locations;
         }
 
-
-
-        public async Task<string> GenerateCodeAsync(Guid? companyId)
-        {
-            var locationName = _context.Locations.Where(x => x.Id == companyId).Select(x => x.Name).FirstOrDefault();
-            var initials = StringExtensions.GetInitials(locationName);
-
-            var totalCount = await _context.Locations.Where(x => x.CompanyId == companyId).CountAsync();
-
-            var number = totalCount + 1;
-            return $"LOC-{initials.ToUpper().Trim()}-{number:D3}";
-        }
-
-        public  IQueryable<Location> ValidateLocations (List<Guid> locations)
+      
+        public   IQueryable<Location> ExistingLocations (List<Guid> locations)
         {
             var queriableLocations = GetAll();
+
+           // await _employeeLocationRepository.HasAccessToLocation()
 
             queriableLocations = queriableLocations.Where(x => locations.Contains(x.Id));
 
             return queriableLocations;
         }
+
+        
     }
 }

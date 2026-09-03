@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.ConstrainedExecution;
 using WebApplication1.DAL;
+using WebApplication1.DAL.Repository;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
@@ -17,11 +18,12 @@ namespace WebApplication1.Controllers
     public class LocationsController : ControllerBase
     {
         private readonly ILocationRepository _locationRepository;
+        private readonly IEmployeeLocationRepository _employeeLocationRepository;
         private readonly ILogger<LocationsController> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IPositionRepository _positonRepository;
         private readonly IEmployeeRepository _employeeRepository;   
-        private readonly ILocationManagementsRepository _locationManagementsRepository;
+        private readonly ITransactionCodeRepository _transactionCodeRepository;
         private readonly AppDbContext _appDbContext;
 
         public LocationsController(
@@ -30,8 +32,9 @@ namespace WebApplication1.Controllers
              IUserRepository userRepository,
              IPositionRepository positonRepository,
              IEmployeeRepository employeeRepository,
-             ILocationManagementsRepository locationManagementsRepository,
-             AppDbContext appDbContext
+             ITransactionCodeRepository transactionCodeRepository,
+             IEmployeeLocationRepository employeeLocationRepository,
+        AppDbContext appDbContext
             )
         {
             _locationRepository = locationRepository;
@@ -39,8 +42,9 @@ namespace WebApplication1.Controllers
             _userRepository = userRepository;
             _positonRepository = positonRepository;
             _employeeRepository = employeeRepository;
-            _locationManagementsRepository  = locationManagementsRepository;
             _appDbContext   = appDbContext;
+            _transactionCodeRepository = transactionCodeRepository;
+            _employeeLocationRepository = employeeLocationRepository;
         }
 
         [HttpGet]
@@ -79,10 +83,10 @@ namespace WebApplication1.Controllers
                     Phone = x.Phone,
                     TypeOfLocationName = x.TypeOfLocation.ToString(),
                     //TypeOfLocation = x.TypeOfLocation,
-                    Managers = x.LocationManangements.Where(x=> x.Status == true).Select(sm => new IdAndNameDTO
+                    Managers = x.EmployeeLocations.Where(x=> x.Status && x.IsManager).Select(sm => new IdAndNameDTO
                     {
-                        Id = sm != null ? sm.ManagerId: Guid.Empty,
-                        Name =$"{sm.Manager.FirstName} {sm.Manager.LastName}",
+                        Id = sm != null ? sm.EmployeeId : Guid.Empty,
+                        Name =$"{sm.Employee.FirstName} {sm.Employee.LastName}",
                     }).ToList()
                 }).ToListAsync();
 
@@ -117,10 +121,10 @@ namespace WebApplication1.Controllers
                     Phone = x.Phone,
                     TypeOfLocationName = x.TypeOfLocation.ToString(),
                   //  TypeOfLocation = x.TypeOfLocation,
-                    Managers = x.LocationManangements.Where(x => x.Status == true).Select(sm => new IdAndNameDTO
+                    Managers = x.EmployeeLocations.Where(x => x.Status  && x.IsManager).Select(sm => new IdAndNameDTO
                     {
-                       // Id = sm != null ? sm.ManagerId: Guid.Empty,
-                        Name = $"{sm.Manager.FirstName} {sm.Manager.LastName}",
+                        Id = sm != null ? sm.EmployeeId: Guid.Empty,
+                        Name = $"{sm.Employee.FirstName} {sm.Employee.LastName}",
                     }).ToList()
                 }).FirstOrDefault();
 
@@ -160,16 +164,19 @@ namespace WebApplication1.Controllers
                     if (!validManager.Any()) return NotFound("Submitted manager(s) not found");
                 }
 
-                var Code =  await _locationRepository.GenerateCodeAsync(user.CompanyId);
+               // var Code =  await _transactionCodeRepository.GenerateEntityCodeAsync("LOC", Guid.Empty);
                 
-                var location = Location.Create(Guid.NewGuid(), dto.Code ?? Code, dto.Name, dto.Status, dto.Address, dto.Phone, dto.Email, (Guid)user.CompanyId, dto.LocationType, DateTime.UtcNow, Guid.Parse(user.Id));
+                var location = Location.Create(Guid.NewGuid(), dto.Code , dto.Name, dto.Status, dto.Address, dto.Phone, dto.Email, (Guid)user.CompanyId, dto.LocationType, DateTime.UtcNow, Guid.Parse(user.Id));
 
                 var createdLocation = await _locationRepository.CreateAsync(location);
 
                 if (dto?.Managers?.Count > 0)
                 {
-                    var managers = dto.Managers.Select(x => LocationManangement.Create(Guid.NewGuid(), x.Id, location.Id, true, x.StartDate, x.EndDate, DateTime.UtcNow, Guid.Parse(user.Id), x.IsMainManager)).ToList();
-                    await _locationManagementsRepository.AddRangeAsync(managers);
+                    //UPDATE
+
+                    var manager = dto.Managers.Select(x => EmployeeLocation.Create(Guid.NewGuid(), location.Id, x.Id, DateTime.UtcNow, Guid.Parse(user.Id), true, x.IsMainManager)).ToList();
+                    await _employeeLocationRepository.AddRangeAsync(manager);
+                   
                 }
 
                 await transaction.CommitAsync();
@@ -208,7 +215,7 @@ namespace WebApplication1.Controllers
                 if (!string.IsNullOrEmpty(dto.Code))
                 {
                     if (await _locationRepository.CodeExistsAsync(dto.Code, dto.Id))
-                        return Conflict(new { error = $"Location with code '{dto.Code}' already exists" });
+                    return Conflict(new { error = $"Location with code '{dto.Code}' already exists" });
                 }
 
 
@@ -219,31 +226,69 @@ namespace WebApplication1.Controllers
                     if (!validManager.Any()) return NotFound("Submitted manager(s) not found");
                 }
 
-                existingLocation.Update(
-                    dto?.Code??existingLocation.Code,
+                var transaction = _appDbContext.Database.BeginTransaction();
+
+                try
+                {
+                    existingLocation.Update(
+                    dto?.Code ?? existingLocation.Code,
                     dto?.Name ?? existingLocation.Name,
                      dto.Status,
-                      dto?.Address ?? existingLocation.Address,
+                      dto?.Address ?? existingLocation.Address ?? "",
                        dto.Phone ?? existingLocation.Phone,
-                        dto?.Email ?? existingLocation.Email,
+                        dto?.Email ?? existingLocation.Email ?? "",
                       dto?.LocationType != null ? Enum.IsDefined(typeof(LocationType), dto.LocationType) ? dto.LocationType : existingLocation.TypeOfLocation : null,
                     DateTime.UtcNow,
                          Guid.Parse(user.Id)
                     );
-                
-                await _locationRepository.UpdateAsync(existingLocation);
 
-                if (dto?.Managers?.Count > 0)
-                {
-                    //delete previous
-                    var oldManagers =   _locationManagementsRepository.GetAllByLocationId(existingLocation.Id);
-                    await _locationManagementsRepository.DeleteRangeAsync(oldManagers.ToList());
+                    await _locationRepository.UpdateAsync(existingLocation);
 
-                    //new managers
-                    var managers = dto.Managers.Select(x => LocationManangement.Create(Guid.NewGuid(), x.Id, existingLocation.Id, true, x.StartDate, x.EndDate, DateTime.UtcNow, Guid.Parse(user.Id), x.IsMainManager)).ToList();
-                    await _locationManagementsRepository.AddRangeAsync(managers);
+                    if (dto?.Managers?.Count > 0)
+                    {
+                        var tobeUpdatedManagerialPositions = new List<EmployeeLocation>();
+
+                        var submittedManagersIds = dto.Managers.Select(x => x.Id);
+
+                        //All employees
+                        var allEmployees = _employeeLocationRepository.GetAllByLocationId(existingLocation.Id);
+
+                        //invalid submission
+                        var allEmployeesIds = await allEmployees.Select(x => x.Id).ToListAsync();
+                        if (submittedManagersIds.Any(x => allEmployeesIds.Contains(x) == false)) throw new Exception("Invalid Employee Submitted");
+                       
+                        //existing managers
+                        var existingManagers = allEmployees.Where(x => x.IsManager);
+                        var existingManagersIds = await existingManagers.Select(x => x.EmployeeId).ToListAsync();
+
+                        //old Managers who are not in the new Managers
+                        var deprecatedManagers = existingManagers.Where(x => submittedManagersIds.Contains(x.EmployeeId) == false);
+
+                        foreach (var manager in deprecatedManagers)
+                        {
+                            manager.SetIsManager(false);
+                            tobeUpdatedManagerialPositions.Add(manager);
+                        }
+                        _appDbContext.EmployeeLocations.UpdateRange(tobeUpdatedManagerialPositions);
+
+                        //new Managers
+                        var newManagers = submittedManagersIds.Where(x => existingManagersIds.Contains(x) == false);
+
+                        if (newManagers.Any())
+                        {
+                            var managers = newManagers.Select(x => EmployeeLocation.Create(Guid.NewGuid(), existingLocation.Id, x, DateTime.UtcNow, Guid.Parse(user.Id), true, true)).ToList();
+                            await _employeeLocationRepository.AddRangeAsync(managers);
+                        }
+                    }
+
+                    await transaction.CommitAsync();
                 }
-
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw ex;
+                }
+                
                 return Ok();
             }
             catch (Exception ex)

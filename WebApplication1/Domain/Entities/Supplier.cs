@@ -9,7 +9,8 @@
         public Company Company { get; private set; }
         public bool Status { get; private set; }
         public ICollection<SupplierLocation> SupplierLocations { get; private set; }
-        public ICollection<Purchase> Purchases { get; private set; }
+        public virtual ICollection<Purchase> Purchases { get; private set; }
+        public  virtual ICollection<SupplierItemCostPrice> SupplierItemCostPrices { get; private set; }
 
         public Supplier()
         {

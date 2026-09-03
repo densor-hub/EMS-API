@@ -13,7 +13,6 @@ namespace WebApplication1.Domain.Repository
         Task<bool> DeleteAsync(Guid id);
         Task<bool> ExistsAsync(Guid id);
         Task<bool> CodeExistsAsync(string code, Guid? excludeId = null);
-        Task<string> GenerateCodeAsync(Guid? companyId);
-        IQueryable<Location> ValidateLocations(List<Guid> locations);
+        IQueryable<Location> ExistingLocations(List<Guid> locations);
     }
 }

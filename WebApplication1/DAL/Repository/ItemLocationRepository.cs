@@ -15,13 +15,12 @@ namespace WebApplication1.DAL.Repository
         public async Task AddRangeAsync(List<ItemLocation> itemLoactions)
         {
             await _context.ItemLocations.AddRangeAsync(itemLoactions);
-             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteRangeAsync(List<ItemLocation> itemLoactions)
         {
             _context.ItemLocations.RemoveRange(itemLoactions);
-            await _context.SaveChangesAsync();
+            await Task.CompletedTask;
         }
 
         public IQueryable<ItemLocation> GetAllByItemId(Guid item)
@@ -46,7 +45,7 @@ namespace WebApplication1.DAL.Repository
 
             if (locations.Count > 0)
             {
-                var validSubmittedLocations = _locationRepository.ValidateLocations(locations);
+                var validSubmittedLocations = _locationRepository.ExistingLocations(locations);
                 var validLocationIds = new HashSet<Guid>(validSubmittedLocations.Select(x => x.Id));
 
                 var currentItemLocations = _context.ItemLocations.Where(x => x.ItemId == itemId);
@@ -109,7 +108,6 @@ namespace WebApplication1.DAL.Repository
                     location.RemoveAccess();
                 }
                 _context.ItemLocations.UpdateRange(employeeLocations);
-                await _context.SaveChangesAsync();
 
 
             }

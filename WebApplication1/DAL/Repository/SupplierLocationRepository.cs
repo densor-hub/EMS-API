@@ -52,7 +52,7 @@ namespace WebApplication1.DAL.Repository
 
             if (locations.Count > 0)
             {
-                var validSubmittedLocations = _locationRepository.ValidateLocations(locations);
+                var validSubmittedLocations = _locationRepository.ExistingLocations(locations);
                 var validLocationIds = new HashSet<Guid>(validSubmittedLocations.Select(x => x.Id));
 
                 var currentSupliereLocations = _context.SupplierLocations.Where(x => x.SupplierId == supplierId);

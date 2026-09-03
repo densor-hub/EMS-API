@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
-using WebApplication1.Helpers;
 
 namespace WebApplication1.DAL.Repository;
 
@@ -28,13 +27,10 @@ public class SupplierRepository : ISupplierRepository
     {
         return _context.Suppliers.Where(x => x.SupplierLocations.Any(sl=> sl.LocationId ==  locationId));
     }
-    public async Task<Supplier> GetByIdAsync(Guid id)
+    public async Task<Supplier?> GetByIdAsync(Guid id)
     {
         var supplier = await _context.Suppliers
             .FirstOrDefaultAsync(e => e.Id == id);
-
-        if (supplier == null)
-            return null;
 
         return supplier;
     }
@@ -42,16 +38,14 @@ public class SupplierRepository : ISupplierRepository
     public async Task<Supplier> CreateAsync(Supplier supplier)
     {
         _context.Suppliers.Add(supplier);
-        await _context.SaveChangesAsync();
-
+        await Task.CompletedTask;
         return supplier;
     }
 
     public async Task<Supplier> UpdateAsync(Supplier supplier)
     {
         _context.Suppliers.Update(supplier);
-        await _context.SaveChangesAsync();
-
+        await Task.CompletedTask;
         return supplier;
     }
 
@@ -62,7 +56,7 @@ public class SupplierRepository : ISupplierRepository
             return false;
 
         _context.Suppliers.Remove(employee);
-        await _context.SaveChangesAsync();
+        await Task.CompletedTask;
         return true;
     }
 
@@ -71,14 +65,14 @@ public class SupplierRepository : ISupplierRepository
         return await _context.Suppliers.AnyAsync(e => e.Id == id);
     }
 
-    public async Task<string> GenerateCodeAsync(Guid comapnyId)
+    public async Task<Supplier?> GetByCodeAsync(string Code)
     {
-        var locationName = _context.Companies.Where(x=> x.Id== comapnyId).Select(x=> x.Name).FirstOrDefault();   
-        var initials = StringExtensions.GetInitials(locationName);
+        return await _context.Suppliers.Where(x => x.Code.ToUpper().Trim() == Code.ToUpper().Trim()).FirstOrDefaultAsync();
+    }
 
-        var totalCount = await _context.Suppliers.Where(x=> x.SupplierLocations.Any(sl => sl.Location.CompanyId == comapnyId)).CountAsync();
-
-        var number = totalCount + 1;
-        return $"SUP-{initials.ToUpper().Trim()}-{number:D3}";
+    public async Task SaveChangesAsync()
+    {
+        // throw new NotImplementedException();
+        await _context.SaveChangesAsync();
     }
 }

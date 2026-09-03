@@ -4,9 +4,9 @@ using WebApplication1.Domain.Entities;
 
 namespace WebApplication1.DAL.Configurations
 {
-    public class TransactionPaymentsConfiguration : IEntityTypeConfiguration<TransactionPayment>
+    public class TransactionPaymentsConfiguration : IEntityTypeConfiguration<Payment>
     {
-        public void Configure(EntityTypeBuilder<TransactionPayment> builder)
+        public void Configure(EntityTypeBuilder<Payment> builder)
         {
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);

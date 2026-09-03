@@ -23,6 +23,12 @@ namespace WebApplication1.Domain.DTO
         [Required]
         public EmployeeStatus Status { get; set; }
         [Required]
-        public List<Guid> Locations { get; set; }
+        public List<LocationManagement> Locations { get; set; }
     }
+
+    public class LocationManagement
+    {
+        public Guid LocationId { get; set; }
+        public bool IsManager { get; set; }
+    } 
 }

@@ -13,6 +13,9 @@ namespace WebApplication1.DAL.Configurations
             // Convert table name to lowercase for PostgreSQL
             builder.ToTable(entityName);
 
+
+           // builder.Property(x => x.Inc).UseIdentityColumn();
+
             // Configure GUID properties as uuid
             foreach (var property in builder.Metadata.GetProperties())
             {

@@ -2,7 +2,14 @@
 {
     public enum GeneralStatus
     {
-        Active =1,
-        SoftDeleted =0
+        Inactive = 0, Cancelled = 0,
+
+        Active = 1,
+        SoftDeleted = -1,
+       
+        Pending = 2,
+        Declined = -2,
+
+        Approved = 3
     }
 }

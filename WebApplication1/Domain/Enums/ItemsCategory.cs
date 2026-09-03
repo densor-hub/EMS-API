@@ -2,6 +2,6 @@
 {
     public enum ItemsCategory
     {
-        Academics =1, Food =2, Tech=3, Cloths=4, Construction=5, Tools=6, Electronics=7, Other=8
+        Academics =1, Edible =2,  Apparel=4, Product=5, Tools=6, Device=7,  Other= 8 //Tech=3,
     }
 }

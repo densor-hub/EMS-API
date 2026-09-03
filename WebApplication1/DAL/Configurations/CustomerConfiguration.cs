@@ -22,6 +22,7 @@ namespace WebApplication1.DAL.Configurations
             builder.Property(c => c.Address).HasMaxLength(500).IsRequired(false);
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
+            builder.Property(x => x.IncrementalId).UseIdentityColumn();
 
             builder.HasOne(x => x.Location)
                 .WithMany(X => X.Customers)

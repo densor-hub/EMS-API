@@ -10,5 +10,6 @@ namespace WebApplication1.Domain.QueryFilters
         public Guid? SalesPersonId { get; set; } = null;
         public DateTime? StartDate { get; set; } = null;
         public DateTime? EndDate { get; set; } = null;
+        public string Type { get; set; } = "GENERAL";
     }
 }

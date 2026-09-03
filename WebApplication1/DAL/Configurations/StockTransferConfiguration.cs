@@ -11,31 +11,31 @@ namespace WebApplication1.DAL.Configurations
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);
 
-            builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
+            builder.Property(c => c.CreatedAt).IsRequired(true).HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
             builder.Property(e => e.Status).HasConversion<int>();
 
-            builder.HasOne(x=>x.InitiatedBy)
-                .WithMany(x=> x.InitiatedStockTransfers)
-                .HasForeignKey(x=> x.InitiatedById)
+            builder.HasIndex(x => x.TransactionId);
+            builder.HasIndex(x => x.RequesterId);
+            builder.HasIndex(x => x.ResponderId);
+
+            builder.HasIndex(x => x.CreatedAt);
+
+            builder.HasOne(x=>x.Transaction)
+                .WithOne()
+                .HasForeignKey<StockTransfer>(x=> x.TransactionId)
                 .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.ApprovedBy)
-                .WithMany(x => x.ApprovedStockTransfers)
-                .HasForeignKey(x => x.ApprovedByUser)
-                .IsRequired(false)
+            builder.HasOne(x => x.Requester)
+                .WithMany(x => x.StockTransferRequests)
+                .HasForeignKey(x=> x.RequesterId)
+                .IsRequired(true)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(x => x.FromLocation)
-               .WithMany(x => x.StockTransfersFrom)
-               .HasForeignKey(x => x.FromLocationId)
-               .IsRequired(true)
-               .OnDelete(DeleteBehavior.Restrict);
-
-            builder.HasOne(x => x.ToLocation)
-               .WithMany(x => x.StockTransfersTo)
-               .HasForeignKey(x => x.ToLocationId)
+            builder.HasOne(x => x.Responder)
+               .WithMany(x => x.StockTransferResponds)
+               .HasForeignKey(x => x.ResponderId)
                .IsRequired(true)
                .OnDelete(DeleteBehavior.Restrict);
 

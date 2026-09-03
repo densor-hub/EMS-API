@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebApplication1.Domain.Entities;
 
 namespace WebApplication1.Services.Emails.TemplateService.Enitities
 {
@@ -36,7 +37,7 @@ namespace WebApplication1.Services.Emails.TemplateService.Enitities
         public string AppName { get;  set; }
         public string TemporaryPassword { get;  set; }
         public string MinPasswordLength { get;  set; }
-        public string LoginUrl { get;  set; }
+        public string AppUrl { get;  set; }
         public string PinCode { get;  set; }
         public string QrCodeImageBase64 { get;  set; }
         public int ValidityHours { get;  set; } = 24;
@@ -47,12 +48,39 @@ namespace WebApplication1.Services.Emails.TemplateService.Enitities
         public string PrimaryPhoneNumber { get;  set; }
         public string SecondaryPhoneNumber { get;  set; }
         public string Address { get;  set; }
+        public string Token { get; set; }
 
+        //Monetary
+        public decimal? Amount { get; set; } = null;
+        public decimal? Cost { get; set; } = null;
+        public decimal? Balance { get; set; } = null;
+        public string Currency { get; set; }
+        public string Reference { get; set; }
+        public DateTime? Date { get; set; } = null;
+
+        public List<EmailItem?>? Items { get; set; }
 
         public AllEmailsTemplateModel()
         {
             
         }
     }
+
+    public class EmailItem
+    {
+        public string Name { get; set; }
+        public string Price { get; set; }
+        public int Quantity { get; set; }
+        public  string Amount { get; set; }
+    }
+
+    public class EmailReceiver
+    {
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Code { get; set; }
+        public Guid Id { get; set; }
+    }
+    
 
 }

@@ -16,5 +16,6 @@ namespace WebApplication1.Services.Emails.EmailService.Entities
         public string SenderEmail { get; set; }
         public string SenderName { get; set; }
         public string AppUrl { get; set; }
+        public string AppName { get; set; }
     }
 }

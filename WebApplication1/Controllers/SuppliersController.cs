@@ -22,6 +22,7 @@ namespace WebApplication1.Controllers
         private readonly IUserRepository _userRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly AppDbContext _appDbContext;
+        private readonly ITransactionCodeRepository _transactionCodeRepository;
 
         public SuppliersController(
             ISupplierRepository supplierRepository,
@@ -29,7 +30,8 @@ namespace WebApplication1.Controllers
             ILogger<SuppliersController> logger,
             IUserRepository userRepository,
             ILocationRepository locationRepository,
-             AppDbContext appDbContext)
+            ITransactionCodeRepository transactionCodeRepository,
+        AppDbContext appDbContext)
         {
             _supplierRepository = supplierRepository;
             _logger = logger;
@@ -37,11 +39,11 @@ namespace WebApplication1.Controllers
             _locationRepository = locationRepository;
             _appDbContext = appDbContext;
             _supplierLocationRepository = supplierLocationRepository;
+            _transactionCodeRepository = transactionCodeRepository;
         }
 
-        // GET: api/employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetSupplierDto>>> GetAllEmployees([FromQuery] Guid? locationId = null)
+        public async Task<ActionResult<IEnumerable<GetSupplierDto>>> GetAllSuppliers([FromQuery] Guid? locationId = null)
         {
             try
             {
@@ -126,32 +128,29 @@ namespace WebApplication1.Controllers
         }
 
         // POST: api/employees
-        [HttpPost]
-        public async Task<ActionResult> CreateEmployee([FromBody] CreateSupplierDto createDto)
+        [HttpPost("{locationId:Guid}")]
+        public async Task<ActionResult> CreateEmployee([FromBody] CreateSupplierDto createDto, [FromRoute] Guid locationId)
         {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
+            if (currentUser is null) return Unauthorized();
+
+            var queriableLocations = _locationRepository.GetAll();
+
+            queriableLocations = queriableLocations.Where(x => createDto.Locations.Contains(x.Id));
+
+            if (!queriableLocations.Any()) { return BadRequest(new { error = $"No Shop found" }); }
+
+
             using var transaction = await _appDbContext.Database.BeginTransactionAsync();
             try
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
-                if (user == null) { return Unauthorized(); }
-                // Check if location exists
-                var queriableLocations = _locationRepository.GetAll();
-
-                queriableLocations = queriableLocations.Where(x => createDto.Locations.Contains(x.Id));
-
-                if (!queriableLocations.Any()) { return BadRequest(new { error = $"No Shop found" }); }
-
-                var Code = await  _supplierRepository.GenerateCodeAsync((Guid)user.CompanyId);
-
-                var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
-                if (currentUser is null)  return Unauthorized();
 
                 var newSupplier = Supplier.Create(Guid.NewGuid(), createDto.SupplierComanyName,(Guid)(currentUser is not null ? currentUser.CompanyId : Guid.Empty),  createDto.FirstName, createDto.LastName,
-                    createDto.Email ?? "", createDto.Phone, createDto.Tin??"", Code, createDto.Status,  createDto.Address, DateTime.UtcNow, Guid.Parse(currentUser.Id));
+                    createDto.Email ?? "", createDto.Phone, createDto.Tin??"", "", createDto.Status,  createDto.Address, DateTime.UtcNow, Guid.Parse(currentUser.Id));
 
                 var supplier = await _supplierRepository.CreateAsync(newSupplier);
 
@@ -203,9 +202,21 @@ namespace WebApplication1.Controllers
 
                 var newSupLocations = locationsId.Select(x => SupplierLocation.Create(Guid.NewGuid(), x, supplier.Id, DateTime.UtcNow, currentUserId, true)).ToList();
 
-                await _supplierLocationRepository.ManageLocationAccess(updateDto.Locations, supplier.Id, currentUserId);
+                var transaction = _appDbContext.Database.BeginTransaction();
 
-                await _supplierRepository.UpdateAsync(supplier);
+                try
+                {
+                    await _supplierLocationRepository.ManageLocationAccess(updateDto.Locations, supplier.Id, currentUserId);
+
+                    await _supplierRepository.UpdateAsync(supplier);
+
+                    await transaction.CommitAsync();
+                }
+                catch(Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
 
                 return Ok();
             }
@@ -226,6 +237,7 @@ namespace WebApplication1.Controllers
                 if (!deleted)
                     return NotFound($"Employee not found");
 
+                await _supplierRepository.SaveChangesAsync();
                 return NoContent();
             }
             catch (Exception ex)

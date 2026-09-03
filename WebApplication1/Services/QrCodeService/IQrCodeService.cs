@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WebApplication1.Services.QrCodeService
 {
-    internal interface IQrCodeService
+    public interface IQrCodeService
     {
         byte[] GenerateQrCode(string data, int width = 300, int height = 300);
 

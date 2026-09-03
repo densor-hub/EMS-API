@@ -10,7 +10,8 @@ namespace WebApplication1.Domain.Entities
        public virtual Company Company { get; private set; }
        public bool Status { get; private set; }
         public string Description { get; private set; }
-       public ICollection<Employee> Employees { get; private  set;}
+        public int IncrementalId { get; private set; }
+        public ICollection<Employee> Employees { get; private  set;}
        public virtual ICollection<PositionRoutes> PositionRoutes { get; private set; }
 
         public Position()

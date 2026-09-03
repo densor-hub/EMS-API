@@ -15,6 +15,8 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
         Task UpdateAsync(QueuedEmail email);
 
         Task DeleteSentEmails();
+
+
     }
 
 }

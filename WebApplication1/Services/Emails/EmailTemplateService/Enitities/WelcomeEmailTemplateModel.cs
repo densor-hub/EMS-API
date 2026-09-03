@@ -11,6 +11,6 @@ namespace WebApplication1.Services.Emails.TemplateService.Enitities
         public string Name { get; set; }
         public string Email { get; set; }
         public string TemporaryPassword { get; set; }
-        public string LoginUrl { get; set; }
+        public string AppUrl { get; set; }
     }
 }
