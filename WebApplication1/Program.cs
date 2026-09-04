@@ -30,6 +30,10 @@ using WebApplication1.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigins = builder.Configuration
+    .GetSection("CorsSettings:AllowedOrigins")
+    .Get<string[]>();
+
 // 1. Configure Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -125,14 +129,13 @@ builder.Services.AddControllers();
 // 5. Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder.WithOrigins("https://ems-front-eosin.vercel.app") //
-                   .AllowAnyMethod()
-                   .AllowAnyHeader()
-                   .AllowCredentials();
-        });
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // using JWT authentication
+    });
 });
 
 // 6. Add Swagger
