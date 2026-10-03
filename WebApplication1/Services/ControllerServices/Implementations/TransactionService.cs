@@ -107,6 +107,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
 
             var qrCode = "";
+            var saleCount = 0;
             var EmailReceiver = new EmailReceiver();
 
             if (transaction.TransactionType == TransactionType.PURC.ToString())
@@ -124,7 +125,13 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             }
             else if (transaction.TransactionType == TransactionType.SALE.ToString())
             {
-                var sale = Sale.Create(Guid.NewGuid(), transaction.Id, BusinessPartnerId.HasValue && BusinessPartnerId.Value != Guid.Empty ? BusinessPartnerId.Value : null, user.Id, DateTime.UtcNow, Guid.Parse(user.Id));
+                var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+                var sale = Sale.Create(Guid.NewGuid(), transaction.Id, BusinessPartnerId.HasValue && BusinessPartnerId.Value != Guid.Empty ? BusinessPartnerId.Value : null, user.Id, DateTime.UtcNow, Guid.Parse(user.Id), transaction.LocationId, todayUtc);
+
+                 saleCount = await GetNextSaleIncrementalAsync(transaction.LocationId, todayUtc);
+
+                sale.SetIncrementalId(saleCount);
+            
                 await _context.Sales.AddAsync(sale);
 
                 if (BusinessPartnerId.HasValue && BusinessPartnerId.Value != Guid.Empty)
@@ -188,7 +195,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 EmailReceiver.Id = employee?.Id ?? Guid.Empty;
             }
 
-            return new SpecificTransactionCreationReturnDto { QrCode = qrCode, EmailReceiver = EmailReceiver};
+            return new SpecificTransactionCreationReturnDto { QrCode = qrCode, EmailReceiver = EmailReceiver, Count = saleCount};
         }
 
 
@@ -1169,7 +1176,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 await _context.SaveChangesAsync();
                 await atomicTransaction.CommitAsync();
 
-                return new TransactionCreatedReturnDataDto { QrCode = ReturnDto.QrCode, TransactionNumber = transactionResults.TransactionNumber };
+                return new TransactionCreatedReturnDataDto { QrCode = ReturnDto.QrCode, TransactionNumber = transactionResults.TransactionNumber, Count = ReturnDto.Count ??0 };
             }
             catch (Exception ex)
             {
@@ -1302,7 +1309,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             await _context.SaleTransDeliveryRequests.AddRangeAsync(newDeliveryRequest);
             await _context.SaveChangesAsync();
 
-            return new TransactionCreatedReturnDataDto { QrCode = qrCode, TransactionNumber = sale.Transaction.TransactionNumber };
+            return new TransactionCreatedReturnDataDto { QrCode = qrCode, TransactionNumber = sale.Transaction.TransactionNumber, Count = sale.IncrementalId };
         }
 
 
@@ -1352,6 +1359,30 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             }
         }
 
+        private async Task<int> GetNextSaleIncrementalAsync(Guid locationId, DateOnly todayUtc)
+        {
+            if (_context.Database.CurrentTransaction is null)
+                throw new InvalidOperationException(
+                    "GetNextSaleIncrementalAsync must be called inside an active transaction.");
 
+
+
+            // ✅ Use the two-arg form with a namespace key, executed as a scalar query
+            await _context.Database.ExecuteSqlInterpolatedAsync($@"
+        SELECT pg_advisory_xact_lock(
+            hashtext('SaleIncremental'),
+            hashtext({locationId.ToString()} || ':' || {todayUtc.ToString("yyyy-MM-dd")})
+        )
+    ");
+            // NOTE: ExecuteSqlInterpolatedAsync works here because Npgsql allows
+            // a SELECT as a non-query, but a scalar call is safer across versions.
+            // If you get "expected 1 row" errors, switch to the scalar version below.
+
+            var count = await _context.Sales
+                .Where(s => s.LocationId == locationId && s.SaleDate == todayUtc)
+                .CountAsync();
+
+            return count + 1;
+        }
     }
 }

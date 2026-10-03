@@ -41,5 +41,11 @@ namespace WebApplication1.Domain.Entities
             UpdatedBy = updatedBy;
             Description = description;
         }
+
+        public void SoftDelete()
+        {
+            GeneralStatus = Enums.GeneralStatus.SoftDeleted;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 }

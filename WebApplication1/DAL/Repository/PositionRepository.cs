@@ -35,7 +35,9 @@ namespace WebApplication1.DAL.Repository
 
         public async Task DeleteAsync(Position position)
         {
-            _context.Positions.Remove(position);
+            //_context.Positions.Remove(position);
+            position.SoftDelete();
+            _context.Positions.Update(position);
             await Task.CompletedTask;
         }
 

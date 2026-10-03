@@ -22,8 +22,6 @@ namespace WebApplication1.Domain.DTO
     public class LocationMangersDTO
     {
         public Guid Id { get; set;}
-        public DateTime StartDate { get; set; }
-        public DateTime? EndDate { get; set; } = null;
         public bool IsMainManager { get; set; }
     }
 }

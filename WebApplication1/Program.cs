@@ -52,6 +52,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+// Override token lifespan
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(24);   // or FromDays(3), FromMinutes(30), etc.
+});
 
 // 3. Register services
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
@@ -126,6 +131,7 @@ builder.Services.AddHttpContextAccessor(); // ✅ Required for IHttpContextAcces
 // 4. Add Controllers
 builder.Services.AddControllers();
 
+
 // 5. Add CORS
 builder.Services.AddCors(options =>
 {
@@ -194,7 +200,7 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("AllowSpecificOrigins");
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -210,22 +216,34 @@ app.MapControllers();
 
 
 // Database migration
+// Database migration + seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate();
+        await context.Database.MigrateAsync();
         Console.WriteLine("Database migrated successfully.");
 
-        await SeedService.InitializeSimpleAsync(context);
+        // 1. Seed hierarchical menus (routes) first
+        await SeedService.SeedMenusHierarchicalAsync(context);
+        Console.WriteLine("Menus seeded successfully.");
 
+        // 2. Seed ADMIN position + its PositionRoutes
+        await SeedService.InitializeSimpleAsync(context);
+        Console.WriteLine("ADMIN position seeded successfully.");
+
+        // 3. Seed default company + super admin user
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await SeedService.SeedDefaultCompanyAndAdminAsync(context, userManager, roleManager);
+        Console.WriteLine("Default company and super admin seeded successfully.");
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while migrating the database.");
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
     }
 }
 

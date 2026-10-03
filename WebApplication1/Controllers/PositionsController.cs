@@ -36,16 +36,20 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetPositionsDto>>> GetAllEmployees()
+        public async Task<ActionResult<IEnumerable<GetPositionsDto>>> GetAllPositionsOrRoles([FromQuery] bool OnlyActive = true)
         {
             try
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
+                if (user == null) { return Unauthorized(); }
+
                 var positions =  _positionRepository.GetAll();
+
+                if (OnlyActive) positions = positions.Where(x => x.Status);
 
                 var returnData = positions
                     .Include(x=> x.PositionRoutes)
-                    .Where(x=>x.CompanyId == user.CompanyId && x.Status == true).Select(p => new GetPositionsDto
+                    .Where(x=>x.CompanyId == user.CompanyId && x.GeneralStatus == GeneralStatus.Active).Select(p => new GetPositionsDto
                 {
                     Id = p.Id,
                     Name = p.Title,
@@ -53,6 +57,33 @@ namespace WebApplication1.Controllers
                     Status  = p.Status,
                     Description = p.Description
                 });
+                return Ok(returnData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all customer");
+                return StatusCode(500, "An error occurred while retrieving customer");
+            }
+        }
+
+        [HttpGet("ForTransactions")]
+        public async Task<ActionResult<IEnumerable<GetPositionsDto>>> GetAllPositionsOrRolesForTransactions()
+        {
+            try
+            {
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+                var positions = _positionRepository.GetAll();
+
+                var returnData = positions
+                    .Include(x => x.PositionRoutes)
+                    .Where(x => x.CompanyId == user.CompanyId && x.GeneralStatus == GeneralStatus.Active && x.Status).Select(p => new GetPositionsDto
+                    {
+                        Id = p.Id,
+                        Name = p.Title,
+                        Permissions = p.PositionRoutes.Select(x => x.AppRouteId).ToList(),
+                        Status = p.Status,
+                        Description = p.Description
+                    });
                 return Ok(returnData);
             }
             catch (Exception ex)
@@ -89,35 +120,45 @@ namespace WebApplication1.Controllers
         public async Task<ActionResult> CreateEmployee([FromBody] CreatePositionDTO createDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
+                if (user == null) return Unauthorized();
 
-                var newPosition= Position.Create(Guid.NewGuid(), createDto.Title, (Guid)user?.CompanyId, createDto.Status, DateTime.UtcNow, Guid.Parse(user.Id), createDto?.Description??"");
+                var currentUserId = Guid.Parse(user.Id);
 
-                 await _positionRepository.AddAsync(newPosition); 
+                var newPosition = Position.Create(
+                    Guid.NewGuid(),
+                    createDto.Title,
+                    (Guid)user.CompanyId,
+                    createDto.Status,
+                    DateTime.UtcNow,
+                    currentUserId,
+                    createDto?.Description ?? ""
+                );
 
-                if (createDto?.Routes is not null)
+                await _positionRepository.AddAsync(newPosition);
+
+                if (createDto?.Routes is not null && createDto.Routes.Any())
                 {
-                    if (createDto.Routes.Any())
-                    {
-                        var positionRoustes = new List<PositionRoutes>();
+                    var positionRoutes = createDto.Routes
+                        .Distinct()
+                        .Select(routeId => PositionRoutes.Create(
+                            Guid.NewGuid(),
+                            newPosition.Id,
+                            routeId,
+                            DateTime.UtcNow,
+                            currentUserId))
+                        .ToList();
 
-                        foreach (var route in createDto.Routes)
-                        {
-                            var positionRoute = PositionRoutes.Create(Guid.NewGuid(), newPosition.Id, route, DateTime.UtcNow, Guid.Parse(user.Id));
-                            positionRoustes.Add(positionRoute);
-
-                        }
-
-                        await _context.PositionRoutes.AddRangeAsync(positionRoustes);
-                    }
+                    await _context.PositionRoutes.AddRangeAsync(positionRoutes);
                 }
-               
+
+                // ✅ THE MISSING LINE — without this, route inserts are never sent to the DB
+                await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
@@ -126,11 +167,10 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error creating customer");
-                return StatusCode(500, "An error occurred while creating the customer");
+                _logger.LogError(ex, "Error creating position");
+                return StatusCode(500, "An error occurred while creating the position");
             }
         }
-
         [HttpPut]
         public async Task<ActionResult> UpdateEmployee([FromBody] UpdatePositionDTO Dto)
         {
@@ -143,48 +183,49 @@ namespace WebApplication1.Controllers
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
                 if (user == null) return Unauthorized();
 
-                var position = await _positionRepository.GetByIdAsync(Dto.Id) ;
-                if (position == null) return NotFound($"Role not found");
+                var position = await _positionRepository.GetByIdAsync(Dto.Id);
+                if (position == null) return NotFound("Role not found");
 
-                var currentUserId = await _userRepository.GetCurrentUserId();
+                var currentUserId = Guid.Parse(user.Id);
 
-                position.Update(Dto.Title, Dto.Status, DateTime.UtcNow, Guid.Parse(user.Id), Dto?.Description ?? "");
+                position.Update(Dto.Title, Dto.Status, DateTime.UtcNow, currentUserId, Dto?.Description ?? "");
 
-
-                var existing = _context.PositionRoutes.Where(x => x.PositionId == position.Id).AsNoTracking();
-                _context.PositionRoutes.RemoveRange(existing);
-
-
-                if (Dto?.Routes is not null)
+                // ✅ Only touch routes if the client explicitly sent a list.
+                // A `null` routes field means "don't change routes"; an empty array means "remove all".
+                if (Dto.Routes is not null)
                 {
+                    var existing = _context.PositionRoutes
+                        .Where(x => x.PositionId == position.Id); // ⚠️ NO AsNoTracking — see Issue 2
+                    _context.PositionRoutes.RemoveRange(existing);
+
                     if (Dto.Routes.Any())
                     {
-                        
+                        var positionRoutes = Dto.Routes
+                            .Distinct()
+                            .Select(routeId => PositionRoutes.Create(
+                                Guid.NewGuid(),
+                                position.Id,
+                                routeId,
+                                DateTime.UtcNow,
+                                currentUserId))
+                            .ToList();
 
-                        var positionRoustes = new List<PositionRoutes>();
-
-                        foreach (var route in Dto.Routes)
-                        {
-                            var positionRoute = PositionRoutes.Create(Guid.NewGuid(), position.Id, route, DateTime.UtcNow, Guid.Parse(user.Id));
-                            positionRoustes.Add(positionRoute);
-
-                        }
-
-                        await _context.PositionRoutes.AddRangeAsync(positionRoustes);
+                        await _context.PositionRoutes.AddRangeAsync(positionRoutes);
                     }
                 }
 
                 await _positionRepository.UpdateAsync(position);
 
-
+                await _context.SaveChangesAsync();   // ✅ ensure pending changes are flushed
                 await transaction.CommitAsync();
+
                 return Ok();
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error updating customer");
-                return StatusCode(500, "An error occurred while updating the customer");
+                _logger.LogError(ex, "Error updating position");
+                return StatusCode(500, "An error occurred while updating the position");
             }
         }
 

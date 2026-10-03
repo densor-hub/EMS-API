@@ -105,6 +105,9 @@ namespace WebApplication1.Middleware
                 "/auth/login",
                 "/auth/register",
                 "/auth/refresh-token",
+                "/auth/account/confirm",
+                "/auth/set-password",
+                "/auth/forgot-password",
                 "/swagger",
                 "/health",
                 "/error"

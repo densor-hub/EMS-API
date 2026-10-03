@@ -473,32 +473,28 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 throw;
             }
         }
+       
 
         public async Task<bool> ConfirmAccount(string token, string email)
         {
-            try
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
             {
-                var user = await _userManager.FindByEmailAsync(email);
-                if (user == null) throw new Exception($"User with email ${email} not found");
-
-                // Verify the token is valid
-                var isValid = await _userManager.VerifyUserTokenAsync(
-                    user,
-                    TokenOptions.DefaultProvider,
-                    "ResetPassword",
-                    token
-                );
-
-                if (!isValid) throw new Exception($"Invalid or expired token. Please request a new password reset.");
-
-                // Return the set password page (or JSON response for SPA)
-                return true;
+                _logger.LogError("ConfirmAccount: user not found for {Email}", email);
+                throw new Exception("Invalid or expired token. Please request a new password reset.");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error validating confirmation");
-                throw new Exception($"Invalid or expired token. Please request a new password reset.");
-            }
+
+            var resetProvider = _userManager.Options.Tokens.PasswordResetTokenProvider;
+           
+            var validWithReset = await _userManager.VerifyUserTokenAsync(
+                user, resetProvider, "ResetPassword", token);
+
+            _logger.LogInformation("ConfirmAccount: validWithReset = {Valid}", validWithReset);
+
+            if (!validWithReset)
+                throw new Exception("Invalid or expired token. Please request a new password reset.");
+
+            return true;
         }
 
         public async Task<object> ForgotPassword(ForgotPasswordRequest request)

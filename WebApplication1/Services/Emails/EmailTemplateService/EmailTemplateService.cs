@@ -98,7 +98,7 @@ namespace WebApplication1.Services.Emails.TemplateService
         {
             var template = await GetTemplateAsync(templateName);
 
-           // var qrCode = await GenerateVisitQrCodeAsync(model);
+            // var qrCode = await GenerateVisitQrCodeAsync(model);
 
             // Build the data object for Handlebars with formatted dates
             var data = new
@@ -195,24 +195,24 @@ namespace WebApplication1.Services.Emails.TemplateService
             }
         }
 
-       private string BuildItemsHtml(List<EmailItem> items)
-{
-    if (items == null || !items.Any())
-        return string.Empty;
+        private string BuildItemsHtml(List<EmailItem> items)
+        {
+            if (items == null || !items.Any())
+                return string.Empty;
 
-    var html = new System.Text.StringBuilder();
-    foreach (var item in items)
-    {
-        html.AppendLine($@"
+            var html = new System.Text.StringBuilder();
+            foreach (var item in items)
+            {
+                html.AppendLine($@"
                 <tr>
                     <td>{System.Net.WebUtility.HtmlEncode(item.Name)}</td>
                     <td>{item.Price}</td>
                     <td style=""text-align: center;"">{item.Quantity}</td>
                     <td>{item.Amount}</td>
                 </tr>");
-    }
-    return html.ToString();
-}
+            }
+            return html.ToString();
+        }
 
         public async Task<string> RenderWelcomeEmailTemplateAsync(WelcomeEmailTemplateModel model)
         {
@@ -290,11 +290,12 @@ namespace WebApplication1.Services.Emails.TemplateService
                 "BusinessPartnerAdded" => GetBusinessPartnerWelcomeTemplate(),
                 "CustomerPayment" => GetPaymentConfirmationTemplate(),
                 "ItemsDelivery" => GetDeliveryEmailTemplate(),
+                "EmployeeSetPassword" => GetEmployeeSetPasswordTemplate(),
                 _ => throw new ArgumentException($"Template '{templateName}' is not supported.")
             };
         }
 
-   
+
         private string GetEmployeeAppAccessTemplate()
         {
             return @"<!DOCTYPE html>
@@ -1956,7 +1957,285 @@ namespace WebApplication1.Services.Emails.TemplateService
     </html>
     ";
         }
+
+        private string GetEmployeeSetPasswordTemplate()
+        {
+            return """
+        <!DOCTYPE html>
+        <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+        <head>
+            <meta charset="utf-8">
+            <meta name="x-apple-disable-message-reformatting">
+            <meta http-equiv="x-ua-compatible" content="ie=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+            <!--[if mso]>
+            <xml>
+                <o:OfficeDocumentSettings>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                </o:OfficeDocumentSettings>
+            </xml>
+            <style>
+                td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
+                    font-family: "Segoe UI", sans-serif;
+                    mso-line-height-rule: exactly;
+                }
+            </style>
+            <![endif]-->
+
+            <style>
+                .header-banner {
+                    background: linear-gradient(135deg, #2c5aa0 0%, #1e3f7a 100%);
+                    color: #ffffff;
+                    padding: 30px;
+                    border-radius: 8px 8px 0 0;
+                    text-align: center;
+                    margin: -40px -40px 25px -40px;
+                }
+
+                .header-banner h1 {
+                    margin: 0 0 8px 0;
+                    font-size: 24px;
+                    font-weight: 700;
+                    color: #ffffff;
+                }
+
+                .header-banner p {
+                    margin: 0;
+                    font-size: 14px;
+                    opacity: 0.9;
+                    color: #ffffff;
+                }
+
+                .action-button {
+                    display: inline-block;
+                    padding: 12px 28px;
+                    background-color: #2c5aa0;
+                    color: #ffffff !important;
+                    text-decoration: none;
+                    border-radius: 6px;
+                    font-weight: 600;
+                    font-size: 15px;
+                    text-align: center;
+                }
+
+                .link-fallback {
+                    margin-top: 20px;
+                    padding: 14px 16px;
+                    background-color: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    color: #666;
+                    word-break: break-all;
+                }
+
+                .link-fallback .label {
+                    display: block;
+                    font-size: 11px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #999;
+                    margin-bottom: 6px;
+                }
+
+                .link-fallback a {
+                    color: #2c5aa0;
+                    text-decoration: underline;
+                    word-break: break-all;
+                }
+
+                .detail-label {
+                    font-size: 12px;
+                    color: #666;
+                    margin-bottom: 3px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .detail-value {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: #333;
+                }
+
+                @media (max-width: 600px) {
+                    .sm-w-full { width: 100% !important; }
+                    .sm-px-24 { padding-left: 24px !important; padding-right: 24px !important; }
+                    .header-banner { padding: 20px; margin: -20px -20px 20px -20px; }
+                    .header-banner h1 { font-size: 20px; }
+                    .header-banner p { font-size: 13px; }
+                }
+            </style>
+        </head>
+
+        <body style="margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;">
+            <div role="article" aria-roledescription="email" aria-label="Welcome - Set Your Password" lang="en">
+                <table style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;" width="100%"
+                       cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                        <td align="center" style="background-color: #eceff1; font-family: 'Segoe UI', sans-serif;">
+                            <table class="sm-w-full" style="font-family: 'Segoe UI', sans-serif; width: 600px;" width="600"
+                                   cellpadding="0" cellspacing="0" role="presentation">
+                                <tr>
+                                    <td align="center" style="font-family: 'Segoe UI', sans-serif;">
+                                        <table style="font-family: 'Segoe UI', sans-serif; width: 100%;" width="100%"
+                                               cellpadding="0" cellspacing="0" role="presentation">
+                                            <tr>
+                                                <td class="sm-px-24"
+                                                    style="background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.6; padding: 40px; text-align: left; color: #333333; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"
+                                                    align="left">
+
+                                                    <!-- Header Banner -->
+                                                    <div class="header-banner">
+                                                        <h1>Welcome to {{CompanyName}}</h1>
+                                                        <p>Your {{AppName}} account is ready</p>
+                                                    </div>
+
+                                                    <p style="margin: 0 0 15px; font-size: 16px;">
+                                                        Dear <strong>{{ReceiverName}}</strong>,
+                                                    </p>
+
+                                                    <p style="margin: 0 0 20px; font-size: 16px;">
+                                                        Your employee account has been created successfully. To get started,
+                                                        you need to set up your password using the secure link below.
+                                                    </p>
+
+                                                    <!-- Account Details -->
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                                           style="margin: 25px 0; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+                                                        <tr>
+                                                            <td style="padding: 18px; font-family: 'Segoe UI', sans-serif;">
+                                                                <h3 style="color: #2c5aa0; margin: 0 0 12px 0; font-size: 16px;">
+                                                                    Your Account Details
+                                                                </h3>
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                                    <tr>
+                                                                        <td width="50%" valign="top" style="padding: 6px 0;">
+                                                                            <div class="detail-label">Full Name</div>
+                                                                            <div class="detail-value">{{ReceiverName}}</div>
+                                                                        </td>
+                                                                        <td width="50%" valign="top" style="padding: 6px 0;">
+                                                                            <div class="detail-label">Role</div>
+                                                                            <div class="detail-value">{{ReceiverRole}}</div>
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td colspan="2" valign="top" style="padding: 6px 0;">
+                                                                            <div class="detail-label">Username / Email</div>
+                                                                            <div class="detail-value" style="word-break: break-all;">{{ReceiverUserName}}</div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Call to Action -->
+                                                    <div style="margin: 30px 0; text-align: center;">
+                                                        <a href="{{AppUrl}}" class="action-button" target="_blank">
+                                                            Set Your Password
+                                                        </a>
+
+                                                        <div class="link-fallback" style="text-align: left;">
+                                                            <span class="label">Or use the link below</span>
+                                                            <a href="{{AppUrl}}" target="_blank">{{AppUrl}}</a>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Steps -->
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                                           style="margin: 25px 0; background-color: #e8f4f8; border-radius: 8px;">
+                                                        <tr>
+                                                            <td width="4" style="background-color: #2c5aa0; border-top-left-radius: 8px; border-bottom-left-radius: 8px;">&nbsp;</td>
+                                                            <td style="padding: 20px; font-family: 'Segoe UI', sans-serif;">
+                                                                <h4 style="margin: 0 0 12px 0; color: #2c5aa0; font-size: 15px;">How to get started</h4>
+                                                                <ol style="margin: 0; padding-left: 22px; color: #333; font-size: 14px; line-height: 1.5;">
+                                                                    <li style="margin-bottom: 8px;">Click the <strong>Set Your Password</strong> button above.</li>
+                                                                    <li style="margin-bottom: 8px;">Create a strong password that meets the security requirements.</li>
+                                                                    <li style="margin-bottom: 8px;">Log in to <strong>{{AppName}}</strong> using your email and new password.</li>
+                                                                    <li>Explore your dashboard and start using the system.</li>
+                                                                </ol>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Security Notice -->
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                                           style="margin: 25px 0; background-color: #fff8e1; border-radius: 8px;">
+                                                        <tr>
+                                                            <td width="4" style="background-color: #ff9800; border-top-left-radius: 8px; border-bottom-left-radius: 8px;">&nbsp;</td>
+                                                            <td style="padding: 18px; font-family: 'Segoe UI', sans-serif;">
+                                                                <h4 style="margin: 0 0 10px 0; color: #e65100; font-size: 15px;">⚠️ Security Notice</h4>
+                                                                <ul style="margin: 0; padding-left: 20px; color: #333; font-size: 13px; line-height: 1.5;">
+                                                                    <li style="margin-bottom: 6px;"><strong>Never share</strong> your password with anyone.</li>
+                                                                    <li style="margin-bottom: 6px;">Our team will <strong>never</strong> ask for your password via email or phone.</li>
+                                                                    <li>If you did not expect this email, please contact your administrator immediately.</li>
+                                                                </ul>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Support -->
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                                           style="margin: 25px 0; background-color: #e8f4f8; border-radius: 8px;">
+                                                        <tr>
+                                                            <td width="4" style="background-color: #2c5aa0; border-top-left-radius: 8px; border-bottom-left-radius: 8px;">&nbsp;</td>
+                                                            <td style="padding: 18px; text-align: center; font-size: 15px; color: #2c5aa0; font-family: 'Segoe UI', sans-serif;">
+                                                                <strong>Need help?</strong> Contact us at
+                                                                <a href="mailto:{{SupportEmail}}" style="color: #2c5aa0; text-decoration: underline;">{{SupportEmail}}</a>
+                                                                or call {{SupportPhone}}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <!-- Closing -->
+                                                    <p style="margin: 25px 0 5px 0; font-size: 16px;">
+                                                        We're excited to have you on board.
+                                                    </p>
+                                                    <p style="margin: 0 0 5px 0; font-size: 16px;">
+                                                        Best regards,
+                                                    </p>
+                                                    <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #2c5aa0;">
+                                                        {{SupportName}}
+                                                    </p>
+
+                                                    <!-- Footer -->
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                                                           style="margin-top: 30px; border-top: 2px solid #e9ecef;">
+                                                        <tr>
+                                                            <td style="padding-top: 20px; text-align: center; font-size: 12px; color: #999; font-family: 'Segoe UI', sans-serif;">
+                                                                <p style="margin: 0 0 10px 0;">
+                                                                    {{CompanyName}} | {{CompanyPhone}} | {{SupportEmail}}
+                                                                </p>
+                                                                <p style="margin: 0;">
+                                                                    This email was sent to {{ReceiverUserName}}
+                                                                </p>
+                                                                <p style="margin: 20px 0 0 0; font-weight: 600; color: #666;">
+                                                                    Powered by Abibeck Software Solutions
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+        </html>
+        """;
+        }
+
     }
 
-   
+
+
+
 }

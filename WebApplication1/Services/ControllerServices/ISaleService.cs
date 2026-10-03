@@ -11,5 +11,6 @@ namespace WebApplication1.Services.ControllerServices
         Task<IEnumerable<GetSalesTrans>> GetAllAsync(Guid locationId, GeneralStatus generalStatus, string type, Guid? customerId = null, Guid? salesPersonId = null);
         Task<decimal> GetTotalSalesAmountAsync(DateTime startDate, DateTime endDate);
         Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber);
+    
     }
 }

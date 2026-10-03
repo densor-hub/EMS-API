@@ -16,13 +16,13 @@ namespace WebApplication1.DAL.Repository
         public async Task AddRangeAsync(List<SupplierLocation> supplierLocation)
         {
             await _context.SupplierLocations.AddRangeAsync(supplierLocation);
-             await _context.SaveChangesAsync();
+           //  await _context.SaveChangesAsync();
         }
 
         public async Task DeleteRangeAsync(List<SupplierLocation> supplierLocation)
         {
             _context.SupplierLocations.RemoveRange(supplierLocation);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
         }
 
         public async Task<bool> Exists(Guid supplierId, Guid locationId)
@@ -103,7 +103,7 @@ namespace WebApplication1.DAL.Repository
                 // Only update if something actually changed
                 if (hasChanges || newLocations.Any())
                 {
-                    await _context.SaveChangesAsync();
+                    //await _context.SaveChangesAsync();
                 }
 
             }
@@ -115,7 +115,7 @@ namespace WebApplication1.DAL.Repository
                     location.RemoveAccess();
                 }
                 _context.EmployeeLocations.UpdateRange(employeeLocations);
-                await _context.SaveChangesAsync();
+              //  await _context.SaveChangesAsync();
 
 
             }

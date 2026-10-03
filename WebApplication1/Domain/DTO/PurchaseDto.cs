@@ -144,6 +144,7 @@ namespace WebApplication1.DTOs
     public class SpecificTransactionCreationReturnDto
     {
         public string QrCode { get; set; }
+        public int? Count { get; set; }
         public EmailReceiver EmailReceiver { get; set; }
     }
 

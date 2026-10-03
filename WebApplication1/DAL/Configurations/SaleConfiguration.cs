@@ -8,16 +8,26 @@ namespace WebApplication1.DAL.Configurations
     {
         public void Configure(EntityTypeBuilder<Sale> builder)
         {
-
-            // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);
 
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
             builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
 
-            builder.HasOne(x=>x.Customer)
-                .WithMany(x=> x.Sales)
-                .HasForeignKey(x=> x.CustomerId)
+            // ⚠️ Remove UseIdentityColumn — the app assigns IncrementalId
+            builder.Property(x => x.IncrementalId).ValueGeneratedNever();
+
+            // Postgres "date" column for the sale day
+            builder.Property(x => x.SaleDate).IsRequired().HasColumnType("date");
+
+            // ✅ Per-location, per-day uniqueness
+            builder.HasIndex(x => new { x.LocationId, x.SaleDate, x.IncrementalId })
+                .IsUnique()
+                .HasDatabaseName("IX_Sales_Location_Date_Incremental");
+
+            // Existing FKs...
+            builder.HasOne(x => x.Customer)
+                .WithMany(x => x.Sales)
+                .HasForeignKey(x => x.CustomerId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.NoAction);
 
@@ -33,11 +43,11 @@ namespace WebApplication1.DAL.Configurations
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            //builder.HasOne(x => x.Location)
-            //   .WithMany(x => x.Sales)
-            //   .HasForeignKey(x => x.LocationId)
-            //   .IsRequired(true)
-            //   .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<Location>()
+                .WithMany()
+                .HasForeignKey(x => x.LocationId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

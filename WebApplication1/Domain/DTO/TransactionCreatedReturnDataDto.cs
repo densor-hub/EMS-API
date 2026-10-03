@@ -4,5 +4,6 @@
     {
         public string QrCode { get; set; }
         public string TransactionNumber { get; set; }
+        public int Count { get; set; }
     }
 }

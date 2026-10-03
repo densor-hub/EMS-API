@@ -63,7 +63,7 @@ namespace WebApplication1.DAL
         public DbSet<PaymentConfirmationToken> PaymentConfirmationTokens { get; set; }
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<DailyTransactionCounter> DailyTransactionCounters { get; set; }
-
+        public DbSet<LocationSaleSequence> LocationSaleSequences { get; set; }
         protected override void OnModelCreating(ModelBuilder builder) 
         {
             base.OnModelCreating(builder);

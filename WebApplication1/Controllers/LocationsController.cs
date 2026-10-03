@@ -22,7 +22,7 @@ namespace WebApplication1.Controllers
         private readonly ILogger<LocationsController> _logger;
         private readonly IUserRepository _userRepository;
         private readonly IPositionRepository _positonRepository;
-        private readonly IEmployeeRepository _employeeRepository;   
+        private readonly IEmployeeRepository _employeeRepository;
         private readonly ITransactionCodeRepository _transactionCodeRepository;
         private readonly AppDbContext _appDbContext;
 
@@ -42,29 +42,30 @@ namespace WebApplication1.Controllers
             _userRepository = userRepository;
             _positonRepository = positonRepository;
             _employeeRepository = employeeRepository;
-            _appDbContext   = appDbContext;
+            _appDbContext = appDbContext;
             _transactionCodeRepository = transactionCodeRepository;
             _employeeLocationRepository = employeeLocationRepository;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<GetLocationDTO>>> GetAll([FromQuery] Guid? LocationId, [FromQuery] bool OnlyActive, [FromQuery] string? TextFilter)
+        public async Task<ActionResult<List<GetLocationDTO>>> GetAll([FromQuery] Guid? LocationId, [FromQuery] bool OnlyActive = false, [FromQuery] string? TextFilter="")
         {
             try
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-                var locations =  _locationRepository.GetAll();
+                var locations = _locationRepository.GetAll();
 
-                 locations = locations.Where(x => x.CompanyId == user.CompanyId);
+                locations = locations.Where(x => x.CompanyId == user.CompanyId);
 
                 if (LocationId != Guid.Empty) locations = locations.Where(x => x.Id != LocationId);
 
-                if (OnlyActive) locations = locations.Where(x => x.Status == OnlyActive);
+                locations = locations.Where(x => x.GeneralStatus == GeneralStatus.Active);
+                if (OnlyActive) locations = locations.Where(x => x.Status == true);
                 if (!string.IsNullOrEmpty(TextFilter))
                 {
                     ///locations = locations.Where(x => x.Name.ToLower().Trim().Contains(filter.TextFilter.ToLower().Trim()));
-                     var searchTerm = $"%{TextFilter.Trim()}%";
+                    var searchTerm = $"%{TextFilter.Trim()}%";
 
                     locations = locations.Where(x =>
                         EF.Functions.Like(x.Name, searchTerm) ||
@@ -83,10 +84,10 @@ namespace WebApplication1.Controllers
                     Phone = x.Phone,
                     TypeOfLocationName = x.TypeOfLocation.ToString(),
                     //TypeOfLocation = x.TypeOfLocation,
-                    Managers = x.EmployeeLocations.Where(x=> x.Status && x.IsManager).Select(sm => new IdAndNameDTO
+                    Managers = x.EmployeeLocations.Where(x => x.Status && x.IsManager).Select(sm => new IdAndNameDTO
                     {
                         Id = sm != null ? sm.EmployeeId : Guid.Empty,
-                        Name =$"{sm.Employee.FirstName} {sm.Employee.LastName}",
+                        Name = $"{sm.Employee.FirstName} {sm.Employee.LastName}",
                     }).ToList()
                 }).ToListAsync();
 
@@ -100,7 +101,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<GetLocationDTO>> GetById([FromRoute]Guid id)
+        public async Task<ActionResult<GetLocationDTO>> GetById([FromRoute] Guid id)
         {
             try
             {
@@ -120,10 +121,10 @@ namespace WebApplication1.Controllers
                     Name = x.Name,
                     Phone = x.Phone,
                     TypeOfLocationName = x.TypeOfLocation.ToString(),
-                  //  TypeOfLocation = x.TypeOfLocation,
-                    Managers = x.EmployeeLocations.Where(x => x.Status  && x.IsManager).Select(sm => new IdAndNameDTO
+                    //  TypeOfLocation = x.TypeOfLocation,
+                    Managers = x.EmployeeLocations.Where(x => x.Status && x.IsManager).Select(sm => new IdAndNameDTO
                     {
-                        Id = sm != null ? sm.EmployeeId: Guid.Empty,
+                        Id = sm != null ? sm.EmployeeId : Guid.Empty,
                         Name = $"{sm.Employee.FirstName} {sm.Employee.LastName}",
                     }).ToList()
                 }).FirstOrDefault();
@@ -150,12 +151,15 @@ namespace WebApplication1.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+               // var validLocation = await _appDbContext.Locations.Where(x => x.Id == locationId).FirstOrDefaultAsync();
+                //if (validLocation == null) return StatusCode(400, new { error = "Invalid  location" });
+            
                if (dto.LocationType != null)
                 {
-                    if (!Enum.IsDefined(typeof(LocationType), dto.LocationType)) { return StatusCode(500, new { error = "Invalid  type" }); }
+                    if (!Enum.IsDefined(typeof(LocationType), dto.LocationType)) { return StatusCode(400, new { error = "Invalid  type" }); }
                 }
 
-                if (await _locationRepository.CodeExistsAsync(dto.Code))  return Conflict(new { error = $"Location with code '{dto.Code}' already exists" });
+                //if (await _locationRepository.CodeExistsAsync(dto.Code))  return Conflict(new { error = $"Location with code '{dto.Code}' already exists" });
 
                 if (dto?.Managers?.Count > 0)
                 {
@@ -164,7 +168,7 @@ namespace WebApplication1.Controllers
                     if (!validManager.Any()) return NotFound("Submitted manager(s) not found");
                 }
 
-               // var Code =  await _transactionCodeRepository.GenerateEntityCodeAsync("LOC", Guid.Empty);
+               // var Code =  await _transactionCodeRepository.GenerateTransactionCodeAsync("LOC", validLocation.Id);
                 
                 var location = Location.Create(Guid.NewGuid(), dto.Code , dto.Name, dto.Status, dto.Address, dto.Phone, dto.Email, (Guid)user.CompanyId, dto.LocationType, DateTime.UtcNow, Guid.Parse(user.Id));
 
@@ -195,6 +199,8 @@ namespace WebApplication1.Controllers
         [HttpPut("Update")]
         public async Task<IActionResult> Update( [FromBody] UpdateShopDTO dto)
         {
+            var transaction = _appDbContext.Database.BeginTransaction();
+
             try
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
@@ -226,7 +232,6 @@ namespace WebApplication1.Controllers
                     if (!validManager.Any()) return NotFound("Submitted manager(s) not found");
                 }
 
-                var transaction = _appDbContext.Database.BeginTransaction();
 
                 try
                 {
@@ -255,7 +260,7 @@ namespace WebApplication1.Controllers
 
                         //invalid submission
                         var allEmployeesIds = await allEmployees.Select(x => x.Id).ToListAsync();
-                        if (submittedManagersIds.Any(x => allEmployeesIds.Contains(x) == false)) throw new Exception("Invalid Employee Submitted");
+                       // if (submittedManagersIds.Any(x => allEmployeesIds.Contains(x) == false)) throw new Exception("Invalid Employee Submitted");
                        
                         //existing managers
                         var existingManagers = allEmployees.Where(x => x.IsManager);

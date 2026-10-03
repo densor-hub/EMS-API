@@ -35,6 +35,7 @@ namespace WebApplication1.Domain.DTO
         public decimal PaidAmount { get; set; }
         public decimal Balance { get; set; }
         public string? TransactionCode { get; set; }
+        public int? Count { get; set; }
         public List<GetSaleReceiptItemDto>? Items { get; set; }
     }
 

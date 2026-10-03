@@ -5,8 +5,7 @@ namespace WebApplication1.Domain.Entities
 {
     public class Location : BaseEntity
     {
-        [Required]
-        public string Code { get; private set; }
+        public string? Code { get; private set; }
         [Required]
         public string Name { get; private set; }
         public string? Address { get; private set; }
@@ -43,6 +42,8 @@ namespace WebApplication1.Domain.Entities
         public virtual ICollection<Coupon> Coupons { get; private set; }
         public virtual ICollection<FinancialServiceProvider> Banks { get; private set; }
         public virtual ICollection<Vehicle> Vehicles { get; private set; }
+        public virtual ICollection<Sale> Sales { get; private set; }
+        ///public virtual ICollection<LocationSaleSequence> LocationSaleSequences { get; private set; }
 
 
         public Location()
@@ -61,9 +62,9 @@ namespace WebApplication1.Domain.Entities
 
         public void SoftDelete (Guid deletedBy)
         {
-            Status = false;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = deletedBy;
+            GeneralStatus = GeneralStatus.SoftDeleted;
         }
 
         public void Update(string code, string name, bool status, string address, string phone, string email,LocationType? type, DateTime updatedAt, Guid updatedBy)

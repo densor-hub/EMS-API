@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApplication1.DAL;
@@ -11,9 +12,11 @@ using WebApplication1.DAL;
 namespace WebApplication1.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002214322_SetUpShopUpdate01")]
+    partial class SetUpShopUpdate01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1378,52 +1381,6 @@ namespace WebApplication1.DAL.Migrations
                     b.ToTable("Locations", (string)null);
                 });
 
-            modelBuilder.Entity("WebApplication1.Domain.Entities.LocationSaleSequence", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("GeneralStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastSaleIncremental")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<Guid>("LocationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LocationId")
-                        .IsUnique();
-
-                    b.ToTable("LocationSaleSequences", (string)null);
-                });
-
             modelBuilder.Entity("WebApplication1.Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1741,20 +1698,8 @@ namespace WebApplication1.DAL.Migrations
                     b.Property<int>("GeneralStatus")
                         .HasColumnType("integer");
 
-                    b.Property<int>("IncrementalId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<Guid?>("LocationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("LocationId1")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("SaleDate")
-                        .HasColumnType("date");
 
                     b.Property<string>("SalesPersonId")
                         .IsRequired()
@@ -1773,16 +1718,10 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("LocationId1");
-
                     b.HasIndex("SalesPersonId");
 
                     b.HasIndex("TransactionId")
                         .IsUnique();
-
-                    b.HasIndex("LocationId", "SaleDate", "IncrementalId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Sales_Location_Date_Incremental");
 
                     b.ToTable("Sales", (string)null);
                 });
@@ -3056,15 +2995,6 @@ namespace WebApplication1.DAL.Migrations
                     b.Navigation("Company");
                 });
 
-            modelBuilder.Entity("WebApplication1.Domain.Entities.LocationSaleSequence", b =>
-                {
-                    b.HasOne("WebApplication1.Domain.Entities.Location", null)
-                        .WithOne()
-                        .HasForeignKey("WebApplication1.Domain.Entities.LocationSaleSequence", "LocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("WebApplication1.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("WebApplication1.Domain.Entities.PaymentConfirmationToken", "ConfirmationToken")
@@ -3169,15 +3099,6 @@ namespace WebApplication1.DAL.Migrations
                         .WithMany("Sales")
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("WebApplication1.Domain.Entities.Location", null)
-                        .WithMany()
-                        .HasForeignKey("LocationId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("WebApplication1.Domain.Entities.Location", null)
-                        .WithMany("Sales")
-                        .HasForeignKey("LocationId1");
 
                     b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "SalesPerson")
                         .WithMany("Sales")
@@ -3657,8 +3578,6 @@ namespace WebApplication1.DAL.Migrations
                     b.Navigation("EmployeeLocations");
 
                     b.Navigation("ItemLocations");
-
-                    b.Navigation("Sales");
 
                     b.Navigation("StockLevels");
 

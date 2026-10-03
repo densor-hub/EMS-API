@@ -11,7 +11,7 @@ namespace WebApplication1.Domain.Repository
          IQueryable <EmployeeLocation> GetAllByLocationId(Guid locationId);
          IQueryable<EmployeeLocation> GetAllByEmployeeId(Guid employeeId);
         Task DeleteRangeAsync(List<EmployeeLocation> employeeLocation);
-        Task ManageLocationAccess(List<LocationManagement> locations, Guid employeeId, Guid userId);
+        Task ManageLocationAccess(List<Guid> locations, Guid employeeId, Guid userId);
         Task<Location?> HasAccessToLocation(Guid locationId);
     }
 }

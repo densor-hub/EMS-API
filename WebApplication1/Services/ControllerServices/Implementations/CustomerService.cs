@@ -1,5 +1,8 @@
 ﻿// Services/Implementations/CustomerService.cs
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
+using WebApplication1.DAL;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
@@ -21,6 +24,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         private readonly IEmployeeLocationRepository _employeeLocRepositoty;
         private readonly ILocationRepository _locationRepository;
         private readonly ITransactionCodeRepository _transactionCodeRepository;
+        private readonly AppDbContext _context;
 
         public CustomerService(
             ICustomerRepository customerRepository,
@@ -31,7 +35,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             ICompanyRepository companyRepository,
              IEmployeeLocationRepository employeelocRepositoty,
             ILocationRepository locationRepository,
-            ITransactionCodeRepository transactionCodeRepository)
+            ITransactionCodeRepository transactionCodeRepository,
+            AppDbContext context)
         {
             _customerRepository = customerRepository;
             _logger = logger;
@@ -42,6 +47,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             _employeeLocRepositoty = employeelocRepositoty;
             _locationRepository = locationRepository;
             _transactionCodeRepository = transactionCodeRepository;
+            _context = context;
         }
 
         public async Task<IEnumerable<GetCustomerDto>> GetAllCustomersAsync(Guid locationId)
@@ -113,6 +119,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
         public async Task<object> CreateCustomerAsync(CreateCustomerDTO createDto)
         {
+            var transacion =  await   _context.Database.BeginTransactionAsync();
             try
             {
                 //if (!ModelState.IsValid)
@@ -153,8 +160,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 if (!string.IsNullOrEmpty(newCustomer.Email))
                 {
-                    try
-                    {
                         var company = await _companyRepository.GetByIdAsync(currentUser?.CompanyId);
 
                         var BusinessPartnerEmail = new AllEmailsTemplateModel
@@ -179,28 +184,44 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                             PinCode = customer.Code
                         };
 
-                        var template = await _emailTemplateService.RenderEmailTemplateAsync(BusinessPartnerEmail, "BusinessPartnerAdded");
-                        var message = new EmailMessage
+                        //var template = await _emailTemplateService.RenderEmailTemplateAsync(BusinessPartnerEmail, "BusinessPartnerAdded");
+                     
+                        //var message = new EmailMessage
+                        //{
+                        //    Subject = $"{company.Name} added you as a customer at {location.Name}",
+                        //    IsHtml = true,
+                        //    Body = template,
+                        //    To = newCustomer.Email
+                        //};
+
+                        var queuedEmail = new QueuedEmail
                         {
+                            To = customer?.Email ?? "",
                             Subject = $"{company.Name} added you as a customer at {location.Name}",
-                            IsHtml = true,
-                            Body = template,
-                            To = newCustomer.Email
+                            TemplateName = "EmployeeSetPassword", // New template name
+                            TemplateModelJson = JsonSerializer.Serialize(BusinessPartnerEmail),
+                            TemplateModelType = typeof(AllEmailsTemplateModel).AssemblyQualifiedName ?? "",
+                            ReceiverId = customer?.Id ?? Guid.Empty,
+                            CreatedAt = DateTime.UtcNow,
+                            Status = EmailQueueStatus.Pending
                         };
 
-                        _ = Task.Run(() => _emailSenderService.SendEmailAsync(message));
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to send welcome email to customer {CustomerId}", customer.Id);
-                    }
+                      await   _context.QueuedEmails.AddAsync(queuedEmail);
+
+                        await _context.SaveChangesAsync();
+
+                    await transacion.CommitAsync();
+                       /// _ = Task.Run(() => _emailSenderService.SendEmailAsync(message));
+                    
                 }
 
                 return new { Id = newCustomer.Id };
             }
             catch (Exception ex)
             {
+                await transacion.RollbackAsync();
                 _logger.LogError(ex, "Error creating customer");
+
                 throw;
             }
         }

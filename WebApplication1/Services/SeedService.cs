@@ -7,126 +7,188 @@ namespace WebApplication1.Services
 {
     public class SeedService
     {
-        // Define menus with hierarchical structure
-        // Level determines the order within the same parent
+        // Define menus with hierarchical structure.
+        // Level serves as a global ordering key (lower = earlier).
         private static readonly List<MenuDefinition> MenuDefinitions = new()
         {
             new MenuDefinition
             {
-                Id = Guid.Parse("51c32656-ba18-4bb7-8594-e9deff2f4751"),
+                Id = Guid.Parse("8b1e4f7a-2c3d-4e5f-9a6b-7c8d9e0f1a2b"),
                 Title = "Dashboard",
                 Path = "/dashboard",
-                Level = 1,  // Order: 1st in root
-                Children = new List<MenuDefinition>()
+                Level = 1,
             },
             new MenuDefinition
             {
-                Id = Guid.Parse("5630bcf8-941b-49c4-a9ed-8655ceb7b659"),
-                Title = "Transactions",
-                Path = "/dashboard/transactions",
-                Level = 2,  // Order: 2nd in root
+                Id = Guid.Parse("3f9c2a7e-6b4d-4c8a-9e1f-5a2b3c4d5e6f"),
+                Title = "POS",
+                Path = "/POS",
+                Level = 2,
                 Children = new List<MenuDefinition>
                 {
                     new MenuDefinition
                     {
-                        Id = Guid.Parse("5b5ec551-d58b-4f4f-b695-b68374c0b428"),
-                        Title = "Deposit",
-                        Path = "/dashboard/transactions/deposit",
-                        Level = 2.1  // Order: 1st in Transactions
-                    },
-                    new MenuDefinition
-                    {
-                        Id = Guid.Parse("bd5bc70e-e051-4d11-9edc-2692cd2276ff"),
-                        Title = "Purchase",
-                        Path = "/dashboard/transactions/purchase",
-                        Level = 2.2  // Order: 2nd in Transactions
-                    },
-                    new MenuDefinition
-                    {
-                        Id = Guid.Parse("63f32299-2135-4704-b82e-516250845f09"),
+                        Id = Guid.Parse("c4d5e6f7-8a9b-4c1d-9e2f-3a4b5c6d7e8f"),
                         Title = "Sale",
-                        Path = "/dashboard/transactions/sale",
-                        Level = 2.3  // Order: 3rd in Transactions
+                        Path = "/POS/sale",
+                        Level = 2.1,
                     },
                     new MenuDefinition
                     {
-                        Id = Guid.Parse("03305554-06a8-46ec-9227-751781e1619d"),
-                        Title = "Stock",
-                        Path = "/dashboard/transactions/stock",
-                        Level = 2.4  // Order: 4th in Transactions
-                    }
-                }
+                        Id = Guid.Parse("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
+                        Title = "Receipt",
+                        Path = "/POS/receipt",
+                        Level = 2.2,
+                    },
+                },
             },
             new MenuDefinition
             {
-                Id = Guid.Parse("5201b8ff-e381-4e8d-beba-2181862f996a"),
-                Title = "Setup",
-                Path = "/dashboard/setup",
-                Level = 3,  // Order: 3rd in root
+                Id = Guid.Parse("7e8f9a0b-1c2d-4e3f-9a4b-5c6d7e8f9a0b"),
+                Title = "Operations",
+                Path = "/operations",
+                Level = 3,
                 Children = new List<MenuDefinition>
                 {
                     new MenuDefinition
                     {
-                        Id = Guid.Parse("0504516a-47b7-49b9-a083-88d2b6b4ad40"),
-                        Title = "Roles",
-                        Path = "/dashboard/setup/roles",
-                        Level = 3.1  // Order: 1st in Setup
+                        Id = Guid.Parse("2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"),
+                        Title = "Purchases",
+                        Path = "/operations/purchase",
+                        Level = 3.1,
                     },
                     new MenuDefinition
                     {
-                        Id = Guid.Parse("6201b8ff-e381-4e8d-beba-2181862f997a"),
-                        Title = "Employees",
-                        Path = "/dashboard/setup/employees",
-                        Level = 3.2  // Order: 2nd in Setup
+                        Id = Guid.Parse("9c0d1e2f-3a4b-4c5d-9e6f-7a8b9c0d1e2f"),
+                        Title = "Customer Sales",
+                        Path = "/operations/customer",
+                        Level = 3.2,
                     },
                     new MenuDefinition
                     {
-                        Id = Guid.Parse("3bfe453d-2244-449b-aca2-e818c891dc7b"),
-                        Title = "Suppliers",
-                        Path = "/dashboard/setup/suppliers",
-                        Level = 3.3  // Order: 3rd in Setup
+                        Id = Guid.Parse("4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a"),
+                        Title = "Disbursements",
+                        Path = "/operations/disbursements",
+                        Level = 3.3,
                     },
-                    new MenuDefinition
-                    {
-                        Id = Guid.Parse("a9925b1f-f0b8-49b6-881e-c977d829a3bd"),
-                        Title = "Customers",
-                        Path = "/dashboard/setup/customers",
-                        Level = 3.4  // Order: 4th in Setup
-                    },
-                    new MenuDefinition
-                    {
-                        Id = Guid.Parse("bd6efe66-0e95-4857-8b84-e8c15ab60779"),
-                        Title = "Shops",
-                        Path = "/dashboard/setup/shops",
-                        Level = 3.5  // Order: 5th in Setup
-                    },
-                    new MenuDefinition
-                    {
-                        Id = Guid.Parse("ca7c3a1a-5b18-4fb8-bdf5-0a2d4eb37629"),
-                        Title = "Items",
-                        Path = "/dashboard/setup/items",
-                        Level =3.6  // Order: 6th in Setup
-                    }
-                }
+                },
             },
             new MenuDefinition
             {
-                Id = Guid.Parse("265f0a27-ddff-4a46-9222-2424be683c22"),
+                Id = Guid.Parse("5e6f7a8b-9c0d-4e1f-9a2b-3c4d5e6f7a8b"),
+                Title = "Stock Management",
+                Path = "/stock-management/stock",
+                Level = 4,
+                Children = new List<MenuDefinition>
+                {
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("0d1e2f3a-4b5c-4d6e-9f7a-8b9c0d1e2f3a"),
+                        Title = "Stock Lock",
+                        Path = "/stock-management/stock-lock",
+                        Level = 4.1,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("a1b2c3d4-e5f6-4a7b-9c8d-0e1f2a3b4c5d"),
+                        Title = "Stock Take",
+                        Path = "/stock-management/stock-take",
+                        Level = 4.2,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("f7a8b9c0-d1e2-4f3a-9b4c-5d6e7f8a9b0c"),
+                        Title = "Stock Verification",
+                        Path = "/stock-management/stock-verification",
+                        Level = 4.3,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("6e7f8a9b-0c1d-4e2f-9a3b-4c5d6e7f8a9b"),
+                        Title = "Stock Transfer",
+                        Path = "/stock-management/stock-transfer",
+                        Level = 4.4,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("b8c9d0e1-f2a3-4b4c-9d5e-6f7a8b9c0d1e"),
+                        Title = "Stock Transfer Approval",
+                        Path = "/stock-management/stock-transfer-approval",
+                        Level = 4.5,
+                    },
+                },
+            },
+            new MenuDefinition
+            {
+                Id = Guid.Parse("2f3a4b5c-6d7e-4f8a-9b0c-1d2e3f4a5b6c"),
+                Title = "Set up",
+                Path = "/dashboard/setup",
+                Level = 5,
+                Children = new List<MenuDefinition>
+                {
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("7a8b9c0d-1e2f-4a3b-9c4d-5e6f7a8b9c0d"),
+                        Title = "Shops",
+                        Path = "/setup/shops",
+                        Level = 5.1,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("c1d2e3f4-a5b6-4c7d-9e8f-0a1b2c3d4e5f"),
+                        Title = "Roles",
+                        Path = "/setup/roles",
+                        Level = 5.2,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e"),
+                        Title = "Employees",
+                        Path = "/setup/employees",
+                        Level = 5.3,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a"),
+                        Title = "Items",
+                        Path = "/setup/items",
+                        Level = 5.4,
+                    },
+                    // ⚠️ NEW unique GUID for Customers (was colliding with "Customer Sales")
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("f1e2d3c4-b5a6-4978-8e9f-0a1b2c3d4e5f"),
+                        Title = "Customers",
+                        Path = "/setup/customers",
+                        Level = 5.5,
+                    },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("e5f6a7b8-c9d0-4e1f-9a2b-3c4d5e6f7a8b"),
+                        Title = "Suppliers",
+                        Path = "/setup/suppliers",
+                        Level = 5.6,
+                    },
+                },
+            },
+            new MenuDefinition
+            {
+                Id = Guid.Parse("3a4b5c6d-7e8f-4a9b-9c0d-1e2f3a4b5c6d"),
                 Title = "Reports",
-                Path = "/dashboard/reports",
-                Level = 4,  // Order: 4th in root
-                Children = new List<MenuDefinition>()
-            }
+                Path = "/reports",
+                Level = 6,
+            },
         };
 
         public static async Task SeedMenusHierarchicalAsync(AppDbContext context)
         {
-            // Flatten the hierarchical structure and assign ParentIds
             var allMenus = new List<ApplicationRoute>();
             FlattenMenuDefinitions(MenuDefinitions, null, allMenus);
 
-            // Get existing menus for change detection
-            var existingMenus = await context.ApplicationRoutes.ToDictionaryAsync(r => r.Id);
+            // ✅ AsNoTracking so the lookup doesn't pollute the change tracker
+            var existingMenus = await context.ApplicationRoutes
+                .AsNoTracking()
+                .ToDictionaryAsync(r => r.Id);
 
             var menusToAdd = new List<ApplicationRoute>();
             var menusToUpdate = new List<ApplicationRoute>();
@@ -135,42 +197,18 @@ namespace WebApplication1.Services
             {
                 if (existingMenus.TryGetValue(menu.Id, out var existingMenu))
                 {
-                    // Check for changes
-                    bool hasChanges = false;
-
-                    if (existingMenu.Title != menu.Title)
-                    {
-                        existingMenu.Title = menu.Title;
-                        hasChanges = true;
-                    }
-
-                    if (existingMenu.Status != menu.Status)
-                    {
-                        existingMenu.Status = menu.Status;
-                        hasChanges = true;
-                    }
-
-                    if (existingMenu.Level != menu.Level)
-                    {
-                        existingMenu.Level = menu.Level;
-                        hasChanges = true;
-                    }
-
-                    if (existingMenu.ParentId != menu.ParentId)
-                    {
-                        existingMenu.ParentId = menu.ParentId;
-                        hasChanges = true;
-                    }
-
-                    if (existingMenu.Path != menu.Path)
-                    {
-                        existingMenu.Path = menu.Path;
-                        hasChanges = true;
-                    }
+                    bool hasChanges =
+                        existingMenu.Title != menu.Title ||
+                        existingMenu.Status != menu.Status ||
+                        existingMenu.Level != menu.Level ||
+                        existingMenu.ParentId != menu.ParentId ||
+                        existingMenu.Path != menu.Path;
 
                     if (hasChanges)
                     {
-                        menusToUpdate.Add(existingMenu);
+                        // ✅ Attach the *incoming* entity (from MenuDefinitions) as Modified
+                        context.ApplicationRoutes.Update(menu);
+                        menusToUpdate.Add(menu);
                     }
                 }
                 else
@@ -179,44 +217,39 @@ namespace WebApplication1.Services
                 }
             }
 
-            // Add new menus
-            if (menusToAdd.Any())
-            {
+            if (menusToAdd.Count > 0)
                 await context.ApplicationRoutes.AddRangeAsync(menusToAdd);
-            }
 
-            // Update changed menus
-            if (menusToUpdate.Any())
-            {
+            if (menusToUpdate.Count > 0)
                 context.ApplicationRoutes.UpdateRange(menusToUpdate);
-            }
 
             await context.SaveChangesAsync();
+
+            // ✅ Detach everything so a subsequent call in the same scope is clean
+            context.ChangeTracker.Clear();
         }
 
         private static void FlattenMenuDefinitions(
             IEnumerable<MenuDefinition> menuDefinitions,
             Guid? parentId,
-            List<ApplicationRoute> flattenedMenus,
-            int depth = 0)
+            List<ApplicationRoute> flattenedMenus)
         {
             foreach (var definition in menuDefinitions.OrderBy(m => m.Level))
             {
                 var menu = ApplicationRoute.Create(
                     definition.Id,
                     definition.Title,
-                    true, // Status
-                    definition.Level, // Level serves as OrderKey
+                    true,             // Status
+                    definition.Level, // OrderKey
                     parentId,
                     definition.Path
                 );
 
                 flattenedMenus.Add(menu);
 
-                // Process children recursively
                 if (definition.Children != null && definition.Children.Any())
                 {
-                    FlattenMenuDefinitions(definition.Children, definition.Id, flattenedMenus, depth + 1);
+                    FlattenMenuDefinitions(definition.Children, definition.Id, flattenedMenus);
                 }
             }
         }
@@ -226,7 +259,7 @@ namespace WebApplication1.Services
             var adminPositionId = new Guid("00000000-0000-0000-0000-000000000001");
             var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
 
-            // 1. Create ADMIN position if missing
+            // 1. Ensure ADMIN position exists
             var adminPosition = await context.Positions.FindAsync(adminPositionId);
             if (adminPosition == null)
             {
@@ -243,18 +276,22 @@ namespace WebApplication1.Services
                 await context.SaveChangesAsync();
             }
 
-            // 2. Get all routes and existing position routes for ADMIN
+            // 2. Load all routes (no tracking — we only read Ids)
             var allRoutes = await context.ApplicationRoutes
-                .OrderBy(r => r.Level)  // Order by Level for consistent ordering
+                .AsNoTracking()
+                .OrderBy(r => r.Level)
                 .ToListAsync();
 
             var existingPositionRouteIds = await context.PositionRoutes
+                .AsNoTracking()
                 .Where(pr => pr.PositionId == adminPositionId)
                 .Select(pr => pr.AppRouteId)
                 .ToListAsync();
 
             // 3. Create missing PositionRoutes
-            var routesToAdd = allRoutes.Where(r => !existingPositionRouteIds.Contains(r.Id));
+            var routesToAdd = allRoutes
+                .Where(r => !existingPositionRouteIds.Contains(r.Id))
+                .ToList();
 
             foreach (var route in routesToAdd)
             {
@@ -268,30 +305,43 @@ namespace WebApplication1.Services
                 context.PositionRoutes.Add(positionRoute);
             }
 
-            await SeedService.SeedMenusHierarchicalAsync(context);
-
             await context.SaveChangesAsync();
+
+            // ✅ Clean tracker for the next seed call
+            context.ChangeTracker.Clear();
         }
 
         public static async Task SeedDefaultCompanyAndAdminAsync(
-            AppDbContext context,
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+     AppDbContext context,
+     UserManager<ApplicationUser> userManager,
+     RoleManager<IdentityRole> roleManager)
         {
-            // Check if default company already exists
+            // 0. Ensure roles exist
+            foreach (var roleName in new[] { "SuperAdmin", "CompanyAdmin" })
+            {
+                if (!await roleManager.RoleExistsAsync(roleName))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                    Console.WriteLine($"Role '{roleName}' created.");
+                }
+            }
+
+            // 1. Default company
             var defaultCompanyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
             var defaultCompany = await context.Companies
                 .FirstOrDefaultAsync(c => c.Id == defaultCompanyId);
 
             if (defaultCompany == null)
             {
-                defaultCompany = Company.Create(defaultCompanyId, "Default Company", "1234567890", "admin@company.com", true, DateTime.UtcNow);
+                defaultCompany = Company.Create(
+                    defaultCompanyId, "Default Company", "1234567890",
+                    "admin@company.com", true, DateTime.UtcNow);
                 await context.Companies.AddAsync(defaultCompany);
                 await context.SaveChangesAsync();
                 Console.WriteLine("Default company created.");
             }
 
-            // Create super admin user
+            // 2. Super admin user
             var adminEmail = "superadmin@company.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -311,15 +361,29 @@ namespace WebApplication1.Services
 
                 var result = await userManager.CreateAsync(adminUser, "Admin@123");
 
-                if (result.Succeeded)
+                if (!result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
-                    await userManager.AddToRoleAsync(adminUser, "CompanyAdmin");
-                    Console.WriteLine("Super admin user created.");
+                    Console.WriteLine(
+                        "Failed to create super admin: " +
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                    return;
                 }
-                else
+                Console.WriteLine("Super admin user created.");
+            }
+
+            // 3. Ensure super admin has both roles (idempotent)
+            var currentRoles = await userManager.GetRolesAsync(adminUser);
+            foreach (var roleName in new[] { "SuperAdmin", "CompanyAdmin" })
+            {
+                if (!currentRoles.Contains(roleName))
                 {
-                    Console.WriteLine("Failed to create super admin: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+                    var roleResult = await userManager.AddToRoleAsync(adminUser, roleName);
+                    if (roleResult.Succeeded)
+                        Console.WriteLine($"Assigned role '{roleName}' to super admin.");
+                    else
+                        Console.WriteLine(
+                            $"Failed to assign role '{roleName}': " +
+                            string.Join(", ", roleResult.Errors.Select(e => e.Description)));
                 }
             }
         }
@@ -329,9 +393,9 @@ namespace WebApplication1.Services
     public class MenuDefinition
     {
         public Guid Id { get; set; }
-        public string Title { get; set; }
-        public string Path { get; set; }
-        public double Level { get; set; }  // Serves as OrderKey within the same parent
+        public string Title { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public double Level { get; set; }
         public List<MenuDefinition> Children { get; set; } = new();
     }
 }

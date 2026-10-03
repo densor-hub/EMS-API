@@ -175,6 +175,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                 : "",
                 //TransactionBy = sales.SalesPerson != null ? sales.SalesPerson.FullName : "",
                 CreatedAt = deliveryRequest.Sale.CreatedAt,
+                Count = deliveryRequest.Sale.IncrementalId,
                 TransactionDate = deliveryRequest.Sale.Transaction != null ? deliveryRequest.Sale.Transaction.TransactionDate : DateTime.MinValue,
                 TotalAmount = transactionTotal,
                 PaidAmount = totalPayment,
@@ -190,6 +191,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             };
         }
+
+
 
     }
 }

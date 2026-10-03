@@ -50,7 +50,7 @@ namespace WebApplication1.DAL.Repository
                 .Where(x => x.LocationId == locId);
         }
 
-        public async Task ManageLocationAccess(List<LocationManagement> locations, Guid employeeId, Guid userId)
+        public async Task ManageLocationAccess(List<Guid> locations, Guid employeeId, Guid userId)
         {
             if (employeeId == Guid.Empty)
                 throw new ArgumentException("EmployeeId cannot be empty", nameof(employeeId));
@@ -58,22 +58,33 @@ namespace WebApplication1.DAL.Repository
             if (userId == Guid.Empty)
                 throw new ArgumentException("UserId cannot be empty", nameof(userId));
 
-            var submittedLocations = locations.Select(x => x.LocationId).ToList();
+            var submittedLocations = locations.ToList();
 
-           
-            if (locations.Count > 0)
+            if (submittedLocations.Count > 0)
             {
-                var validSubmittedLocations = _locationRepository.ExistingLocations(submittedLocations);
-                var validLocationIds = new HashSet<Guid>(validSubmittedLocations.Select(x => x.Id));
+                // 1. Fetch the valid Locations FIRST — plain SELECT, no Guid.NewGuid in the projection.
+                //    This is the critical fix: materialize before projecting.
+                var validSubmittedLocations = _locationRepository
+                    .ExistingLocations(submittedLocations)
+                    .ToList();
 
-                var currentEmployeeLocations = _context.EmployeeLocations.Where(x=> x.EmployeeId == employeeId);
-                var currentLocationIds = new HashSet<Guid>(currentEmployeeLocations.Select(x => x.LocationId));
+                var validLocationIds = new HashSet<Guid>(
+                    validSubmittedLocations.Select(x => x.Id)
+                );
 
-                // Track if any changes were made
+                // 2. Materialize current EmployeeLocations ONCE so subsequent enumerations
+                //    don't re-query the database.
+                var currentEmployeeLocations = _context.EmployeeLocations
+                    .Where(x => x.EmployeeId == employeeId)
+                    .ToList();
+
+                var currentLocationIds = new HashSet<Guid>(
+                    currentEmployeeLocations.Select(x => x.LocationId)
+                );
+
                 bool hasChanges = false;
 
-
-                // Update existing locations
+                // 3. Update existing locations
                 foreach (var location in currentEmployeeLocations)
                 {
                     bool shouldHaveAccess = validLocationIds.Contains(location.LocationId);
@@ -83,7 +94,7 @@ namespace WebApplication1.DAL.Repository
                         location.ActivateAccess();
                         hasChanges = true;
                     }
-                    else if (!shouldHaveAccess && location.Status == true)
+                    else if (!shouldHaveAccess && location.Status)
                     {
                         location.RemoveAccess();
                         hasChanges = true;
@@ -95,7 +106,7 @@ namespace WebApplication1.DAL.Repository
                     _context.EmployeeLocations.UpdateRange(currentEmployeeLocations);
                 }
 
-                // Add new locations
+                // 4. Build new locations in memory — Guid.NewGuid() now runs in C#, not SQL.
                 var newLocations = validSubmittedLocations
                     .Where(x => !currentLocationIds.Contains(x.Id))
                     .Select(loc => EmployeeLocation.Create(
@@ -106,31 +117,29 @@ namespace WebApplication1.DAL.Repository
                         userId,
                         true,
                         false
-                        ));
+                    ))
+                    .ToList();
 
-                if (newLocations.Any())
+                if (newLocations.Count > 0)
                 {
                     await _context.EmployeeLocations.AddRangeAsync(newLocations);
                 }
-
-                // Only update if something actually changed
-                if (hasChanges || newLocations.Any())
-                {
-                }
-
             }
-            else {
-                var employeeLocations = _context.EmployeeLocations.Where(x=> x.EmployeeId == employeeId);
+            else
+            {
+                // No locations submitted — revoke access to all current ones.
+                var employeeLocations = _context.EmployeeLocations
+                    .Where(x => x.EmployeeId == employeeId)
+                    .ToList();
+
                 foreach (var location in employeeLocations)
                 {
                     location.RemoveAccess();
                 }
+
                 _context.EmployeeLocations.UpdateRange(employeeLocations);
             }
-
-            await Task.CompletedTask;
         }
-
         public async Task AddAsync(EmployeeLocation employeeLocation)
         {
             await _context.AddAsync(employeeLocation);

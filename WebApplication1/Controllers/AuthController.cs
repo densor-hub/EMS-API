@@ -163,11 +163,15 @@ namespace WebApplication1.Controllers
             }
         }
 
-
+         [AllowAnonymous]
         [HttpGet("Account/Confirm")]
-        [AllowAnonymous]
+       
         public async Task<IActionResult> ConfirmAccount([FromQuery] string token, [FromQuery] string email)
         {
+
+            _logger.LogInformation("Token length: {Len}", token?.Length ?? 0);
+            _logger.LogInformation("Token raw: {Token}", token);
+            _logger.LogInformation("Email: {Email}", email);
 
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(email))
                 return BadRequest(new { message = "Invalid or missing parameters" });
@@ -230,6 +234,29 @@ namespace WebApplication1.Controllers
                 return StatusCode(500, new { message = "An error occurred" });
             }
         }
+
+        ////[HttpPost("Resend-Invitation")]
+        ////public async Task<IActionResult> ResendInvitation([FromBody] ResendInvitationDto dto)
+        ////{
+        ////    var user = await _userManager.FindByEmailAsync(dto.Email);
+        ////    if (user == null)
+        ////        // Don't reveal whether the email exists — always return OK
+        ////        return Ok(new { message = "If the email exists, a new link has been sent." });
+
+        ////    var newToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        ////    var encodedToken = Uri.EscapeDataString(newToken);
+        ////    var encodedEmail = Uri.EscapeDataString(user.Email);
+        ////    var resetUrl = $"{_emailSettings.FrontendUrl}/account/confirmation?token={encodedToken}&email={encodedEmail}";
+
+        ////    // Queue a new email — same template, new URL
+        ////    var employee = await _employeeRepository.GetByEmailAsync(user.Email);
+        ////    if (employee != null)
+        ////    {
+        ////        // build model, queue email (same as your invite flow)
+        ////    }
+
+        ////    return Ok(new { message = "If the email exists, a new link has been sent." });
+        ////}
     }
 
 }

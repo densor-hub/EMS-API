@@ -171,170 +171,368 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     throw new Exception("Email already registered");
             }
 
+            Guid createdEmployeeId;
+            string createdEmployeeCode;
 
-            using var transaction = await _appDbContext.Database.BeginTransactionAsync();
-
-            try
+            // =========================================================
+            // Phase 1: Create employee + user + locations in a transaction
+            // =========================================================
+            using (var transaction = await _appDbContext.Database.BeginTransactionAsync())
             {
-
-                // 4. CHECK - Existing user
-                if (createDto.IsAppUser)
+                try
                 {
-                    if (string.IsNullOrWhiteSpace(createDto.Email))
-                        throw new Exception("Email is required for app users");
+                    var empId = Guid.NewGuid();
 
-                    var existingUser = await _userManager.FindByEmailAsync(createDto.Email);
-                    if (existingUser != null)
-                        throw new Exception("Email already registered");
-                }
+                    var employee = Employee.Create(
+                        empId,
+                        createDto.FirstName,
+                        createDto.LastName,
+                        createDto.Email ?? "",
+                        "",
+                        createDto.PositionId,
+                        createDto.Phone,
+                        DateTime.SpecifyKind(createDto.HireDate, DateTimeKind.Utc),
+                        createDto.Salary,
+                        EmployeeStatus.Active,
+                        (Guid)currentUser.CompanyId,
+                        createDto.Address ?? "",
+                        createDto.IsAppUser,
+                        DateTime.UtcNow,
+                        Guid.Parse(currentUser.Id),
+                        empId.ToString()
+                    );
 
-                // 5. CREATE - Employee
-                var empId = Guid.NewGuid();
+                    await _employeeRepository.CreateAsync(employee);
 
-                
-                var employee = Employee.Create(
-                   empId,
-                    createDto.FirstName,
-                    createDto.LastName,
-                    createDto.Email ?? "",
-                    "",
-                    createDto.PositionId,
-                    createDto.Phone,
-                    DateTime.SpecifyKind(createDto.HireDate, DateTimeKind.Utc),
-                    createDto.Salary,
-                    EmployeeStatus.Active,
-                    (Guid)currentUser.CompanyId,
-                    createDto.Address ?? "",
-                    createDto.IsAppUser,
-                    DateTime.UtcNow,
-                    Guid.Parse(currentUser.Id),
-                    empId.ToString()
-                );
-
-
-                await _employeeRepository.CreateAsync(employee);
-
-
-
-                // 6. CREATE - App User if needed (without password)
-                if (createDto.IsAppUser)
-                {
-                    var userAccountForEmployee = new ApplicationUser
+                    if (createDto.IsAppUser)
                     {
-                        Id = employee.Id.ToString(),
-                        UserName = employee.Email,
-                        Email = employee.Email,
-                        FullName = $"{employee.FirstName} {employee.LastName}",
-                        PhoneNumber = employee.Phone,
-                        CreatedAt = DateTime.UtcNow,
-                        Status = true,
-                        CompanyId = employee.CompanyId,
-                    };
+                        var userAccountForEmployee = new ApplicationUser
+                        {
+                            Id = employee.Id.ToString(),
+                            UserName = employee.Email,
+                            Email = employee.Email,
+                            FullName = $"{employee.FirstName} {employee.LastName}",
+                            PhoneNumber = employee.Phone,
+                            CreatedAt = DateTime.UtcNow,
+                            Status = true,
+                            CompanyId = employee.CompanyId,
+                        };
 
-                    // Create user without password - will use password reset flow
-                    var createUserResult = await _userManager.CreateAsync(userAccountForEmployee);
+                        var createUserResult = await _userManager.CreateAsync(userAccountForEmployee);
 
-                    if (!createUserResult.Succeeded)
-                    {
-                        await transaction.RollbackAsync();
-                        var errors = createUserResult.Errors.Select(e => e.Description);
-                        throw new Exception($"User creation failed: {string.Join(", ", errors)}");
+                        if (!createUserResult.Succeeded)
+                        {
+                            await transaction.RollbackAsync();
+                            var errors = createUserResult.Errors.Select(e => e.Description);
+                            throw new Exception($"User creation failed: {string.Join(", ", errors)}");
+                        }
                     }
+
+                    if (validLocations.Any())
+                    {
+                        var employeeLocations = validLocations.Select(x =>
+                            EmployeeLocation.Create(
+                                Guid.NewGuid(),
+                                x.Id,
+                                employee.Id,
+                                DateTime.UtcNow,
+                                Guid.Parse(currentUser.Id),
+                                true,
+                                false
+                            )
+                        ).ToList();
+
+                        await _employeeLocationRepository.AddRangeAsync(employeeLocations);
+                    }
+
+                    await _appDbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    createdEmployeeId = employee.Id;
+                    createdEmployeeCode = employee.Code;
                 }
-
-                // 7. CREATE - Employee Locations
-                if (validLocations.Any())
+                catch (Exception ex)
                 {
-                    var employeeLocations = validLocations.Select(x =>
-                        EmployeeLocation.Create(
-                            Guid.NewGuid(),
-                            x.Id,
-                            employee.Id,
-                            DateTime.UtcNow,
-                            Guid.Parse(currentUser.Id),
-                            true,
-                            false
-                        )
-                    ).ToList();
-
-                    await _employeeLocationRepository.AddRangeAsync(employeeLocations);
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error creating employee");
+                    throw;
                 }
+            }
 
-                // 8. SEND - Password Reset Email
-                if (createDto.IsAppUser)
+            // =========================================================
+            // Phase 2: OUTSIDE the transaction — reload user, generate token, queue email
+            // =========================================================
+            if (createDto.IsAppUser)
+            {
+                try
                 {
-                    var company = await _companyRepository.GetByIdAsync(currentUser.CompanyId);
-                    var user = await _userManager.FindByEmailAsync(employee.Email);
+                    var company = await _companyRepository.GetByIdAsync((Guid)currentUser.CompanyId);
+
+                    // Reload the user from the database so SecurityStamp is the committed one
+                    var user = await _userManager.FindByEmailAsync(createDto.Email!);
 
                     if (user != null)
                     {
-                        // Generate password reset token
+                        // Token generated against the committed user and stamp
                         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-                        // URL encode the token
                         var encodedToken = Uri.EscapeDataString(resetToken);
-                        var encodedEmail = Uri.EscapeDataString(employee.Email);
+                        var encodedEmail = Uri.EscapeDataString(user.Email!);
 
-                        // Build reset password URL
-                        var resetUrl = $"{_emailSettings.AppUrl}/Account/Confirmation?token={encodedToken}&email={encodedEmail}";
-
-                        // You can also use the frontend route
-                        // var resetUrl = $"{_emailSettings.FrontendUrl}/auth/reset-password?token={encodedToken}&email={encodedEmail}";
+                        var resetUrl = $"{_emailSettings.AppUrl}/account/confirmation?token={encodedToken}&email={encodedEmail}";
 
                         var employeeAppAccessEmail = new AllEmailsTemplateModel
                         {
                             CompanyName = company.Name,
                             AppName = "EMS",
-                            ReceiverName = $"{employee.FirstName} {employee.LastName}",
+                            ReceiverName = $"{createDto.FirstName} {createDto.LastName}",
                             ReceiverRole = validPosition.Title,
-                            ReceiverUserName = employee.Email,
-                            AppUrl = _emailSettings.AppUrl,
+                            ReceiverUserName = user.Email!,
+                            AppUrl = resetUrl,
                             SupportName = company.Name,
                             SupportEmail = company.Email,
                             SupportPhone = company.PhoneNumber,
-                            PinCode = employee.Code
+                            PinCode = createdEmployeeCode
                         };
 
                         var queuedEmail = new QueuedEmail
                         {
-                            To = employee.Email,
+                            To = user.Email!,
                             Subject = $"Welcome to {company.Name} - Set Your Password",
-                            TemplateName = "EmployeeSetPassword", // New template name
+                            TemplateName = "EmployeeSetPassword",
                             TemplateModelJson = JsonSerializer.Serialize(employeeAppAccessEmail),
                             TemplateModelType = typeof(AllEmailsTemplateModel).AssemblyQualifiedName,
-                            ReceiverId = employee.Id,
+                            ReceiverId = createdEmployeeId,
                             CreatedAt = DateTime.UtcNow,
                             Status = EmailQueueStatus.Pending
                         };
 
                         await _appDbContext.QueuedEmails.AddAsync(queuedEmail);
+                        await _appDbContext.SaveChangesAsync();
                     }
                 }
-
-                // 9. SAVE - All changes
-                await transaction.CommitAsync();
-
-                return new EmployeeResponseDto
+                catch (Exception ex)
                 {
-                    Id = employee.Id,
-                    Code = employee.Code,
-                    Message = createDto.IsAppUser ?
-                        "Employee created successfully. A password setup link has been sent to their email." :
-                        "Employee created successfully."
-                };
+                    // Employee was created successfully; email failed. Log but don't roll back.
+                    _logger.LogError(ex, "Employee created but invite email could not be queued for {Email}", createDto.Email);
+                }
             }
-            catch (Exception ex)
+
+            return new EmployeeResponseDto
             {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error creating employee");
-                throw;
-            }
+                Id = createdEmployeeId,
+                Code = createdEmployeeCode,
+                Message = createDto.IsAppUser
+                    ? "Employee created successfully. A password setup link has been sent to their email."
+                    : "Employee created successfully."
+            };
         }
+
+        //public async Task<object> CreateEmployeeAsync(CreateEmployeeDto createDto, Guid createdAtLocation)
+        //{
+        //    if (!Enum.IsDefined(typeof(EmployeeStatus), createDto.Status))
+        //        throw new Exception("Submitted Status is incorrect");
+
+        //    if (createDto.IsAppUser && string.IsNullOrEmpty(createDto.Email))
+        //        throw new Exception("Email is required app users");
+
+        //    var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
+        //    if (currentUser == null)
+        //        throw new Exception("User not found");
+
+        //    List<Location> validLocations = new List<Location>();
+        //    if (createDto.Locations?.Any() == true)
+        //    {
+        //        validLocations = _locationRepository.ExistingLocations(createDto.Locations).ToList();
+        //        if (!validLocations.Any())
+        //            throw new Exception("Invalid shops submitted");
+        //    }
+
+        //    if (currentUser?.CompanyId == null)
+        //        throw new Exception("Unable to determine user company");
+
+        //    var validPosition = await _positionRepository.GetByIdAsync(createDto.PositionId);
+        //    if (validPosition == null || validPosition.CompanyId != currentUser.CompanyId)
+        //        throw new Exception("Invalid position submitted");
+
+        //    if (createDto.IsAppUser)
+        //    {
+        //        if (string.IsNullOrWhiteSpace(createDto.Email))
+        //            throw new Exception("Email is required for app users");
+
+        //        var existingUser = await _userManager.FindByEmailAsync(createDto.Email);
+        //        if (existingUser != null)
+        //            throw new Exception("Email already registered");
+        //    }
+
+
+        //    using var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
+        //    try
+        //    {
+
+        //        // 4. CHECK - Existing user
+        //        if (createDto.IsAppUser)
+        //        {
+        //            if (string.IsNullOrWhiteSpace(createDto.Email))
+        //                throw new Exception("Email is required for app users");
+
+        //            var existingUser = await _userManager.FindByEmailAsync(createDto.Email);
+        //            if (existingUser != null)
+        //                throw new Exception("Email already registered");
+        //        }
+
+        //        // 5. CREATE - Employee
+        //        var empId = Guid.NewGuid();
+
+
+        //        var employee = Employee.Create(
+        //           empId,
+        //            createDto.FirstName,
+        //            createDto.LastName,
+        //            createDto.Email ?? "",
+        //            "",
+        //            createDto.PositionId,
+        //            createDto.Phone,
+        //            DateTime.SpecifyKind(createDto.HireDate, DateTimeKind.Utc),
+        //            createDto.Salary,
+        //            EmployeeStatus.Active,
+        //            (Guid)currentUser.CompanyId,
+        //            createDto.Address ?? "",
+        //            createDto.IsAppUser,
+        //            DateTime.UtcNow,
+        //            Guid.Parse(currentUser.Id),
+        //            empId.ToString()
+        //        );
+
+
+        //        await _employeeRepository.CreateAsync(employee);
+
+
+
+        //        // 6. CREATE - App User if needed (without password)
+        //        if (createDto.IsAppUser)
+        //        {
+        //            var userAccountForEmployee = new ApplicationUser
+        //            {
+        //                Id = employee.Id.ToString(),
+        //                UserName = employee.Email,
+        //                Email = employee.Email,
+        //                FullName = $"{employee.FirstName} {employee.LastName}",
+        //                PhoneNumber = employee.Phone,
+        //                CreatedAt = DateTime.UtcNow,
+        //                Status = true,
+        //                CompanyId = employee.CompanyId,
+        //            };
+
+        //            // Create user without password - will use password reset flow
+        //            var createUserResult = await _userManager.CreateAsync(userAccountForEmployee);
+
+        //            if (!createUserResult.Succeeded)
+        //            {
+        //                await transaction.RollbackAsync();
+        //                var errors = createUserResult.Errors.Select(e => e.Description);
+        //                throw new Exception($"User creation failed: {string.Join(", ", errors)}");
+        //            }
+        //        }
+
+        //        // 7. CREATE - Employee Locations
+        //        if (validLocations.Any())
+        //        {
+        //            var employeeLocations = validLocations.Select(x =>
+        //                EmployeeLocation.Create(
+        //                    Guid.NewGuid(),
+        //                    x.Id,
+        //                    employee.Id,
+        //                    DateTime.UtcNow,
+        //                    Guid.Parse(currentUser.Id),
+        //                    true,
+        //                    false
+        //                )
+        //            ).ToList();
+
+        //            await _employeeLocationRepository.AddRangeAsync(employeeLocations);
+        //        }
+
+        //        // 8. SEND - Password Reset Email
+        //        if (createDto.IsAppUser)
+        //        {
+        //            var company = await _companyRepository.GetByIdAsync(currentUser.CompanyId);
+        //            var user = await _userManager.FindByEmailAsync(employee.Email);
+
+        //            if (user != null)
+        //            {
+        //                // Generate password reset token
+        //                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        //                // URL encode the token
+        //                var encodedToken = Uri.EscapeDataString(resetToken);
+        //                var encodedEmail = Uri.EscapeDataString(employee.Email);
+
+        //                // Build reset password URL
+        //                var resetUrl = $"{_emailSettings.AppUrl}/account/confirmation?token={encodedToken}&email={encodedEmail}";
+
+        //                // You can also use the frontend route
+        //                // var resetUrl = $"{_emailSettings.FrontendUrl}/auth/reset-password?token={encodedToken}&email={encodedEmail}";
+
+        //                var employeeAppAccessEmail = new AllEmailsTemplateModel
+        //                {
+        //                    CompanyName = company.Name,
+        //                    AppName = "EMS",
+        //                    ReceiverName = $"{employee.FirstName} {employee.LastName}",
+        //                    ReceiverRole = validPosition.Title,
+        //                    ReceiverUserName = employee.Email,
+        //                    AppUrl = resetUrl,
+        //                    SupportName = company.Name,
+        //                    SupportEmail = company.Email,
+        //                    SupportPhone = company.PhoneNumber,
+        //                    PinCode = employee.Code
+        //                };
+
+        //                var queuedEmail = new QueuedEmail
+        //                {
+        //                    To = employee.Email,
+        //                    Subject = $"Welcome to {company.Name} - Set Your Password",
+        //                    TemplateName = "EmployeeSetPassword", // New template name
+        //                    TemplateModelJson = JsonSerializer.Serialize(employeeAppAccessEmail),
+        //                    TemplateModelType = typeof(AllEmailsTemplateModel).AssemblyQualifiedName,
+        //                    ReceiverId = employee.Id,
+        //                    CreatedAt = DateTime.UtcNow,
+        //                    Status = EmailQueueStatus.Pending
+        //                };
+
+        //                await _appDbContext.QueuedEmails.AddAsync(queuedEmail);
+        //            }
+        //        }
+
+        //        // 9. SAVE - All changes
+        //        await _appDbContext.SaveChangesAsync();
+        //        await transaction.CommitAsync();
+
+        //        return new EmployeeResponseDto
+        //        {
+        //            Id = employee.Id,
+        //            Code = employee.Code,
+        //            Message = createDto.IsAppUser ?
+        //                "Employee created successfully. A password setup link has been sent to their email." :
+        //                "Employee created successfully."
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        _logger.LogError(ex, "Error creating employee");
+        //        throw;
+        //    }
+        //}
 
         public async Task UpdateEmployeeAsync(UpdateEmployeeDto updateDto)
         {
             //if (!ModelState.IsValid)
             //    throw new Exception("Invalid model state");
+
+            var transaction = await _appDbContext.Database.BeginTransactionAsync();
+
 
             if (!Enum.IsDefined(typeof(EmployeeStatus), updateDto.Status))
                 throw new Exception("Submitted Status is incorrect");
@@ -342,7 +540,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             if (updateDto.IsAppUser && string.IsNullOrEmpty(updateDto.Email))
                 throw new Exception("Email is required app users");
 
-            var submittedLocations = updateDto.Locations.Select(x => x.LocationId).ToList();
+            var submittedLocations = updateDto.Locations.ToList();
             if (updateDto.Locations.Any())
             {
                 var queriableLocations = _locationRepository.ExistingLocations(submittedLocations);
@@ -358,7 +556,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             if (employee == null || employee.CompanyId != user?.CompanyId)
                 throw new Exception("Employee not found");
 
-            var transaction = await _appDbContext.Database.BeginTransactionAsync();    
 
             try
             {
@@ -385,6 +582,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     user.Email = updateDto.Email;
                     await _userManager.UpdateAsync(user);
                 }
+                await   _appDbContext.SaveChangesAsync();
 
                  await transaction.CommitAsync();
             }

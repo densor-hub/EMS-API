@@ -1,14 +1,18 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
+using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
 using WebApplication1.DAL;
 using WebApplication1.DAL.Repository;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
 using WebApplication1.Domain.Repository;
+using WebApplication1.Services.Emails.TemplateService.Enitities;
 
 namespace WebApplication1.Controllers
 {
@@ -128,8 +132,8 @@ namespace WebApplication1.Controllers
         }
 
         // POST: api/employees
-        [HttpPost("{locationId:Guid}")]
-        public async Task<ActionResult> CreateEmployee([FromBody] CreateSupplierDto createDto, [FromRoute] Guid locationId)
+        [HttpPost]
+        public async Task<ActionResult> CreateSupplier([FromBody] CreateSupplierDto createDto)
         {
 
             if (!ModelState.IsValid)
@@ -138,7 +142,7 @@ namespace WebApplication1.Controllers
             var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
             if (currentUser is null) return Unauthorized();
 
-            var queriableLocations = _locationRepository.GetAll();
+            var queriableLocations = _locationRepository.GetAll().Include(x=> x.Company).AsNoTracking();
 
             queriableLocations = queriableLocations.Where(x => createDto.Locations.Contains(x.Id));
 
@@ -160,6 +164,36 @@ namespace WebApplication1.Controllers
 
                 await _supplierLocationRepository.AddRangeAsync(SupplierLocations);
 
+                var company = await queriableLocations.FirstOrDefaultAsync();
+                var employeeAppAccessEmail = new AllEmailsTemplateModel
+                {
+                    CompanyName = company?.Name??"",
+                    AppName = "EMS",
+                    ReceiverName = $"{supplier.FirstName} {supplier.LastName}",
+                    ReceiverRole = "Supplier",
+                   // ReceiverUserName = "",
+                   // AppUrl = _emailSettings.AppUrl,
+                    SupportName = company?.Name??"",
+                    SupportEmail = company?.Email??"",
+                    SupportPhone = company?.Phone??"",
+                    PinCode = supplier.Code
+                };
+
+                var queuedEmail = new QueuedEmail
+                {
+                    To = supplier?.Email??"",
+                    Subject = $"{company?.Name??""} added you as a Supplier",
+                    TemplateName = "BusinessPartnerAdded", // New template name
+                    TemplateModelJson = JsonSerializer.Serialize(employeeAppAccessEmail),
+                    TemplateModelType = typeof(AllEmailsTemplateModel).AssemblyQualifiedName??"",
+                    ReceiverId = supplier?.Id??Guid.Empty,
+                    CreatedAt = DateTime.UtcNow,
+                    Status = EmailQueueStatus.Pending
+                };
+
+                await _appDbContext.QueuedEmails.AddAsync(queuedEmail);
+
+
                 await transaction.CommitAsync();
 
                 return StatusCode(201, new { id = supplier.Id });
@@ -176,6 +210,10 @@ namespace WebApplication1.Controllers
         [HttpPut]
         public async Task<ActionResult> UpdateEmployee([FromBody] UpdateSupplierDto updateDto)
         {
+
+            var transaction = _appDbContext.Database.BeginTransaction();
+            await transaction.CommitAsync();
+
             try
             {
                 if (!ModelState.IsValid)
@@ -202,26 +240,17 @@ namespace WebApplication1.Controllers
 
                 var newSupLocations = locationsId.Select(x => SupplierLocation.Create(Guid.NewGuid(), x, supplier.Id, DateTime.UtcNow, currentUserId, true)).ToList();
 
-                var transaction = _appDbContext.Database.BeginTransaction();
+              
+                await _supplierLocationRepository.ManageLocationAccess(updateDto.Locations, supplier.Id, currentUserId);
 
-                try
-                {
-                    await _supplierLocationRepository.ManageLocationAccess(updateDto.Locations, supplier.Id, currentUserId);
-
-                    await _supplierRepository.UpdateAsync(supplier);
-
-                    await transaction.CommitAsync();
-                }
-                catch(Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    throw;
-                }
+                await _supplierRepository.UpdateAsync(supplier);
 
                 return Ok();
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
+
                 _logger.LogError(ex, "Error updating supplier");
                 return StatusCode(500, "An error occurred while updating the supplier");
             }
