@@ -29,7 +29,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         }
 
 
-        public async Task<IEnumerable<GetSalesTrans>> GetAllAsync(Guid locationId, GeneralStatus generalStatus , string type, Guid? customerId = null, Guid? salesPersonId = null)
+        public async Task<IEnumerable<GetSalesTrans>> GetAllAsync(Guid locationId, GeneralStatus generalStatus, string type, Guid? customerId = null, Guid? salesPersonId = null, DateTime? startDate = null, DateTime? endDate = null)
         {
             var query = from sales in _context.Sales
                 .Include(p => p.Customer)
@@ -45,7 +45,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                          && x.GeneralStatus == generalStatus
                          && (type.ToUpper().Trim()  == "GENERAL" ? x.Customer == null:
                             type.ToUpper().Trim() == "CUSTOMER" ? x.Customer != null && (customerId !=null ? x.CustomerId == customerId : true) :false)
-                         && (salesPersonId != null && salesPersonId == Guid.Empty ? x.SalesPersonId == salesPersonId.ToString() : true))
+                         && (salesPersonId != null && salesPersonId != Guid.Empty ? x.SalesPersonId == salesPersonId.ToString() : true))
                 .AsNoTracking() // Moved before select
 
                         select new GetSalesTrans // Changed from GetSalesTrans to GetSaleDto
@@ -67,6 +67,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                 .Sum(tp => tp.Amount)  : 0 : 0,
                         };
 
+                
                 return await query.OrderByDescending(x=> x.CreatedAt).ToListAsync();
         }
 
@@ -92,6 +93,27 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             return sales.Sum(s => s.Transaction?.TotalAmount ?? 0);
         }
 
+        public Task<List<GetSaleBackLogDto>> GetSaleDeliveryBacklog(Guid locationId, DateTime? date = null)
+        {
+            var dtaeOnly = date == null ? DateTime.UtcNow : date;
+            var todayUtc  = DateOnly.FromDateTime((DateTime)dtaeOnly);
+
+            var data = _context.SaleTransDeliveryRequests
+                .Include(x=> x.Sale)
+                .ThenInclude(x=> x.Transaction)
+                .Where(x => x.Sale.SaleDate == todayUtc && x.Sale.LocationId == locationId)
+                .OrderBy(X=> X.CreatedAt);
+
+            return data.Select(x=> new GetSaleBackLogDto
+            {
+                SaleDate = x.Sale.SaleDate,
+                DailyCountNumber = x.Sale.IncrementalId,
+                TransactionNumber = x.Sale.Transaction.TransactionNumber,
+                SaleDeliveryRequestId = x.Id,
+                CreatedAt = x.CreatedAt,
+                IsDelivered = x.IsDelivered
+            }).ToListAsync();
+        }
 
         public async Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber)
         {

@@ -57,7 +57,7 @@ namespace WebApplication1.Controllers
                     Path = "/"
                 });
 
-                Response.Headers["X-Refresh-Token"] = result.RefreshToken;
+                Response.Headers["X-Refresh-Token"] = "";
 
                 result.RefreshTokenExpires = DateTime.MinValue;
                 result.RefreshToken = string.Empty;

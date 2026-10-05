@@ -115,7 +115,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 var supplier = await _context.Suppliers.Where(x => x.Id == BusinessPartnerId).FirstOrDefaultAsync();
                 if (supplier == null) { throw new Exception("Supplier not found"); }
 
-                var purchase = Purchase.Create(Guid.NewGuid(), supplier.Id, Guid.Parse(user.Id), transaction.Id);
+                var purchase = Purchase.Create(Guid.NewGuid(), supplier.Id, Guid.Parse(user.Id), transaction.Id, Guid.Parse(user.Id), DateTime.UtcNow);
                 await _context.Purchases.AddAsync(purchase);
 
                 EmailReceiver.Email = supplier?.Email??"";
@@ -483,6 +483,9 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 await _context.TransactionPayments.AddAsync(payment);
             }
 
+            //email sending condition
+            // if purchase and Purchase is commpleted
+
             if (transRecord.RequiresExternalApproval)
             {
                 await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReceiver);
@@ -669,84 +672,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             return results;
 
-
-            //    var result = (string)transaction.TransactionType switch
-            //{
-            //    TransactionType.SALE.ToString() =>
-            //        // Reversal can be from Delivery or Receival? You used TransactionItemsDelivered.
-            //        items
-            //            .SelectMany(ti => ti.TransactionItemsDelivered ?? Enumerable.Empty<TransactionItemDelivered>())
-            //            .SelectMany(delivered => delivered.TransactionItemReversals ?? Enumerable.Empty<TransactionItemReversal>())
-            //            .Select(reversal => SafeCreateDto(
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.ItemId,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.Item?.Name,
-            //                reversal?.Quantity ?? 0,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.UnitPrice ?? 0))
-            //            .Where(dto => dto.Id != Guid.Empty) // filter out invalid entries
-            //            .ToArray(),
-
-
-            //    TransactionResultsType.SaleDelivery =>
-            //        // Reversal can be from Delivery or Receival? You used TransactionItemsDelivered.
-            //        items
-            //            .SelectMany(ti => ti.TransactionItemsDelivered ?? Enumerable.Empty<TransactionItemDelivered>())
-            //            .Select(delivered => delivered.SaleTransDeliveryRequest ??  SaleTransDeliveryRequest())
-            //            .Select(reversal => SafeCreateDto(
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.ItemId,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.Item?.Name,
-            //                reversal?.Quantity ?? 0,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.UnitPrice ?? 0))
-            //            .Where(dto => dto.Id != Guid.Empty) // filter out invalid entries
-            //            .ToArray(),
-
-
-            //    TransactionResultsType.Delivery =>
-            //        items
-            //            .SelectMany(ti => ti.TransactionItemsDelivered ?? Enumerable.Empty<TransactionItemDelivered>())
-            //            .Select(delivered => SafeCreateDto(
-            //                delivered?.TransactionItem?.ItemId,
-            //                delivered?.TransactionItem?.Item?.Name,
-            //                delivered?.Quantity ?? 0,
-            //                delivered?.TransactionItem?.UnitPrice ?? 0))
-            //            .Where(dto => dto.Id != Guid.Empty)
-            //            .ToArray(),
-
-            //    TransactionResultsType.TransferReceival =>
-            //        items
-            //            .SelectMany(ti => ti.TransactionItemReceived ?? Enumerable.Empty<TransactionItemReceived>())
-            //            .Select(received => SafeCreateDto(
-            //                received?.TransactionItem?.ItemId,
-            //                received?.TransactionItem?.Item?.Name,
-            //                received?.Quantity ?? 0,
-            //                received?.TransactionItem?.UnitPrice ?? 0))
-            //            .Where(dto => dto.Id != Guid.Empty)
-            //            .ToArray(),
-
-            //    TransactionResultsType.TransferReversal =>
-            //        items
-            //            .SelectMany(ti => ti.TransactionItemReceived ?? Enumerable.Empty<TransactionItemReceived>())
-            //            .SelectMany(received => received.TransactionItemReversals ?? Enumerable.Empty<TransactionItemReversal>())
-            //            .Select(reversal => SafeCreateDto(
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.ItemId,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.Item?.Name,
-            //                reversal?.Quantity ?? 0,
-            //                reversal?.TransactionItemDelivered?.TransactionItem?.UnitPrice ?? 0))
-            //            .Where(dto => dto.Id != Guid.Empty)
-            //            .ToArray(),
-
-            //    // Fallback: Customer Sale, Purchase from Supplier, Stock Transfer Request
-            //    _ =>
-            //        items
-            //            .Select(ti => new IdAndNameQtyDTO
-            //            {
-            //                Id = ti.ItemId,
-            //                Name = ti.Item?.Name ?? "N/A",
-            //                Quantity = ti.Quantity,
-            //                Price = 0 // or ti.UnitPrice if available?
-            //            })
-            //            .ToArray()
-            //};
-
         }
 
         // Helper method to safely create DTO with fallback values
@@ -917,8 +842,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                     bool isDelivered = !isSale || (isSale && saleTransDeliveryRequest != null);
 
-                    if (saleTransDeliveryRequest != null &&
-                       (!saleTransDeliveryRequest.IsDelivered || transactionItem.TransactionItemsDelivered.Any(x => !x.IsDelivered)))
+                    if (saleTransDeliveryRequest != null && saleTransDeliveryRequest.Sale.Customer != null //added customer check because customers triger DeliveryItems to set the ItemsDelivered to Pending, but instant sale does not trigger such so instant sale will have no customer and will have to create ItemsDelivered with status Deliverred
+                       && (!saleTransDeliveryRequest.IsDelivered || transactionItem.TransactionItemsDelivered.Any(x => !x.IsDelivered)))
                     {
                         var transItemDelivered = transactionItem.TransactionItemsDelivered
                             .FirstOrDefault(x => !x.IsDelivered);
@@ -927,6 +852,12 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         {
                             transItemDelivered.Delivered(Guid.Parse(user.Id), saleTransDeliveryRequest.DeliveryDate);
                             transactionItemsDeliveredToBeUpdated.Add(transItemDelivered);
+                        }
+                        else
+                        {
+                            //Guard if transactionItemsDelivered is not there
+                          //  var newTransactionItemsDelivered = Tra
+                          //if the ssale record 
                         }
                     }
                     else
@@ -993,7 +924,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 // 9. Dispatch notification email if fully delivered
                 if (saleTransDeliveryRequest != null &&
-                    saleTransDeliveryRequest.IsDelivered &&
+                    saleTransDeliveryRequest.IsDelivered && saleTransDeliveryRequest.Sale.Customer !=null && //Again custmer check to ensure that emauks are sent to transactions that have customers
                     saleTransDeliveryRequest.TransactionItemDelivered != null && saleTransDeliveryRequest.TransactionItemDelivered.All(x => x.IsDelivered))
                 {
                     var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
@@ -1132,13 +1063,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         public async Task<TransactionCreatedReturnDataDto> CompleteTransationProcess(CreateTransactionDto createDto, TransactionResultsType? transResult)
         {
 
-
             var atomicTransaction = await _context.Database.BeginTransactionAsync();
 
-            
             try
             {
-
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
                 if (user == null) throw new Exception("User not found");
 
@@ -1171,7 +1099,11 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 };
 
                 //add paymentUtcNow
-                await AddPaymentInternalCallAsync(transactionResults, transactionPayemntDto, null, paymentTransactionNumber, ReturnDto.EmailReceiver);
+                //if purchasecahse and not aproved yet, dont add payment details
+                if (transactionResults.TransactionType != TransactionType.PURC.ToString()) // PPURCHASE requires approval, and payment is done on commitin
+                {
+                    await AddPaymentInternalCallAsync(transactionResults, transactionPayemntDto, null, paymentTransactionNumber, ReturnDto.EmailReceiver);
+                }
 
                 await _context.SaveChangesAsync();
                 await atomicTransaction.CommitAsync();
@@ -1186,7 +1118,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
         }
 
-        public async Task<GetTransactionDto> GetTransactionDetails(Guid transactionId)
+        public async Task<GetTransactionDto> GetTransactionDetails(Guid transactionId, Guid locationId)
         {
             try
             {
@@ -1197,6 +1129,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         .ThenInclude(p => p.Coupon) // Make sure Coupon is loaded
                     .Include(t => t.TransactionItems)
                         .ThenInclude(ti => ti.Item) // Make sure Item is loaded
+                            .ThenInclude(x=> x.StockLevel)
                     .Include(t => t.TransactionItems)
                         .ThenInclude(ti => ti.TransactionItemsDelivered)
                             .ThenInclude(d => d.TransactionItemReversals)
@@ -1225,7 +1158,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         Code = z.Item.Code, // Will this ever be null?
                         Quantity = z.Quantity, // Fixed spelling
                         UnitPrice = z.UnitPrice,
-
+                        AvailableQuantity = z.Item?.StockLevel.Where(x=> x.LocationId == locationId)?.FirstOrDefault()?.AvailableQuanity,
+                        ActualQuantity = z.Item?.StockLevel.Where(x => x.LocationId == locationId)?.FirstOrDefault()?.ActualQuantity,
                         ItemsDelivered = z.TransactionItemsDelivered?.Select(d => new GetTransactionItemsDeliveredDto
                         {
                             DeliveryDate = d.DeliveryDate,
@@ -1312,7 +1246,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             return new TransactionCreatedReturnDataDto { QrCode = qrCode, TransactionNumber = sale.Transaction.TransactionNumber, Count = sale.IncrementalId };
         }
 
-
         public async Task CancelAsync(TransactionCancellationDto createDto)
         {
             var user = await _userRepository.GetUserByRefreshTokenAsync();
@@ -1369,10 +1302,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             // ✅ Use the two-arg form with a namespace key, executed as a scalar query
             await _context.Database.ExecuteSqlInterpolatedAsync($@"
-        SELECT pg_advisory_xact_lock(
-            hashtext('SaleIncremental'),
-            hashtext({locationId.ToString()} || ':' || {todayUtc.ToString("yyyy-MM-dd")})
-        )
+                SELECT pg_advisory_xact_lock(
+                    hashtext('SaleIncremental'),
+                    hashtext({locationId.ToString()} || ':' || {todayUtc.ToString("yyyy-MM-dd")})
+                )
     ");
             // NOTE: ExecuteSqlInterpolatedAsync works here because Npgsql allows
             // a SELECT as a non-query, but a scalar call is safer across versions.
@@ -1384,5 +1317,42 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             return count + 1;
         }
+
+        public async Task<(Transaction transaction, ApplicationUser user, Payment payment)> PurchaseCommit( TransactionPaymentsDto createDto, Guid purcaseId)
+        {
+            var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+                if (user == null) { new Exception("Unauthorized"); }
+                var purchase = await _context.Purchases.Include(x => x.Transaction)
+                    .Where(x => x.Id == purcaseId).FirstOrDefaultAsync();
+
+                if (purchase == null) throw new Exception("Purchase not found");
+
+                if (purchase.GeneralStatus != GeneralStatus.Approved) throw new Exception("Invalid Status");
+
+                purchase.Update(GeneralStatus.Committed, Guid.Parse(user?.Id), DateTime.UtcNow);
+
+                var transactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", purchase.Transaction.LocationId);
+
+                var emailReceiver = await GetEmailRceiverForExistsingTransaction(purchase.Transaction);
+
+                var paymentReturnData = await AddPaymentInternalCallAsync(purchase.Transaction, createDto, null, transactionNumber, emailReceiver);
+
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (paymentReturnData.transaction, paymentReturnData.user, paymentReturnData.payment);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+      
     }
 }

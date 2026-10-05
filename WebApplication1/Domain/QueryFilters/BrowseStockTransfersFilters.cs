@@ -9,5 +9,6 @@ namespace WebApplication1.Domain.QueryFilters
         public DateTime? EndDate { get; set; } = null;
         public StockTransferEnum? Stage { get; set; } 
         public bool Approval { get; set; } = false;
+        public int? Type { get; set; } = 1;
     }
 }

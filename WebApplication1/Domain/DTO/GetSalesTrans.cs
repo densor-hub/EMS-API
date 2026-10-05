@@ -46,4 +46,15 @@ namespace WebApplication1.Domain.DTO
         public decimal UnitPrice { get; set; }
         public int Quantity { get; set; }
     }
+
+    public class GetSaleBackLogDto
+    {
+        public string TransactionNumber { get; set; }
+        public int DailyCountNumber { get; set; }
+        public DateOnly SaleDate { get; set; }
+        public Guid SaleDeliveryRequestId { get; set; }
+        public DateTime CreatedAt { get; set;}
+        public bool IsDelivered { get; set; }
+
+    }
 }

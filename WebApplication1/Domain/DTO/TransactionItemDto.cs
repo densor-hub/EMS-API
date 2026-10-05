@@ -31,6 +31,8 @@ namespace WebApplication1.DTOs
         public string Code { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; } //PurchasePrice
+        public int? AvailableQuantity { get; set; }
+        public int? ActualQuantity { get; set; }
         public List<GetTransactionItemsDeliveredDto>? ItemsDelivered { get; set; }
         public List<GetTransactionItemsReceivedDto>? ItemsReceived { get; set; }
     }

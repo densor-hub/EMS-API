@@ -9,7 +9,7 @@ namespace WebApplication1.Services.ControllerServices
     {
         Task<GetPurchaseDto> GetByIdAsync(Guid id, GeneralStatus generalStatus);
         Task<IEnumerable<GetPurchaseDto>> GetAllAsync(Guid locationId, GeneralStatus generalStatus, Guid? supplierId = null, Guid? salesPersonId = null);
-       // Task<GetPurchaseDto> UpdateAsync(Guid id, UpdatePurchaseDto updateDto, Guid userId);
+         Task ManagerCheck(UpdatePurchaseDto updateDto);
        // Task<bool> DeleteAsync(Guid id, Guid userId, string reason);
         //Task<PurchaseCancellationDto> CancelAsync(CreatePurchaseCancellationDto createDto, Guid userId);
     }

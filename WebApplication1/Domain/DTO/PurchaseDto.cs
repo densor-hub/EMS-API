@@ -88,16 +88,11 @@ namespace WebApplication1.DTOs
 
     public class UpdatePurchaseDto
     {
-        public Guid PurchaseId { get; set; }
+        public Guid TransactionId { get; set; }
         public Guid LocationId { get; set; }
-        public Guid SupplierId { get; set; }
-        public Guid PurchasedBy { get; set; }
+        public GeneralStatus Status { get; set; }
         public DateTime Date { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal TaxAmount { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public string Notes { get; set; }
-        public List<UpdateTransactionItemDto> Items { get; set; }
+        public string Remarks { get; set; }
     }
 
 

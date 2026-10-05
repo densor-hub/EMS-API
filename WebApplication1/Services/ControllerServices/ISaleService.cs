@@ -8,9 +8,11 @@ namespace WebApplication1.Services.ControllerServices
     public interface ISaleService
     {
         Task<Sale> GetByIdAsync(Guid id);
-        Task<IEnumerable<GetSalesTrans>> GetAllAsync(Guid locationId, GeneralStatus generalStatus, string type, Guid? customerId = null, Guid? salesPersonId = null);
+        Task<IEnumerable<GetSalesTrans>> GetAllAsync(Guid locationId, GeneralStatus generalStatus, string type, Guid? customerId = null, Guid? salesPersonId = null, DateTime? startDate = null, DateTime? endDate = null);
         Task<decimal> GetTotalSalesAmountAsync(DateTime startDate, DateTime endDate);
         Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber);
-    
+        Task<List<GetSaleBackLogDto>> GetSaleDeliveryBacklog(Guid locationId, DateTime? date = null);
+
+
     }
 }

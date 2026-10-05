@@ -8,6 +8,7 @@ using WebApplication1.Domain.Repository;
 using WebApplication1.Controllers;
 using WebApplication1.Domain.QueryFilters;
 using WebApplication1.DTOs;
+using NLog.Filters;
 
 namespace WebApplication1.Services.ControllerServices.Implementations
 {
@@ -324,17 +325,18 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 var query = _context.StockTransfers.AsNoTracking();
                
-                query = query.Where(x => x.RequesterId == filters.LocationId.Value || x.ResponderId == filters.LocationId.Value);
+                query = query.Where(x => filters.Type == 1 ? x.RequesterId == filters.LocationId.Value : filters.Type == 2 ? x.ResponderId == filters.LocationId.Value : x.RequesterId == Guid.Empty);
 
                 if (filters.Stage.HasValue)
                 {
                     query = query.Where(x => x.Status == filters.Stage.Value);
                 }
                 
-                if (filters.Approval)
+                if (filters.Approval && filters.Stage == StockTransferEnum.Pending)
                 {
                     query = query.Where(x => x.ResponderId == filters.LocationId && x.Status == StockTransferEnum.Pending);
                 }
+
 
                 var returnData = await query
                     .OrderByDescending(x => x.CreatedAt)

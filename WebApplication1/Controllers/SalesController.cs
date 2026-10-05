@@ -6,6 +6,8 @@ using WebApplication1.Domain.QueryFilters;
 using WebApplication1.Domain.Enums;
 using WebApplication1.Services.ControllerServices;
 using WebApplication1.Domain.DTO;
+using WebApplication1.Domain.Entities;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace WebApplication1.Controllers
 {
@@ -39,7 +41,7 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<GetSaleDto>> GetAll([FromQuery] BrowseSalesFilters filter)
         {
-            var sales =  await _saleService.GetAllAsync(filter.LocationId, filter.GeneralStatus, filter.Type, filter.CustomerId, filter.SalesPersonId);
+            var sales = await _saleService.GetAllAsync(filter.LocationId, filter.GeneralStatus, filter.Type, filter.CustomerId, filter.SalesPersonId);
             return Ok(sales);
         }
 
@@ -50,22 +52,22 @@ namespace WebApplication1.Controllers
             {
                 var validGuid = Guid.TryParse(deliveryRequestId, out var id);
 
-                
-                var sales = await _saleService.GenerateReceipt(validGuid ? id : Guid.Empty, deliveryRequestId );
+
+                var sales = await _saleService.GenerateReceipt(validGuid ? id : Guid.Empty, deliveryRequestId);
                 return Ok(sales);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-   
+
         }
 
 
         [HttpPost("General")]
         public async Task<ActionResult<TransactionCreatedReturnDataDto>> Create([FromBody] CreateTransactionDto createDto)
         {
-            
+
             try
             {
                 if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment method");
@@ -78,13 +80,13 @@ namespace WebApplication1.Controllers
                 createDto.BusinessPartnerId = Guid.Empty;
                 createDto.TransactionResultsType = TransactionResultsType.Deposit;
 
-                var user = await  _userRepository.GetUserByRefreshTokenAsync();
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
 
 
                 //use configuration to select which best fits
-               var results =  await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit); // Deposit becuase initail payment for QrCode, debit is done when Stock Person generates receipt
+                var results = await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit); // Deposit becuase initail payment for QrCode, debit is done when Stock Person generates receipt
 
-                return StatusCode(201,  results);
+                return StatusCode(201, results);
             }
             catch (Exception ex)
             {
@@ -115,6 +117,27 @@ namespace WebApplication1.Controllers
                 var results = await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit);
 
                 return StatusCode(201, results);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet("SaleDeliveryBackLogs/{locationId:Guid}")]
+        public async Task<ActionResult<IEnumerable<GetSaleBackLogDto>>> GetSaleDeliveryBackLogs([FromRoute] Guid locationId, [FromQuery]  DateTime? SaleDate = null)
+        {
+            try
+            {
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+
+                var location = await _locationRepository.GetByIdAsync(locationId);
+                if (location == null) BadRequest("Shop not found");
+
+                var saleDeliveryReequest = await _saleService.GetSaleDeliveryBacklog(locationId, SaleDate);
+
+                return Ok(saleDeliveryReequest);
             }
             catch (Exception ex)
             {

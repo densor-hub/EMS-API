@@ -73,7 +73,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         .Include(x => x.Transaction)
                                 .ThenInclude(t => t.TransactionItems)
                                     .ThenInclude(ti => ti.TransactionItemsDelivered)
-                        .Where(x => x.Transaction.LocationId == locationId && x.Transaction.GeneralStatus == generalStatus && (supplierId != null ? x.SupplierId == supplierId : true)
+                        .Where(x => x.Transaction.LocationId == locationId 
+                                // && x.Transaction.GeneralStatus == generalStatus 
+                                && (supplierId != null ? x.SupplierId == supplierId : true)
+                               && (int)x.GeneralStatus   == (int) generalStatus
                         && (salesPersonId != null && salesPersonId != Guid.Empty ? x.PurcasedById == salesPersonId.ToString() : true)
                         )
                         .AsNoTracking()
@@ -100,176 +103,54 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             return await query.ToListAsync();
         }
 
+        public async Task ManagerCheck( UpdatePurchaseDto updateDto)
+        {
+            // 1. Fix: missing closing paren + Enum.IsDefined(TYPE, value) is the correct overload
+            var validStatus = Enum.IsDefined(typeof(GeneralStatus), updateDto.Status);
+            if (!validStatus) throw new Exception("Invalid status submitted");
 
-        //public async Task<GetPurchaseDto> UpdateAsync(Guid id, UpdatePurchaseDto updateDto, Guid userId)
-        //{
-        //    var purchase = await _context.Purchases
-        //        .Include(x => x.Transaction)
-        //             .ThenInclude(t => t.TransactionItems)
-        //        .FirstOrDefaultAsync(p => p.Id == id && p.Transaction.GeneralStatus != GeneralStatus.SoftDeleted);
+            var allowedStatus = new List<GeneralStatus> { GeneralStatus.Approved, GeneralStatus.Declined };
 
-        //    if (purchase == null)
-        //        return null;
+            if (allowedStatus.Contains(updateDto.Status) == false) throw new Exception("Invalid status submitted");
 
-        //    using var dbTransaction = await _context.Database.BeginTransactionAsync();
+            // 2. Fix: include related entities if needed (Transaction for the comment)
+            var purchase = await _context.Purchases
+                .Include(x => x.Transaction)
+                .Where(x => x.TransactionId == updateDto.TransactionId)
+                .FirstOrDefaultAsync();
 
-        //    try
-        //    {
-        //        var now = DateTime.UtcNow;
+            if (purchase == null) throw new Exception("Purchase not found");
 
-        //        // Update Transaction
-        //        purchase.Transaction.Update(
-        //            //updateDto.Date,
-        //            updateDto.TotalAmount,
-        //            updateDto.TaxAmount,
-        //           // updateDto.DiscountAmount,
-        //           // PaymentStatus.Pending,
-        //            userId,
-        //            now
-        //        );
+            if (purchase.GeneralStatus != GeneralStatus.Initiated)
+            {
+                throw new Exception("Invalid status submitted");
+            }
 
-        //        // Update Transaction Items
-        //        var existingItems = purchase.Transaction.TransactionItems.ToList();
+            var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-        //        // Remove items not in the update
-        //        foreach (var item in existingItems)
-        //        {
-        //            if (!updateDto.Items.Any(i => i.Id == item.Id))
-        //            {
-        //                item.SoftDelete(userId, now);
-        //            }
-        //        }
+            // 3. Fix: guard against null user before using user.Id / user.FullName
+            if (user == null) throw new Exception("User not found");
 
-        //        // Update or add items
-        //        foreach (var itemDto in updateDto.Items)
-        //        {
-        //            var existingItem = existingItems.FirstOrDefault(i => i.Id == itemDto.Id);
-        //            var total = itemDto.Quantity * itemDto.UnitPrice;
+            if (!string.IsNullOrWhiteSpace(updateDto.Remarks))
+            {
+                var comment = TransactionComment.Create(
+                    Guid.NewGuid(),
+                    purchase.TransactionId,
+                    purchase.Transaction.TransactionType.ToString(),
+                    "1",
+                    updateDto.Remarks,
+                    DateTime.UtcNow,
+                    user.Id,
+                    user.FullName
+                );
+                _context.Comments.Add(comment);
+            }
 
-        //            if (existingItem != null)
-        //            {
-        //                // Update existing item
-        //                typeof(TransactionItem).GetProperty("Quantity").SetValue(existingItem, itemDto.Quantity);
-        //                typeof(TransactionItem).GetProperty("UnitPrice").SetValue(existingItem, itemDto.UnitPrice);
-        //                typeof(TransactionItem).GetProperty("Total").SetValue(existingItem, total);
-        //                existingItem.UpdatedAt = now;
-        //                existingItem.UpdatedBy = userId;
-        //            }
-        //            else
-        //            {
-        //                // Add new item
-        //                var newItem = TransactionItem.Create(
-        //                    Guid.NewGuid(),
-        //                    purchase.TransactionId,
-        //                    itemDto.ItemId,
-        //                    itemDto.Quantity,
-        //                    itemDto.UnitPrice,
-        //                    total,
-        //                    userId,
-        //                    now
-        //                );
-        //                await _context.TransactionItems.AddAsync(newItem);
-        //            }
-        //        }
+            // 4. Fix: user.Id is already a string GUID — no need to re-parse unless the property expects Guid
+            purchase.Update(updateDto.Status, Guid.Parse(user.Id), DateTime.UtcNow);
+            _context.Purchases.Update(purchase);
 
-        //        // Update Purchase properties
-        //        typeof(Purchase).GetProperty("LocationId").SetValue(purchase, updateDto.LocationId);
-        //        typeof(Purchase).GetProperty("SupplierId").SetValue(purchase, updateDto.SupplierId);
-        //        typeof(Purchase).GetProperty("PurcasedById").SetValue(purchase, updateDto.PurchasedBy.ToString());
-
-
-        //        await _context.SaveChangesAsync();
-        //        await dbTransaction.CommitAsync();
-
-        //        return await GetByIdAsync(id, GeneralStatus.Active);
-        //    }
-        //    catch
-        //    {
-        //        await dbTransaction.RollbackAsync();
-        //        throw;
-        //    }
-        //}
-
-        //public async Task<bool> DeleteAsync(Guid id, Guid userId, string reason)
-        //{
-        //    var purchase = await _context.Purchases
-        //        .Include(x=> x.Transaction)
-        //            .ThenInclude(t => t.TransactionItems)
-        //        .FirstOrDefaultAsync(p => p.Id == id && p.Transaction.GeneralStatus != GeneralStatus.SoftDeleted);
-
-        //    if (purchase == null)
-        //        return false;
-        //    var now = DateTime.UtcNow;
-        //    purchase.Transaction.SoftDelete(now, userId);
-
-        //    foreach (var item in purchase.Transaction.TransactionItems)
-        //    {
-        //        item.SoftDelete(userId, now);
-        //    }
-
-        //    await _context.SaveChangesAsync();
-        //    return true;
-        //}
-
-
-        //public async Task<PurchaseCancellationDto> CancelAsync(CreatePurchaseCancellationDto createDto, Guid userId)
-        //{
-        //    using var transaction = await _context.Database.BeginTransactionAsync();
-
-        //    try
-        //    {
-        //        var purchase = await _context.Purchases
-        //             .Include(p => p.Transaction)
-        //                .ThenInclude(t => t.TransactionItems)
-        //                    .ThenInclude(x=> x.TransactionItemsDelivered)
-        //            .FirstOrDefaultAsync(p => p.Id == createDto.PurchaseId
-        //                && p.Transaction.GeneralStatus != GeneralStatus.SoftDeleted);
-
-        //        if (purchase == null)
-        //            throw new Exception("Transaction not found or already cancelled");
-
-        //        if (purchase.Transaction.TransactionItems.Any(x=> x.TransactionItemsDelivered.Any()))
-        //        {
-        //            throw new Exception("Transaction has Items delivered, hence cannot be cancelled");
-        //        }
-
-        //        var now = DateTime.UtcNow;
-
-        //        // Soft delete the associated transaction
-        //        if (purchase.Transaction != null)
-        //        {
-        //            purchase.Transaction.SoftDelete(now, userId);
-
-        //            // Soft delete all transaction items
-        //            foreach (var item in purchase.Transaction.TransactionItems)
-        //            {
-        //                item.SoftDelete(userId, now);
-        //            }
-        //        }
-
-        //        // Here you might want to create a cancellation record
-        //        // For now, we'll just update the purchase status
-
-        //        await _context.SaveChangesAsync();
-        //        await transaction.CommitAsync();
-
-        //        return new PurchaseCancellationDto
-        //        {
-        //            Id = purchase.Id,
-        //            PurchaseId = purchase.Id,
-        //            PurchaseNumber = purchase.Transaction.TransactionNumber, 
-        //            CancellationDate = now,
-        //            Reason = createDto.Reason,
-        //            CancelledBy = userId
-        //        };
-        //    }
-        //    catch
-        //    {
-        //        await transaction.RollbackAsync();
-        //        throw;
-        //    }
-        //}
-
-
+            await _context.SaveChangesAsync();
+        }
     }
 }

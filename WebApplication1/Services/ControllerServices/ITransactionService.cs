@@ -9,9 +9,11 @@ namespace WebApplication1.Services.ControllerServices
 {
     public interface ITransactionService
     {
-        Task<GetTransactionDto> GetTransactionDetails(Guid transactionId);
+        Task<GetTransactionDto> GetTransactionDetails(Guid transactionId, Guid locationId);
         //Task<Transaction> CreateGeneralTransactionAsync(CreateTransactionDto createDto, Location location);
         Task<(Transaction transaction, ApplicationUser user, Payment payment)> AddPaymentExternalCallAsync(Transaction transaction, TransactionPaymentsDto createDto, TransactionResultsType? transResult);
+
+        Task<(Transaction transaction, ApplicationUser user, Payment payment)> PurchaseCommit(TransactionPaymentsDto createDto, Guid purcaseId);
         //Task<string> CreateSpecificTypeOfTransaction(Transaction transaction, ApplicationUser user, Guid? BusinessPartnerId);
         Task ProcessTransactionItemsAsync(Transaction tranaction, CreateTransactionDto createDto, Guid userId);
         Task<IEnumerable<TransactionItemsReceivedDto>> GetAllDeliveredItemsToDate(Guid transactionId);

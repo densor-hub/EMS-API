@@ -65,7 +65,7 @@
 
         public  void SetToPending ()
         {
-            GeneralStatus = Enums.GeneralStatus.Pending;
+            GeneralStatus = Enums.GeneralStatus.PendingCompletionOrDelivery;
         }
 
 

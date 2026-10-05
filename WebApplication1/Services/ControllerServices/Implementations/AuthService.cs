@@ -215,7 +215,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     Email = user.Email ?? "",
                     FullName = user.FullName,
                     Id = user.Id,
-                    Locations = allLocationsDTO.Count > 0 ? allLocationsDTO : employee?.EmployeeLocations != null ? employee.EmployeeLocations.Select(x => new DropDownDTO
+                    Locations = allLocationsDTO.Count > 0 ? allLocationsDTO : employee?.EmployeeLocations != null ? employee.EmployeeLocations.Where(x => x.Status).Select(x => new DropDownDTO
                     {
                         Code = x.Location.Code,
                         Id = x.Location.Id,
@@ -223,13 +223,13 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     }).ToList() : null,
                     Routes = employee?.Position?.PositionRoutes != null ? employee.Position.PositionRoutes.Select(x => new DropDownDTO
                     {
-                        Code = "",
-                        Id = x.ApplicationRoutes.Id,
-                        Name = x.ApplicationRoutes.Title
+                        Code = x.ApplicationRoutes.Path
                     }).ToList() : null,
                     IsCreator = user.Id == employee?.CreatedBy.ToString(),
+                    AccessToken = tokens.AccessToken,
+                    AccessTokenExpires = tokens.AccessTokenExpires,
                     RefreshToken = tokens.RefreshToken,
-                    RefreshTokenExpires = tokens.RefreshTokenExpires
+                    RefreshTokenExpires = tokens.RefreshTokenExpires,
                 };
 
                 _logger.LogInformation("User logged in: {Email}", user.Email);
@@ -275,6 +275,20 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 .Where(x => x.Id == Guid.Parse(user.Id))
                 .FirstOrDefaultAsync();
 
+            var allLocationsDTO = new List<DropDownDTO>();
+
+            if (employee?.Id == employee?.CreatedBy)
+            {
+                var locations = _context.Locations.Where(x => x.Status == true && x.CompanyId == user.CompanyId);
+                allLocationsDTO = await locations.Select(x => new DropDownDTO
+                {
+                    Code = x.Code,
+                    Id = x.Id,
+                    Name = x.Name
+                }).ToListAsync();
+            }
+
+
             var returnData = new AuthResponseDTO
             {
                 
@@ -286,26 +300,22 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 Email = user.Email ?? "",
                 FullName = user.FullName,
                 Id = user.Id,
-                Locations = employee.Id == company.AdminId ? employee.Company.Locations.Select(x => new DropDownDTO
+                Locations = allLocationsDTO.Count > 0 ? allLocationsDTO : employee?.EmployeeLocations != null ? employee.EmployeeLocations.Where(x=> x.Status).Select(x => new DropDownDTO
                 {
-                    Code = x.Code,
-                    Id = x.Id,
-                    Name = x.Name
-                }).ToList() : employee?.EmployeeLocations != null ? employee.EmployeeLocations.Select(x => new DropDownDTO
-                        {
-                            Code = x.Location.Code,
-                            Id = x.Location.Id,
-                            Name = x.Location.Name
-                        }).ToList() : null,
+                    Code = x.Location.Code,
+                    Id = x.Location.Id,
+                    Name = x.Location.Name
+                }).ToList() : null,
                 Routes = employee?.Position?.PositionRoutes != null ? employee.Position.PositionRoutes.Select(x => new DropDownDTO
                 {
-                    Code = "",
-                    Id = x.ApplicationRoutes.Id,
-                    Name = x.ApplicationRoutes.Title
+                    Code = x.ApplicationRoutes.Path
                 }).ToList() : null,
                 IsCreator = user.Id == employee?.CreatedBy.ToString(),
                 RefreshToken = tokens.RefreshToken,
-                RefreshTokenExpires = tokens.RefreshTokenExpires
+                RefreshTokenExpires = tokens.RefreshTokenExpires,
+                AccessToken = tokens.AccessToken,
+                AccessTokenExpires = tokens.AccessTokenExpires,
+                
             };
 
             return returnData;

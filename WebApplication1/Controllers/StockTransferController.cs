@@ -78,11 +78,64 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<StockTransfersDTO>>> GetStockTransferRecords([FromQuery] BrowseStockTransfersFilters filters)
+        [HttpGet("Requests")]
+        public async Task<ActionResult<IEnumerable<StockTransfersDTO>>> GetInflows([FromQuery] BrowseStockTransfersFilters filters)
         {
             try
             {
+                filters.Type = 1;
+                var result = await _stockTransferService.GetStockTransferRecordsAsync(filters);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("Manager-Check")]
+        public async Task<ActionResult<IEnumerable<StockTransfersDTO>>> GetOutflow([FromQuery] BrowseStockTransfersFilters filters)
+        {
+            try
+            {
+                filters.Type = 2;
+                filters.Approval = true;
+                filters.Stage = Domain.Enums.StockTransferEnum.Pending;
+                var result = await _stockTransferService.GetStockTransferRecordsAsync(filters);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("Approved-For-Delivery")]
+        public async Task<ActionResult<IEnumerable<StockTransfersDTO>>> GetApproved([FromQuery] BrowseStockTransfersFilters filters)
+        {
+            try
+            {
+                filters.Type = 2;
+                filters.Approval = true;
+                filters.Stage = Domain.Enums.StockTransferEnum.Approved;
+                var result = await _stockTransferService.GetStockTransferRecordsAsync(filters);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+
+        [HttpGet("Receivals")]
+        public async Task<ActionResult<IEnumerable<StockTransfersDTO>>> Receivals([FromQuery] BrowseStockTransfersFilters filters)
+        {
+            try
+            {
+                filters.Type = 1;
+                filters.Approval = true;
+                filters.Stage = Domain.Enums.StockTransferEnum.Approved;
                 var result = await _stockTransferService.GetStockTransferRecordsAsync(filters);
                 return Ok(result);
             }

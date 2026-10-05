@@ -39,8 +39,8 @@ namespace WebApplication1.Controllers
             _transactionRepository = transactionRepository;
         }
 
-        [HttpGet("{id:Guid}")]
-        public async Task<ActionResult<GetTransactionDto>> GetTransactionDetails([FromRoute] Guid id)
+        [HttpGet("{id:Guid}/location/{locationId:Guid}")]
+        public async Task<ActionResult<GetTransactionDto>> GetTransactionDetails([FromRoute] Guid id, [FromRoute] Guid locationId)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace WebApplication1.Controllers
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
                
 
-                var paymentResults = await _transactionService.GetTransactionDetails(id);
+                var paymentResults = await _transactionService.GetTransactionDetails(id, locationId);
 
                 return paymentResults;
             }
@@ -80,6 +80,27 @@ namespace WebApplication1.Controllers
             }
         }
 
+
+        [HttpPost("CommitPurchase/{purchaseId:Guid}")]
+        public async Task<ActionResult> CommitPurchase([FromRoute] Guid purchaseId ,[FromBody] TransactionPaymentsDto createDto)
+        {
+            try
+            {
+                if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
+
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+                var transaction = await _transactionRepository.GetByIdAsync(createDto.TransationId);
+                if (transaction == null) return BadRequest("Transaction not found");
+
+                var paymentResults = await _transactionService.AddPaymentExternalCallAsync(transaction, createDto, null);
+
+                return StatusCode(201);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
         [HttpGet("ItemsDelivered")]
         public async Task<IActionResult> GetAllRecievedToDate([FromQuery] Guid TransactionId)
