@@ -16,7 +16,7 @@ namespace WebApplication1.DAL.Configurations
 
             // Properties configuration
             builder.Property(c => c.Name).IsRequired().HasMaxLength(200);
-            builder.HasIndex(c => c.Email).IsUnique();
+            builder.HasIndex(c => c.Email);
             builder.Property(c => c.Email).IsRequired().HasMaxLength(100);
             builder.Property(c => c.Address) .HasMaxLength(500).IsRequired(false);
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");

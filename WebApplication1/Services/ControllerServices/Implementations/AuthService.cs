@@ -20,6 +20,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
         private readonly EmailSettings _emailSettings;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -28,6 +30,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             IConfiguration configuration,
             ILogger<AuthService> logger,
              IOptions<EmailSettings> emailSettings,
+             IHttpContextAccessor httpContextAccessor,
         AppDbContext context)
         {
             _userManager = userManager;
@@ -37,7 +40,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             _logger = logger;
             _context = context;
             _emailSettings = emailSettings.Value;
-            
+            _httpContextAccessor = httpContextAccessor;
+
         }
 
         public async Task RegisterAsync(RegisterDTO request)
@@ -343,6 +347,33 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 }
 
                 await _signInManager.SignOutAsync();
+
+                // ────────────────────────────────────────────────
+                // 👇 Force-expire the refresh_token cookie so the browser
+                //    stops sending it. Must match the cookie name + options
+                //    used when it was set (login/refresh).
+                // ────────────────────────────────────────────────
+                var response = _httpContextAccessor.HttpContext?.Response;
+                if (response != null)
+                {
+                    response.Cookies.Append("refresh_token", "", new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,                       // true in production over HTTPS
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                        Path = "/",
+                        // Domain: only set if you set it when creating
+                    });
+
+                    response.Cookies.Delete("refresh_token", new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = false,
+                        SameSite = SameSiteMode.Lax,
+                        Path = "/",
+                    });
+                }
             }
             catch (Exception ex)
             {

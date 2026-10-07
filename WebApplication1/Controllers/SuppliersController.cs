@@ -132,8 +132,8 @@ namespace WebApplication1.Controllers
         }
 
         // POST: api/employees
-        [HttpPost]
-        public async Task<ActionResult> CreateSupplier([FromBody] CreateSupplierDto createDto)
+        [HttpPost("{locationId:Guid}")]
+        public async Task<ActionResult> CreateSupplier([FromRoute] Guid locationId, [FromBody] CreateSupplierDto createDto)
         {
 
             if (!ModelState.IsValid)
@@ -141,6 +141,9 @@ namespace WebApplication1.Controllers
 
             var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
             if (currentUser is null) return Unauthorized();
+
+            var validLocation = await _appDbContext.Locations.AnyAsync(x => x.Id == locationId);
+            if (!validLocation) throw new Exception("Invalid location submitted");
 
             var queriableLocations = _locationRepository.GetAll().Include(x=> x.Company).AsNoTracking();
 
@@ -193,7 +196,7 @@ namespace WebApplication1.Controllers
 
                 await _appDbContext.QueuedEmails.AddAsync(queuedEmail);
 
-
+                await _appDbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return StatusCode(201, new { id = supplier.Id });
