@@ -112,8 +112,18 @@ namespace WebApplication1.Controllers
 
                 await _authService.LogoutAsync(userId, accessToken);
 
-                Response.Cookies.Delete("access_token");
-                Response.Cookies.Delete("refresh_token");
+                var expired = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Path = "/",
+                    Expires = DateTimeOffset.UtcNow.AddDays(-1),
+                    // Domain = ".yourdomain.com"   // ONLY if your login set a Domain
+                };
+
+                Response.Cookies.Append("access_token", "", expired);
+                Response.Cookies.Append("refresh_token", "", expired);
 
                 return Ok(new { message = "Logged out successfully" });
             }

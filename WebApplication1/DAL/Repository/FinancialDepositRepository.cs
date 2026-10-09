@@ -27,10 +27,11 @@ namespace WebApplication1.DAL.Repository
             var data = _appDbContext.FinancialServiceDisbursement
                     .Include(x=> x.Transaction)
                         .ThenInclude(x=>x.Location)
-                .Include(x=> x.ContactPerson)
-                    .ThenInclude(x=> x.FinancialServiceProvider)
+                    .Include(x=> x.FinancialServiceDisbursementContactPersons)
+                        .ThenInclude(x=> x.ContactPerson)
+                            .ThenInclude(x=> x.FinancialServiceProvider)
                    
-                .Where(x => x.Transaction.LocationId  == locationId).AsNoTracking();
+                    .Where(x => x.Transaction.LocationId  == locationId).AsNoTracking();
 
             if (financialServiceProviderId.HasValue && financialServiceProviderId != Guid.Empty)
             {

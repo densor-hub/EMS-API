@@ -11,7 +11,10 @@ namespace WebApplication1.Services.ControllerServices
         Task<FinancialServiceProviderResponseDto> UpdateBankAsync(Guid bankId, FinancialServiceProviderUpdateDto updateDto);
         Task DeleteBankAsync(Guid bankId);
         Task<IEnumerable<FinancialServiceProviderDropdownDto>> GetBanksForDropdownAsync(Guid locationId, GeneralStatus? status);
-        Task MakeDepositAsync(CreateTransactionDto depositDto);
+        Task<IEnumerable<FinancialServiceProviderResponseDto>> GetFinancialServiceProviders(Guid locationId, GeneralStatus? status);
+        // Task MakeDepositAsync(CreateTransactionDto depositDto);
         Task<IEnumerable<FinancialServiceProviderContactPersonResponseDto>> GetAllContactPersonsAsync(Guid bankId, string? filter, GeneralStatus? status);
+        Task Disbursement (CreateFinancialServiceDisbursementDTO createDto);
+        Task<IEnumerable<GetFinancialServiceDisbursementDTO>> GetDisbursements(Guid locationId, Guid? financialServiceProviderId, DateTime? startDate = null, DateTime? endDate = null);
     }
 }

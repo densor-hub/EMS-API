@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApplication1.DAL;
@@ -11,9 +12,11 @@ using WebApplication1.DAL;
 namespace WebApplication1.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008074712_CouponCodeLengthIncreased")]
+    partial class CouponCodeLengthIncreased
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2380,8 +2383,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CouponId")
-                        .IsUnique();
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("LocationId");
 
@@ -3450,9 +3452,8 @@ namespace WebApplication1.DAL.Migrations
             modelBuilder.Entity("WebApplication1.Domain.Entities.Transaction", b =>
                 {
                     b.HasOne("WebApplication1.Domain.Entities.Coupon", "Coupon")
-                        .WithOne()
-                        .HasForeignKey("WebApplication1.Domain.Entities.Transaction", "CouponId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .WithMany()
+                        .HasForeignKey("CouponId");
 
                     b.HasOne("WebApplication1.Domain.Entities.Location", "Location")
                         .WithMany("Transactions")

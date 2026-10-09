@@ -291,6 +291,7 @@ namespace WebApplication1.Services.Emails.TemplateService
                 "CustomerPayment" => GetPaymentConfirmationTemplate(),
                 "ItemsDelivery" => GetDeliveryEmailTemplate(),
                 "EmployeeSetPassword" => GetEmployeeSetPasswordTemplate(),
+                "DepositConfirmation" => GetDepositConfirmationTemplate(),
                 _ => throw new ArgumentException($"Template '{templateName}' is not supported.")
             };
         }
@@ -2233,6 +2234,311 @@ namespace WebApplication1.Services.Emails.TemplateService
         """;
         }
 
+
+        private string GetDepositConfirmationTemplate()
+        {
+            return """
+        <!DOCTYPE html>
+        <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+        <head>
+            <meta charset="utf-8">
+            <meta name="x-apple-disable-message-reformatting">
+            <meta http-equiv="x-ua-compatible" content="ie=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+            <!--[if mso]>
+            <xml>
+                <o:OfficeDocumentSettings>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                </o:OfficeDocumentSettings>
+            </xml>
+            <style>
+                td, th, div, p, a, h1, h2, h3, h4, h5, h6 {
+                    font-family: "Segoe UI", sans-serif;
+                    mso-line-height-rule: exactly;
+                }
+            </style>
+            <![endif]-->
+
+            <style>
+                .header-banner {
+                    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+                    color: #ffffff;
+                    padding: 25px 30px;
+                    border-radius: 8px 8px 0 0;
+                    text-align: center;
+                    margin: -40px -40px 25px -40px;
+                }
+
+                .status-badge {
+                    display: inline-block;
+                    padding: 5px 16px;
+                    background-color: rgba(255,255,255,0.2);
+                    border-radius: 50px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    margin-top: 8px;
+                    color: #ffffff;
+                }
+
+                .amount-highlight {
+                    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    text-align: center;
+                    margin: 20px 0;
+                }
+
+                .amount-highlight .label { font-size: 14px; opacity: 0.9; }
+                .amount-highlight .amount { font-size: 36px; font-weight: 700; margin: 5px 0; }
+
+                .details-box {
+                    background-color: #f8f9fa;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                    border: 1px solid #e9ecef;
+                }
+
+                .details-box h3 {
+                    color: #1e7e34;
+                    margin: 0 0 15px 0;
+                    font-size: 16px;
+                }
+
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px 0;
+                    border-bottom: 1px dashed #dee2e6;
+                    font-size: 15px;
+                }
+
+                .detail-row:last-child { border-bottom: none; }
+                .detail-row .label { color: #666; }
+                .detail-row .value { color: #333; font-weight: 600; }
+
+                .verification-box {
+                    background-color: #e8f5e9;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 25px 0;
+                    border-left: 4px solid #1e7e34;
+                }
+
+                .verification-box h4 {
+                    margin: 0 0 10px 0;
+                    color: #155724;
+                    font-size: 15px;
+                }
+
+                .verification-box ul { margin: 0; padding-left: 20px; }
+                .verification-box li { margin-bottom: 8px; color: #333; font-size: 14px; }
+
+                .support-box {
+                    background-color: #e8f4f8;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 25px 0;
+                    border-left: 4px solid #2c5aa0;
+                    text-align: center;
+                }
+
+                .highlight-text { font-weight: 700; color: #1e7e34; }
+
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                    font-size: 14px;
+                }
+
+                .items-table th {
+                    background-color: #1e7e34;
+                    color: #ffffff;
+                    padding: 10px 12px;
+                    text-align: left;
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+
+                .items-table td {
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #e9ecef;
+                    color: #333;
+                    font-size: 14px;
+                    word-wrap: break-word;
+                    word-break: break-word;
+                }
+
+                .items-table tr:nth-child(even) { background-color: #f8f9fa; }
+                .items-table td:last-child { text-align: right !important; }
+
+                @media (max-width: 600px) {
+                    .sm-w-full { width: 100% !important; }
+                    .sm-px-24 { padding-left: 24px !important; padding-right: 24px !important; }
+                    .header-banner { padding: 20px; margin: -20px -20px 20px -20px; }
+                    .header-banner h1 { font-size: 20px; }
+                    .amount-highlight .amount { font-size: 28px; }
+                    .detail-row { font-size: 13px; }
+                    .items-table { font-size: 11px !important; }
+                    .items-table th { font-size: 10px !important; padding: 6px 8px !important; }
+                    .items-table td { font-size: 10px !important; padding: 6px 8px !important; }
+                }
+            </style>
+        </head>
+
+        <body style="margin: 0; padding: 0; width: 100%; word-break: break-word; -webkit-font-smoothing: antialiased; background-color: #eceff1;">
+            <div role="article" aria-roledescription="email" aria-label="Deposit Acknowledgment" lang="en">
+                <table style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; width: 100%;" width="100%"
+                       cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                        <td align="center" style="background-color: #eceff1; font-family: 'Segoe UI', sans-serif;">
+                            <table class="sm-w-full" style="font-family: 'Segoe UI', sans-serif; width: 600px;" width="600"
+                                   cellpadding="0" cellspacing="0" role="presentation">
+                                <tr>
+                                    <td align="center" style="font-family: 'Segoe UI', sans-serif;">
+                                        <table style="font-family: 'Segoe UI', sans-serif; width: 100%;" width="100%"
+                                               cellpadding="0" cellspacing="0" role="presentation">
+                                            <tr>
+                                                <td class="sm-px-24"
+                                                    style="background-color: #ffffff; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.6; padding: 40px; text-align: left; color: #333333; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"
+                                                    align="left">
+
+                                                    <!-- Header Banner -->
+                                                    <div class="header-banner">
+                                                        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 700;">
+                                                            Deposit Acknowledgment
+                                                        </h1>
+                                                        <div class="status-badge">✓ PAYMENT RECEIVED</div>
+                                                    </div>
+
+                                                    <!-- Greeting -->
+                                                    <p style="margin: 0 0 20px; font-size: 16px;">
+                                                        Dear <strong>{{ReceiverName}}</strong>,
+                                                    </p>
+
+                                                    <p style="margin: 0 0 20px; font-size: 16px;">
+                                                        This is to acknowledge and confirm that a deposit of
+                                                        <strong class="highlight-text">{{Currency}} {{Amount}}</strong>
+                                                        was successfully received on
+                                                        <strong class="highlight-text">{{Date}}</strong>.
+                                                    </p>
+
+                                                    <!-- Amount -->
+                                                    <div class="amount-highlight">
+                                                        <div class="label">Amount Received</div>
+                                                        <div class="amount">{{Currency}} {{Amount}}</div>
+                                                        <div style="font-size: 14px; opacity: 0.9;">
+                                                            Reference: {{Reference}}
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Transaction Details -->
+                                                    <div class="details-box">
+                                                        <h3>Transaction Details</h3>
+                                                        <div class="detail-row">
+                                                            <span class="label">Date &amp; Time</span>
+                                                            <span class="value">{{Date}}</span>
+                                                        </div>
+                                                        <div class="detail-row">
+                                                            <span class="label">Reference No.</span>
+                                                            <span class="value">{{Reference}}</span>
+                                                        </div>
+                                                        <div class="detail-row">
+                                                            <span class="label">Total Cost</span>
+                                                            <span class="value">{{Currency}} {{Cost}}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Items (optional, only if Items present) -->
+                                                    {{#if Items}}
+                                                    <div>
+                                                        <h3 style="color: #1e7e34; margin: 0 0 15px 0; font-size: 17px;">
+                                                            Items
+                                                        </h3>
+                                                        <table class="items-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Item Name</th>
+                                                                    <th>Price</th>
+                                                                    <th style="text-align: center;">Qty</th>
+                                                                    <th style="text-align: right;">Amount</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {{#each Items}}
+                                                                <tr>
+                                                                    <td>{{this.name}}</td>
+                                                                    <td>{{this.price}}</td>
+                                                                    <td style="text-align: center;">{{this.quantity}}</td>
+                                                                    <td style="text-align: right;">{{this.amount}}</td>
+                                                                </tr>
+                                                                {{/each}}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    {{/if}}
+
+                                                    <!-- Verification Message -->
+                                                    <div class="verification-box">
+                                                        <h4>⚠️ Please Verify This Acknowledgment</h4>
+                                                        <ul>
+                                                            <li><strong>Confirm the amount received matches your records</strong></li>
+                                                            <li><strong>Report any discrepancies immediately</strong></li>
+                                                            <li><strong>Retain this email as an official transaction record</strong></li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <!-- Support -->
+                                                    <div class="support-box">
+                                                        <p style="margin: 0; font-size: 15px; color: #2c5aa0;">
+                                                            <strong>Need assistance?</strong> Contact us at
+                                                            <a href="mailto:{{CompanyEmail}}" style="color: #2c5aa0; text-decoration: underline;">{{CompanyEmail}}</a>
+                                                            or call {{CompanyPhone}}
+                                                        </p>
+                                                    </div>
+
+                                                    <!-- Closing -->
+                                                    <p style="margin: 25px 0 5px 0; font-size: 16px;">
+                                                        Thank you for your continued partnership.
+                                                    </p>
+
+                                                    <p style="margin: 0 0 5px 0; font-size: 16px;">
+                                                        Best regards,
+                                                    </p>
+                                                    <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #1e7e34;">
+                                                        {{CompanyName}}
+                                                    </p>
+
+                                                    <!-- Footer -->
+                                                    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; text-align: center; font-size: 12px; color: #999;">
+                                                        <p style="margin: 0 0 10px 0;">
+                                                            {{CompanyName}} | {{CompanyAddress}} | {{CompanyPhone}} | {{CompanyEmail}}
+                                                        </p>
+                                                        <p style="margin: 0;">
+                                                            This email was sent to {{PrimaryEmail}}
+                                                        </p>
+                                                        <p style="margin: 20px 0 0 0; font-weight: 600; color: #666;">
+                                                            Powered by Abibeck Software Solutions
+                                                        </p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </body>
+        </html>
+        """;
+        }
     }
 
 

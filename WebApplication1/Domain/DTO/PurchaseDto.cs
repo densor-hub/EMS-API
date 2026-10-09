@@ -82,8 +82,6 @@ namespace WebApplication1.DTOs
         public string? TransactionCode { get; set; }
         public List<GetTransactionItemDto>? Items { get; set; }
         public List<GetTransactionPaymentsDto>? Payments { get; set; }
-
-
     }
 
     public class UpdatePurchaseDto

@@ -9,6 +9,7 @@
         public bool Status { get; private set; }
         public Guid LocationId { get; private set; }
         public Location Location { get; private set; }
+
         
        
 

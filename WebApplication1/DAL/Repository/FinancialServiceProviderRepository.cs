@@ -26,6 +26,7 @@ namespace WebApplication1.Repositories
         {
             var FinancialServiceProviders =  _context.FinancialServiceProviders
                 .Include(b => b.Location)
+                .Include(x=> x.ContactPersons)
                 .Where(b => b.LocationId == locationId &&
                 (!string.IsNullOrEmpty(filter) ? b.Name.ToLower().Trim().Contains(filter.ToLower().Trim()) || b.Code.ToLower().Trim().Contains(filter.ToLower().Trim()) : true))
             .AsNoTracking();

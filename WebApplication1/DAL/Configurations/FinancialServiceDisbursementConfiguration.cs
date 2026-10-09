@@ -30,11 +30,11 @@ namespace WebApplication1.DAL.Configurations
                .OnDelete(DeleteBehavior.Restrict);
 
 
-            builder.HasOne(x => x.ContactPerson)
-               .WithMany(x => x.FinancialServiceDisbursements)
-               .HasForeignKey(x => x.ContactPersonId)
-               .IsRequired(true)
-               .OnDelete(DeleteBehavior.Restrict);
+            //builder.HasOne(x => x.ContactPerson)
+            //   .WithMany(x => x.FinancialServiceDisbursements)
+            //   .HasForeignKey(x => x.ContactPersonId)
+            //   .IsRequired(true)
+            //   .OnDelete(DeleteBehavior.Restrict);
 
 
         }

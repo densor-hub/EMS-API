@@ -218,7 +218,7 @@ public class EmailSenderService : IEmailSenderService
         return email;
     }
 
-    public async Task<EmailResult> SendEmailAsync(string to, string subject, string body, bool isHtml = true)
+    public async Task<EmailResult> SendEmailAsync(string to,  string subject,string body, List<string> Bcc = null, bool isHtml = true)
     {
         var message = new EmailMessage
         {
@@ -227,7 +227,7 @@ public class EmailSenderService : IEmailSenderService
             Body = body,
             IsHtml = isHtml,
             Cc = new List<string>(),
-            Bcc = new List<string>(),
+            Bcc = Bcc?? new List<string>(),
             Attachments = new List<EmailAttachment>()
         };
 

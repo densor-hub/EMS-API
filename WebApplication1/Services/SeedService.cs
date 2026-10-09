@@ -60,17 +60,24 @@ namespace WebApplication1.Services
                     new MenuDefinition
                     {
                         Id = Guid.Parse("b2a3b4c5-e6f7-4a89-9b1c-2d3e4f5a6b7c"),
-                        Title = "Disbursements",
-                        Path = "/disbursements/disbursement",
+                        Title = "Miscellaneous",
+                        Path = "/disbursements/miscellaneous",
                         Level = 3.1,
                     },
                     new MenuDefinition
                     {
                         Id = Guid.Parse("b3a4b5c6-f7a8-4b9a-9c2d-3e4f5a6b7c8d"),
-                        Title = "Approval",
-                        Path = "/disbursements/approval",
+                        Title = "Miscellaneous Approval",
+                        Path = "/disbursements/miscellaneous-approval",
                         Level = 3.2,
                     },
+                      new MenuDefinition
+                    {
+                        Id = Guid.Parse("f0004e7b-21d7-42d6-9c15-2726ea394ab8"),
+                        Title = "Deposits",
+                        Path = "/disbursements/deposits",
+                        Level = 332,
+                    }
                 },
             },
             new MenuDefinition
@@ -230,14 +237,29 @@ namespace WebApplication1.Services
                         Path = "/setup/suppliers",
                         Level = 7.6,
                     },
+                     new MenuDefinition
+                    {
+                        Id = Guid.Parse("b8a1a4da-99e2-4b27-a616-6e0342bee40b"),
+                        Title = "Financial Institutions",
+                        Path = "/setup/financial-institutions",
+                        Level = 7.6,
+                    },
                 },
             },
+            new MenuDefinition
+                {
+                    Id = Guid.Parse("f3a92b41-7e6d-4c58-9a10-2d8f4b7c1e63"),
+                    Title = "Coupons",
+                    Path = "/coupons",
+                    Level = 8,
+                },
+
             new MenuDefinition
             {
                 Id = Guid.Parse("3a4b5c6d-7e8f-4a9b-9c0d-1e2f3a4b5c6d"),
                 Title = "Reports",
                 Path = "/reports",
-                Level = 8,
+                Level = 9,
             },
         };
 

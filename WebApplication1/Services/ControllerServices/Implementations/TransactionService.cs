@@ -78,6 +78,27 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     0, createDto.TaxAmount, createDto.DiscountAmount, Guid.Parse(user.Id), DateTime.UtcNow, createDto.TransactionResultsType, createDto.TransactionType.ToString(),
                     location.Id, createDto.BusinessPartnerId.HasValue && createDto.BusinessPartnerId != Guid.Empty && createDto.TransactionType != TransactionType.TRAN);
 
+                if (!string.IsNullOrEmpty(createDto.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(x => x.LocationId == location.Id && x.Code.ToUpper().Trim() == (createDto.CouponCode ?? string.Empty).ToUpper().Trim());
+                    if(coupon == null) { throw new Exception("Invalid Coupon Submitted");  }
+
+                    if (coupon.Used)
+                    {
+                        throw new Exception("Coupon has been used already");
+                    }
+
+                    if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
+                    {
+                        throw new Exception("Coupon has expired");
+                    }
+
+                    coupon.Use(Guid.Parse(user.Id));
+
+                     _context.Coupons.Update(coupon);
+
+                    transaction.SetCoupon(coupon.Id);
+                }
                 await _context.Transactions.AddAsync(transaction);
 
 
@@ -157,19 +178,19 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             }
 
-            else if (transaction.TransactionType == TransactionType.DEPO.ToString())
-            {
-                var contactPerson = await _context.FinancialServiceProviderContactPersons.Where(x => x.Id == BusinessPartnerId).FirstOrDefaultAsync();
-                if (contactPerson == null) { throw new Exception("Contact person not found"); }
+            //else if (transaction.TransactionType == TransactionType.DEPO.ToString())
+            //{
+            //    var contactPerson = await _context.FinancialServiceProviderContactPersons.Where(x => x.Id == BusinessPartnerId).FirstOrDefaultAsync();
+            //    if (contactPerson == null) { throw new Exception("Contact person not found"); }
 
-                EmailReceiver.Email = contactPerson?.Email ?? "";
-                EmailReceiver.Name = $"{contactPerson?.FirstName ?? ""} {contactPerson?.LastName ?? ""}";
-                EmailReceiver.Code = contactPerson?.Code ?? "";
-                EmailReceiver.Id = contactPerson?.Id ?? Guid.Empty;
+            //    EmailReceiver.Email = contactPerson?.Email ?? "";
+            //    EmailReceiver.Name = $"{contactPerson?.FirstName ?? ""} {contactPerson?.LastName ?? ""}";
+            //    EmailReceiver.Code = contactPerson?.Code ?? "";
+            //    EmailReceiver.Id = contactPerson?.Id ?? Guid.Empty;
 
-                var fs_disbursement = FinancialServiceDisbursement.Create(Guid.NewGuid(), contactPerson.Id, Guid.Parse(user.Id), transaction.Id);
-                await _context.FinancialServiceDisbursement.AddAsync(fs_disbursement);
-            }
+            //    var fs_disbursement = FinancialServiceDisbursement.Create(Guid.NewGuid(),  Guid.Parse(user.Id), transaction.Id);
+            //    await _context.FinancialServiceDisbursement.AddAsync(fs_disbursement);
+            //}
             else if (transaction.TransactionType == TransactionType.TRAN.ToString())
             {
                 if (BusinessPartnerId.HasValue == false) throw new Exception("A destination or target shop is required for this transaction to compltete");
@@ -392,6 +413,29 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             try
             {
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+
+                if (!string.IsNullOrEmpty(createDto.CouponCode))
+                {
+                    var coupon = await _context.Coupons.FirstOrDefaultAsync(x => x.LocationId == transRecord.LocationId && x.Code.ToUpper().Trim() == (createDto.CouponCode ?? string.Empty).ToUpper().Trim());
+                    if (coupon == null) { throw new Exception("Invalid Coupon Submitted"); }
+
+                    if (coupon.Used)
+                    {
+                        throw new Exception("Coupon has been used already");
+                    }
+
+                    if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
+                    {
+                        throw new Exception("Coupon has expired");
+                    }
+
+                    coupon.Use(Guid.Parse(user.Id));
+
+                    _context.Coupons.Update(coupon);
+
+                }
+
                 var transactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", transRecord.LocationId);
 
                 var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
@@ -416,22 +460,24 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             if (user == null) { throw new Exception("Invalid transaction"); }
 
             if (transRecord == null) { throw new Exception("Submitted transaction not found"); }
+            
 
             Guid? couponId = null;
             if (!string.IsNullOrEmpty(createDto.CouponCode))
             {
-                var coupon = await _context.Coupons.Where(x => x.Code.ToUpper().Trim() == createDto.CouponCode.ToUpper().Trim()).FirstOrDefaultAsync();
+                var coupon = await _context.Coupons.Where(x => x.Code.ToUpper().Trim() == createDto.CouponCode.ToUpper().Trim() && x.LocationId == transRecord.LocationId).FirstOrDefaultAsync();
+
                 if (coupon != null)
                 {
-                    if (coupon.Used)
-                    {
-                        throw new Exception("Coupon has been used already");
-                    }
+                    //if (coupon.Used)
+                    //{
+                    //    throw new Exception("Coupon has been used already");
+                    //}
 
-                    if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
-                    {
-                        throw new Exception("Coupon has expired");
-                    }
+                    //if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
+                    //{
+                    //    throw new Exception("Coupon has expired");
+                    //}
 
                     couponId = coupon.Id;
                 }
@@ -488,51 +534,47 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             if (transRecord.RequiresExternalApproval)
             {
-                await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReceiver);
+                var emailReciversList = new List<EmailReceiver> { emailReceiver };
+                await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReciversList);
             }
 
             return (transRecord, user, payment);
         }
 
-        public async Task SaveTransactionEmailTemplate(Transaction transaction, ApplicationUser user, Payment payment, Guid? BatchId, EmailReceiver? emailReceiver)
+        public async Task SaveTransactionEmailTemplate(Transaction transaction, ApplicationUser user, Payment payment, Guid? BatchId, List<EmailReceiver>? emailReceivers)
         {
-
             bool isSale = transaction.TransactionType == TransactionType.SALE.ToString();
             bool isSaleReversal = transaction.TransactionType == TransactionType.SREV.ToString();
             bool isPurchase = transaction.TransactionType == TransactionType.PURC.ToString();
             bool isPurchaseReversal = transaction.TransactionType == TransactionType.PREV.ToString();
             bool isTransfer = transaction.TransactionType == TransactionType.TRAN.ToString();
             bool isTransferReversal = transaction.TransactionType == TransactionType.TRAN.ToString();
+            bool isFinacialDeposit = transaction.TransactionType == TransactionType.DEPO.ToString();
 
             var company = await _companyRepository.GetByIdAsync(user.CompanyId);
 
-
             var totalPayments = transaction.TransactionPayments != null ? transaction.TransactionPayments.Sum(x => x.Amount) : 0;
-            var balance = transaction.TotalAmount - (totalPayments); //Payment has been added to database hence the sum here will automatically include the current payment being made
-
-
-            // var token = payment is not null ? await _paymentTokenService.GenerateTokenAsync(receiverEmail ?? "", payment) : null;
+            var balance = transaction.TotalAmount - (totalPayments);
 
             var location = await _context.Locations.FirstOrDefaultAsync(x => x.Id == transaction.LocationId);
-
 
             var emailItemQuanties = await GetTransactionItemsByType(transaction, BatchId);
 
             var emailItems = emailItemQuanties
                 ?.Select(yz =>
                 {
-                    
                     return new EmailItem
                     {
                         Name = yz.Name ?? "N/A",
-                        Price = yz.Price.ToString("N2", CultureInfo.InvariantCulture), // Fixed format
+                        Price = yz.Price.ToString("N2", CultureInfo.InvariantCulture),
                         Quantity = yz.Quantity,
                         Amount = (yz.Quantity * yz.Price).ToString("N2", CultureInfo.InvariantCulture)
                     };
-                    
                 })
-                .Where(e => e != null) // filter out nulls
+                .Where(e => e != null)
                 .ToList() ?? new List<EmailItem>();
+
+            var primaryContact = emailReceivers?.FirstOrDefault();
 
             var emailTemplate = new AllEmailsTemplateModel
             {
@@ -540,8 +582,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 CompanyAddress = location?.Address ?? company?.Address ?? "",
                 CompanyPhone = location?.Phone ?? company?.PhoneNumber ?? "",
                 AppName = _emailSettings.AppName,
-                ReceiverName = emailReceiver?.Name??"",
-                PrimaryEmail = emailReceiver?.Email ?? "",
+                ReceiverName = primaryContact?.Name ?? "",
+                PrimaryEmail = primaryContact?.Email ?? "",
                 Currency = payment?.Currency?.Code ?? "GHS",
                 Cost = transaction?.TotalAmount,
                 Amount = payment?.Amount,
@@ -550,8 +592,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 Reference = transaction?.TransactionNumber ?? "",
                 PinCode = transaction?.TransactionNumber ?? "",
                 Items = emailItems,
-                //  Balance = payment.Amount - transaction.TotalAmount
-
             };
 
             var subject = "";
@@ -559,31 +599,44 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             if (payment == null)
             {
-              subject = isSale || isTransfer ? "Items Delivery" :
-                        isSaleReversal || isPurchaseReversal || isTransferReversal ? "Items Reversal" :
-                        isPurchase ? "Items Receival" : "Items Delivery";
+                subject = isSale || isTransfer ? "Items Delivery" :
+                          isSaleReversal || isPurchaseReversal || isTransferReversal ? "Items Reversal" :
+                          isPurchase ? "Items Receival" :
+                          isFinacialDeposit ? "Deposit" : "Items Delivery";
 
                 templateName = isSale || isTransfer ? "ItemsDelivery" :
-                            isSaleReversal || isPurchaseReversal || isTransferReversal ? "ItemsReversal" :
-                           isPurchase  ? "ItemsReceival" : "ItemsDelivery" ;
-            } 
+                               isSaleReversal || isPurchaseReversal || isTransferReversal ? "ItemsReversal" :
+                               isPurchase ? "ItemsReceival" :
+                               isFinacialDeposit ? "DepositConfirmation" : "ItemsDelivery";
+            }
             else
             {
                 subject = "Payment Confirmation";
                 templateName = "CustomerPayment";
             }
 
+            // ── ONLY change: wrap model + BCC in envelope ──────────────────────
+            var BCCs = emailReceivers?.Where(x => x.Id != primaryContact?.Id);
+            List<string> bccList = BCCs?.Any() == true
+                ? BCCs.Select(x => x.Email).Where(x => !string.IsNullOrWhiteSpace(x)).ToList()
+                : new List<string>();
+
+            var envelope = new
+            {
+                model = emailTemplate,
+                bccList = bccList,
+            };
+
             var queuedEmail = new QueuedEmail
             {
-                To = emailReceiver?.Email??"",
+                To = primaryContact?.Email ?? "",
                 Subject = subject,
                 TemplateName = templateName,
-                TemplateModelJson = JsonSerializer.Serialize(emailTemplate),
+                TemplateModelJson = JsonSerializer.Serialize(envelope),   // ← was Serialize(emailTemplate)
                 TemplateModelType = typeof(AllEmailsTemplateModel).AssemblyQualifiedName,
-                ReceiverId = emailReceiver?.Id??Guid.Empty,
+                ReceiverId = primaryContact?.Id ?? Guid.Empty,
                 CreatedAt = DateTime.UtcNow,
-                //ReceiverId = Guid.Empty,
-                Status = EmailQueueStatus.Pending
+                Status = EmailQueueStatus.Pending,
             };
 
             await _context.QueuedEmails.AddAsync(queuedEmail);
@@ -928,9 +981,11 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     saleTransDeliveryRequest.TransactionItemDelivered != null && saleTransDeliveryRequest.TransactionItemDelivered.All(x => x.IsDelivered))
                 {
                     var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
+
+                    var emailRceiverList = new List<EmailReceiver> { emailReceiver };
                     await SaveTransactionEmailTemplate(transRecord, user, null,
-                      saleTransDeliveryRequestToBeCreated != null ? saleTransDeliveryRequestToBeCreated.Id :  saleTransDeliveryRequest != null ? saleTransDeliveryRequest.Id : batchId, 
-                      emailReceiver);
+                      saleTransDeliveryRequestToBeCreated != null ? saleTransDeliveryRequestToBeCreated.Id :  saleTransDeliveryRequest != null ? saleTransDeliveryRequest.Id : batchId,
+                      emailRceiverList);
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -994,26 +1049,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             }
 
-            else if (transRecord.TransactionType == TransactionType.DEPO.ToString())
-            {
 
-                var financialDeposit = await _context.FinancialServiceDisbursement
-                   .Include(x => x.ContactPerson)
-                   .Where(x => x.TransactionId == transRecord.Id)
-                   .Select(x => new { x.ContactPerson })
-                   .FirstOrDefaultAsync();
-
-                if (financialDeposit == null || financialDeposit.ContactPerson == null) { throw new Exception("Customer not found"); }
-
-
-                var fscp = financialDeposit.ContactPerson;
-
-                EmailReceiver.Email = fscp?.Email ?? "";
-                EmailReceiver.Name = $"{fscp?.FirstName ?? ""} {fscp?.LastName ?? ""}";
-                EmailReceiver.Code = fscp?.Code ?? "";
-                EmailReceiver.Id = fscp?.Id ?? Guid.Empty;
-
-            }
             else if (transRecord.TransactionType == TransactionType.TRAN.ToString())
             {
                 //if (BusinessPartnerId.HasValue == false) throw new Exception("A destination or target shop is required for this transaction to compltete");

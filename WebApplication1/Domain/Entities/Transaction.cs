@@ -48,6 +48,10 @@ namespace WebApplication1.Domain.Entities
         public static Transaction Create(Guid id, string transactionNumber, DateTime transactionDate, decimal total, decimal taxAmount, decimal discount,  Guid createdBy, DateTime createdAt, TransactionResultsType? transactionResult, string transactionType, Guid locationId, bool requiresExternalApproval)
        => new Transaction(id, transactionNumber, transactionDate, total, taxAmount, discount, createdBy, createdAt, transactionResult, transactionType, locationId, requiresExternalApproval);
 
+        public void SetCoupon(Guid couponId)
+        {
+            CouponId = couponId;
+        }
         public void UpdateTotalAmountWithCalculatedValue(decimal calculatedAmount)
         {
             TotalAmount = calculatedAmount;

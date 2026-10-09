@@ -13,6 +13,8 @@
         Creation = -3,
         TransferReceival =-4,
         TransferReversal = -5,
+        FinancialServiceProviderDisbursement=-6,
+        EmployeeDisbursement = -7
     }
 
     

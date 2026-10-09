@@ -24,11 +24,11 @@ namespace WebApplication1.DAL.Configurations
             //builder.HasIndex(x => x.TransactionType);
             builder.HasIndex(x => x.TransactionType);
 
-            //builder.HasOne(x => x.Coupon)
-            //    .WithOne()
-            //    .HasForeignKey<Coupon>(x => x.TransactionId)
-            //    .IsRequired(false)
-            //    .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.Coupon)
+                .WithOne()
+                .HasForeignKey<Transaction>(x => x.CouponId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             builder.HasOne(x=> x.Location)

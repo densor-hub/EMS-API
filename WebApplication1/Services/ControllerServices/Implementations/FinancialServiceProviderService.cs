@@ -18,12 +18,15 @@ using Microsoft.Extensions.Options;
 using WebApplication1.Services.TokenService;
 using MimeKit.Encodings;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.ConstrainedExecution;
+using static QRCoder.PayloadGenerator.SwissQrCode;
+using HandlebarsDotNet;
 
 namespace WebApplication1.Services.ControllerServices.Implementations
 {
     public class FinancialServiceProviderService : IFinancialServiceProviderService
     {
-        private readonly IFinancialServiceProviderRepository _bankRepository;
+        private readonly IFinancialServiceProviderRepository _servceProviderRepository;
         private readonly IFinancialServiceProviderContactPersonRepository _contactPersonRepository;
         private readonly ITransactionCodeRepository _transactionCodeRepository;
         private readonly ILocationRepository _locationRepository;
@@ -32,7 +35,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         private readonly ITransactionService _transactionService;
 
         //for transaction
-        private readonly AppDbContext _db;
+        private readonly AppDbContext _dbContext;
         public FinancialServiceProviderService(
              IFinancialServiceProviderRepository bankRepository,
              IFinancialServiceProviderContactPersonRepository contactPersonRepository,
@@ -40,22 +43,26 @@ namespace WebApplication1.Services.ControllerServices.Implementations
              ILocationRepository locationRepository,
              IUserRepository userRepository,
               ICurrencyRepository currencyRepository,
-             AppDbContext db
+             AppDbContext db,
+             ITransactionService transactionService
             )
         {
-            _bankRepository = bankRepository;
+            _servceProviderRepository = bankRepository;
             _contactPersonRepository = contactPersonRepository;
             _transactionCodeRepository = transactionCodeRepository;
             _locationRepository = locationRepository;
             _userRepository = userRepository;
             _currencyRepository = currencyRepository;
-            _db = db;
-
+            _dbContext = db;
+            _transactionService = transactionService;
         }
 
         public async Task<FinancialServiceProviderResponseDto> CreateBankAsync(CreateFinancialServiceProviderDto createDto)
         {
             // Validate unique code
+            var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+
             var validLocation = await _locationRepository.GetByIdAsync(createDto.LocationId);
             if (validLocation == null) { throw new Exception("Invalid shop submitted"); }
 
@@ -68,7 +75,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             {
                 throw new Exception("Invalid User");
             }
-            var transaction = await _db.Database.BeginTransactionAsync();
 
             try
             {
@@ -84,7 +90,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 createDto.Status
             );
 
-                await _bankRepository.AddAsync(bank);
+                await _servceProviderRepository.AddAsync(bank);
 
                 // Create contact persons if any
                 var contactPersons = new List<FinancialServiceProviderContactPerson>();
@@ -102,7 +108,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                             contactPersonDto.PhoneNumber,
                             bank.Id,
                             Guid.Parse(user.Id),
-                            DateTime.UtcNow
+                            DateTime.UtcNow,
+                            contactPersonDto.Location
                         );
 
                         contactPersons.Add(contactPerson);
@@ -111,6 +118,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 if (contactPersons.Any()) await _contactPersonRepository.AddRangeAsync(contactPersons);
 
+                await  _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
 
 
@@ -144,8 +152,17 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         public async Task<FinancialServiceProviderResponseDto> UpdateBankAsync(Guid bankId, FinancialServiceProviderUpdateDto updateDto)
         {
             var user = await _userRepository.GetUserByRefreshTokenAsync();
+            var bank = await _servceProviderRepository.GetByIdAsync(bankId);
 
-            var bank = await _bankRepository.GetByIdAsync(bankId);
+
+            var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            if (user == null)
+            {
+                throw new Exception($"Unauthorized.");
+            }
+
+
             if (bank == null)
             {
                 throw new Exception($"Financial service provider not found.");
@@ -168,14 +185,13 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             var contactPersonsToUpdate = new List<FinancialServiceProviderContactPerson>();
             var contactPersonsToCreate = new List<FinancialServiceProviderContactPerson>();
 
-            var transaction = await _db.Database.BeginTransactionAsync();
             try
             {
                 // Update bank basic info
                 bank.Update(updateDto.Name ?? bank.Name, updateDto.Type ?? bank.Type, updateDto.Address, (GeneralStatus)updateDto.Status, Guid.Parse(user.Id));
 
 
-                await _bankRepository.Update(bank);
+                await _servceProviderRepository.Update(bank);
 
                 // Handle contact persons updates if provided
                 if (updateDto.ContactPersons != null && updateDto.ContactPersons.Any())
@@ -194,7 +210,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                updateData.Email,
                                updateData.PhoneNumber,
                                updateData.Status,
-                               Guid.Parse(user.Id)
+                               Guid.Parse(user.Id),
+                               updateDto.Address
                            );
                             contactPersonsToUpdate.Add(contactPerson);
                         }
@@ -208,7 +225,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                 updateDto.ContactPersons[i].PhoneNumber,
                                 bank.Id,
                                 Guid.Parse(user.Id),
-                                DateTime.UtcNow
+                                DateTime.UtcNow,
+                                updateDto.Address
                             );
 
 
@@ -248,7 +266,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         public async Task DeleteBankAsync(Guid bankId)
         {
             var user = await _userRepository.GetUserByRefreshTokenAsync();
-            var bank = await _bankRepository.GetByIdAsync(bankId);
+            var bank = await _servceProviderRepository.GetByIdAsync(bankId);
             if (bank == null)
             {
                 throw new Exception($"Financial service provider not found.");
@@ -256,7 +274,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             // Soft delete bank
             bank.Update(bank.Name,bank.Type, bank.Address, GeneralStatus.SoftDeleted, Guid.Parse(user.Id));
-            await _bankRepository.Update(bank);
+            await _servceProviderRepository.Update(bank);
 
             //// Soft delete all contact persons
             //foreach (var contactPerson in bank.ContactPersons)
@@ -274,7 +292,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
         public async Task<IEnumerable<FinancialServiceProviderDropdownDto>> GetBanksForDropdownAsync(Guid locationId, GeneralStatus? status)
         {
-            var banks =  _bankRepository.GetFinancialServiceProvidersByLocationAsync(locationId, null, status ?? GeneralStatus.Active);
+            var banks =  _servceProviderRepository.GetFinancialServiceProvidersByLocationAsync(locationId, null, status ?? GeneralStatus.Active);
             return  await banks.Select(x => new FinancialServiceProviderDropdownDto
             {
                 Code = x.Code,
@@ -285,7 +303,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
         public async Task<IEnumerable<FinancialServiceProviderContactPersonResponseDto>> GetAllContactPersonsAsync(Guid bankId, string? filter, GeneralStatus? status)
         {
-            var bank = await _bankRepository.GetByIdAsync(bankId);
+            var bank = await _servceProviderRepository.GetByIdAsync(bankId);
             if (bank == null)
             {
                 throw new Exception($"Financial service provider not found.");
@@ -303,66 +321,219 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         }
 
 
-        public async Task MakeDepositAsync(CreateTransactionDto depositDto)
-        {
-            // Validate bank exists
-            var financialServiceProvider = await _bankRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
-            if (financialServiceProvider == null)
-            {
-                throw new Exception($"Financial service provider not found.");
-            }
+        //public async Task MakeDepositAsync(CreateTransactionDto depositDto)
+        //{
+        //    var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            // Validate contact person belongs to the bank and is active
-            var contactPerson = await _contactPersonRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
-            if (contactPerson == null || contactPerson.FinancialServiceProviderId != depositDto.BusinessPartnerId)
-            {
-                throw new Exception("Invalid contact person.");
-            }
+        //    // Validate bank exists
+        //    var financialServiceProvider = await _servceProviderRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
+        //    if (financialServiceProvider == null)
+        //    {
+        //        throw new Exception($"Financial service provider not found.");
+        //    }
 
-            if (contactPerson.GeneralStatus != GeneralStatus.Active)
-            {
-                throw new Exception("The selected contact person is not active.");
-            }
+        //    // Validate contact person belongs to the bank and is active
+        //    var contactPerson = await _contactPersonRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
+        //    if (contactPerson == null || contactPerson.FinancialServiceProviderId != depositDto.BusinessPartnerId)
+        //    {
+        //        throw new Exception("Invalid contact person.");
+        //    }
 
-            var currency = await _currencyRepository.GetByCurrencyCodeAsync(depositDto.CurrencyCode);
+        //    if (contactPerson.GeneralStatus != GeneralStatus.Active)
+        //    {
+        //        throw new Exception("The selected contact person is not active.");
+        //    }
 
-            if (currency == null) throw new Exception("Invalid currency");
-            // Create deposit entity
+        //    var currency = await _currencyRepository.GetByCurrencyCodeAsync(depositDto.CurrencyCode);
 
-            var user = await _userRepository.GetUserByRefreshTokenAsync();
+        //    if (currency == null) throw new Exception("Invalid currency");
+        //    // Create deposit entity
 
-            if (user == null) throw new Exception("User not found");
-            // Create deposit entity
-            var transaction = await _db.Database.BeginTransactionAsync();
-            try
-            {
-                await _transactionService.CompleteTransationProcess(depositDto, null );
-            } catch(Exception ex)
-            {
-                await transaction.RollbackAsync();
-                throw ex;
-            }
+        //    var user = await _userRepository.GetUserByRefreshTokenAsync();
+
+        //    if (user == null) throw new Exception("User not found");
+        //    // Create deposit entity
+        //    try
+        //    {
+        //        await _transactionService.CompleteTransationProcess(depositDto, null );
+        //    } catch(Exception ex)
+        //    {
+        //        await transaction.RollbackAsync();
+        //        throw ex;
+        //    }
 
            
-            //}
+        //    //}
 
-            //return new DepositResponseDto
-            //{
-            //    FinancialServiceProviderId = financialServiceProvider.Id,
-            //    FinancialServiceProviderName = financialServiceProvider.Name,
-            //    Amount = depositDto.AmountPaid,
-            //    ContactPersonId = contactPerson.Id,
-            //    ContactPersonName = contactPerson.FullName
-            //    //CreatedAt = tra.CreatedAt,
-            //    //TransactionNumber = deposit.TransactionNumber,
-            //    //DepositDate = deposit.DepositDate,
-            //    //DepositId = deposit.Id,
-            //    //Description = deposit.Description,
-            //    //Status = deposit.Status.ToString()
+        //    //return new DepositResponseDto
+        //    //{
+        //    //    FinancialServiceProviderId = financialServiceProvider.Id,
+        //    //    FinancialServiceProviderName = financialServiceProvider.Name,
+        //    //    Amount = depositDto.AmountPaid,
+        //    //    ContactPersonId = contactPerson.Id,
+        //    //    ContactPersonName = contactPerson.FullName
+        //    //    //CreatedAt = tra.CreatedAt,
+        //    //    //TransactionNumber = deposit.TransactionNumber,
+        //    //    //DepositDate = deposit.DepositDate,
+        //    //    //DepositId = deposit.Id,
+        //    //    //Description = deposit.Description,
+        //    //    //Status = deposit.Status.ToString()
 
-            //};
+        //    //};
+        //}
+
+        public async Task Disbursement(CreateFinancialServiceDisbursementDTO createDto)
+        {
+            var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var user = await _userRepository.GetUserByRefreshTokenAsync();
+            if (user == null) throw new Exception("Unauthorized");
+
+            var location = await _locationRepository.GetByIdAsync(createDto.LocationId);
+
+            if (location == null) throw new Exception("Location not found");
+
+            if (string.IsNullOrEmpty(createDto.CurrencyCode)) throw new Exception("Currency required exception");
+            var currencyCode = await _dbContext.Currencies.FirstOrDefaultAsync(x => x.Code.ToUpper().Trim() == createDto.CurrencyCode.ToUpper().Trim());
+            if (currencyCode == null) throw new Exception("Invalid currency");
+
+            var validServiceProvider = await _servceProviderRepository.GetByIdAsync(createDto.FinancialServiceProviderId);
+            if (validServiceProvider == null) throw new Exception("Financial service provider not found");
+
+            var transactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("DEPO", location.Id);
+
+            var transactionRecord = Transaction.Create(Guid.NewGuid(), transactionNumber, DateTime.SpecifyKind(createDto.Date ?? DateTime.UtcNow, DateTimeKind.Utc), createDto.TotalAmount, 0, 0, Guid.Parse(user.Id), DateTime.UtcNow, TransactionResultsType.FinancialServiceProviderDisbursement, TransactionType.DEPO.ToString(), location.Id, false);
+           await  _dbContext.Transactions.AddAsync(transactionRecord);
+
+
+             var paymentTransactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", transactionRecord.LocationId);
+
+            var payment = Payment.Create(
+                  Guid.NewGuid(),
+                  transactionRecord.Id,
+                  paymentTransactionNumber,
+                   DateTime.SpecifyKind(createDto.Date ?? DateTime.UtcNow, DateTimeKind.Utc),
+                  createDto.TotalAmount,
+                  0,
+                  createDto.PaymentMethod,
+                  DateTime.UtcNow,
+                  Guid.Parse(user.Id),
+                  PaymentStatus.Completed ,
+                  currencyCode.Id,
+                  null
+             );
+
+            await _dbContext.TransactionPayments.AddAsync(payment);
+
+            var disbursement = FinancialServiceDisbursement.Create(Guid.NewGuid(), transactionRecord.Id, validServiceProvider.Id);
+            await _dbContext.FinancialServiceDisbursement.AddAsync(disbursement);
+
+            var ContactPersonsToSave = new List<FinancialServiceProviderContactPerson>();
+            var newContactPersonDisbursementList = new List<FinancialServiceDisbursementContactPerson>();
+            var EmailReceiversList = new List<EmailReceiver>();
+
+            foreach(var person in createDto.ContactPersons)
+            {
+                var exits = await _contactPersonRepository.GetByIdAsync(person.Id??Guid.Empty);
+
+                if (exits == null)
+                {
+                    var ContactPerson = FinancialServiceProviderContactPerson.Create(Guid.NewGuid(), "", person.FullName, person.Email, person.PhoneNumber, validServiceProvider.Id, Guid.Parse(user.Id), DateTime.UtcNow, "");
+                    ContactPersonsToSave.Add(ContactPerson);
+
+                    exits = ContactPerson;
+                }
+
+                var contactPersonDisbursement = FinancialServiceDisbursementContactPerson.Create(Guid.NewGuid(), disbursement.Id, exits.Id, DateTime.UtcNow, Guid.Parse(user.Id));
+                newContactPersonDisbursementList.Add(contactPersonDisbursement);
+
+                var EmailReceiver = new EmailReceiver();
+                EmailReceiver.Email = exits?.Email ?? "";
+                EmailReceiver.Name = $"{exits?.FirstName ?? ""} {exits?.LastName ?? ""}";
+                EmailReceiver.Code = exits?.Code ?? "";
+                EmailReceiver.Id = exits?.Id ?? Guid.Empty;
+
+                EmailReceiversList.Add(EmailReceiver);
+
+            }
+
+            if (ContactPersonsToSave.Count > 0)
+            {
+                await _dbContext.FinancialServiceProviderContactPersons.AddRangeAsync(ContactPersonsToSave);
+            }
+
+            await _dbContext.FinancialServiceDisbursementContactPersons.AddRangeAsync(newContactPersonDisbursementList);
+
+
+            await _transactionService.SaveTransactionEmailTemplate(transactionRecord, user, payment, Guid.NewGuid(), EmailReceiversList);
+
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+    
+        public async Task<IEnumerable<GetFinancialServiceDisbursementDTO>> GetDisbursements(Guid locationId, Guid? financialServiceProviderId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var disbursements = _dbContext.FinancialServiceDisbursement
+                                    .Include(x => x.FinancialServiceProvider)
+                                    .Include(x => x.FinancialServiceDisbursementContactPersons)
+                                        .ThenInclude(x=> x.ContactPerson)
+                                    .Include(x => x.Transaction)
+                                        .ThenInclude(x => x.Location)
+                                    .Where(x => x.Transaction.LocationId == locationId);
+
+            if (financialServiceProviderId != null && financialServiceProviderId != Guid.Empty) {
+                disbursements = disbursements.Where(x=> x.FinancialServiceProviderId == financialServiceProviderId);
+            }
+
+            if (startDate != null)
+            {
+                disbursements = disbursements.Where(x => x.Transaction.CreatedAt >=  startDate);
+            }
+
+            if (endDate != null)
+            {
+                disbursements = disbursements.Where(x => x.Transaction.CreatedAt <= endDate);
+            }
+
+            return await disbursements.Select(x => new GetFinancialServiceDisbursementDTO
+            { 
+                 CreatedAt = x.Transaction.CreatedAt,
+                 LocationName = x.Transaction.Location.Name,
+                 TotalAmount = x.Transaction.TotalAmount,
+                 TransactionCode = x.Transaction.TransactionNumber,
+                 FinacialServiceProviderName = x.FinancialServiceProvider.Name,
+                 TransactionDate = x.Transaction.TransactionDate,
+                 Id = x.Id,
+                 ContactPersons = x.FinancialServiceDisbursementContactPersons.Select(cp => new ContactPersons
+                 {
+                     Id = cp.Id,
+                     Email = cp.ContactPerson.Email,
+                     FullName = cp.ContactPerson.FullName,
+                     PhoneNumber = cp.ContactPerson.PhoneNumber
+                     
+                 }).ToList()
+
+            }).ToListAsync();
+
         }
 
-
+        public async Task<IEnumerable<FinancialServiceProviderResponseDto>> GetFinancialServiceProviders(Guid locationId, GeneralStatus? status)
+        {
+            var banks = _servceProviderRepository.GetFinancialServiceProvidersByLocationAsync(locationId, null, status ?? GeneralStatus.Active);
+            return await banks.Select(x => new FinancialServiceProviderResponseDto
+            {
+               Code = x.Code,
+               Address = x.Address,
+               Id = x.Id,
+               Name = x.Name, 
+               Status = x.GeneralStatus.ToString(),
+               ContactPersons = x.ContactPersons.Select(cp=> new FinancialServiceProviderContactPersonResponseDto
+               {
+                   Status = cp.GeneralStatus.ToString(),
+                   Id = cp.Id,
+                   Code = cp.Code,
+                   FullName = cp.FullName,
+               }).ToList(),
+            }).ToListAsync();
+        }
     }
 }

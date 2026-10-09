@@ -34,11 +34,12 @@ namespace WebApplication1.Controllers
             _couponRepository = couponRepository;
             _logger = logger;
             _userRepository = userRepository;
+            _locationRepository = locationRepository;
         }
 
         // GET: api/employees
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetCouponDTO>>> GetAllCoupons([FromQuery] Guid locationId, [FromQuery] bool? status = null)
+        [HttpGet("{locationId:Guid}")]
+        public async Task<ActionResult<IEnumerable<GetCouponDTO>>> GetAllCoupons([FromRoute] Guid locationId, [FromQuery] bool? status = null)
         {
             try
             {
@@ -100,8 +101,6 @@ namespace WebApplication1.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var Code = await  _couponRepository.GenerateCodeAsync();
-
                 var currentUser = await _userRepository.GetUserByRefreshTokenAsync();
                 var location = await _locationRepository.GetByIdAsync(createDto.LocationId);
 
@@ -109,32 +108,37 @@ namespace WebApplication1.Controllers
 
                 if (createDto?.CouponAmounts?.Count > 0)
                 {
-                    var newCoupons = createDto.CouponAmounts.Select(x => Coupon.Create(
-                     Guid.NewGuid(),
-                     Code,
-                     x.Amount,
-                     x.ExpiryDate.HasValue,
-                     x.ExpiryDate,
-                     Guid.Parse(currentUser.Id),
-                     location.Id
-                     )).ToList();
+                    var newCoupons = new List<Coupon>();
+
+                    foreach (var item in createDto.CouponAmounts)
+                    {
+                        var code = await _couponRepository.GenerateCodeAsync();
+
+                        var coupon = Coupon.Create(
+                            Guid.NewGuid(),
+                            code,
+                            item.Amount,
+                            item.ExpiryDate.HasValue,
+                            item.ExpiryDate,
+                            Guid.Parse(currentUser.Id),
+                            location.Id
+                        );
+
+                        newCoupons.Add(coupon);
+                    }
 
                     await _couponRepository.CreateRangeAsync(newCoupons);
-
                     await _couponRepository.SaveChangesAsync();
                 }
-                
-               
 
                 return StatusCode(201);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating customer");
-                return StatusCode(500, "An error occurred while creating the customer");
+                _logger.LogError(ex, "Error creating coupon");
+                return StatusCode(500, "An error occurred while creating the coupons");
             }
         }
-
         // PUT: api/employees/{id}
         [HttpPut]
         public async Task<ActionResult> UpdateEmployee([FromBody] UpdateCouponDTO createDto)

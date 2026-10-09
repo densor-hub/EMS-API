@@ -13,7 +13,7 @@ namespace WebApplication1.Domain.Entities
         public int IncrementalId { get; private set; }
         public Guid FinancialServiceProviderId { get; private set; }
         public FinancialServiceProvider FinancialServiceProvider { get; private set; }
-        public virtual ICollection<FinancialServiceDisbursement> FinancialServiceDisbursements { get; private set; }
+        public  ICollection<FinancialServiceDisbursementContactPerson> Disbursements { get; private set; }
 
 
         //location relation
@@ -23,7 +23,7 @@ namespace WebApplication1.Domain.Entities
             
         }
 
-        private FinancialServiceProviderContactPerson(Guid id, string code, string fullName, string email, string phoneNumber, Guid financialServiceProvider, Guid createdBy, DateTime createdAt)
+        private FinancialServiceProviderContactPerson(Guid id, string code, string fullName, string email, string phoneNumber, Guid financialServiceProvider, Guid createdBy, DateTime createdAt, string address)
         {
             Id = id;
             Code = code;
@@ -33,13 +33,17 @@ namespace WebApplication1.Domain.Entities
             CreatedAt = createdAt;
             Email = email;
             PhoneNumber = phoneNumber;
+            Address = address;
+            FirstName = fullName;
+            LastName = fullName;
+            Phone = phoneNumber;
         }
 
 
-        public static FinancialServiceProviderContactPerson Create(Guid id, string code, string fullName, string email, string phoneNumber, Guid bankId, Guid createdBy, DateTime createdAt)
-         => new FinancialServiceProviderContactPerson(id, code,fullName, email, phoneNumber, bankId, createdBy, createdAt);
+        public static FinancialServiceProviderContactPerson Create(Guid id, string code, string fullName, string email, string phoneNumber, Guid bankId, Guid createdBy, DateTime createdAt, string address)
+         => new FinancialServiceProviderContactPerson(id, code,fullName, email, phoneNumber, bankId, createdBy, createdAt, address);
 
-        public void Update(string fullName, string email, string phoneNumber, GeneralStatus status, Guid updatedBy)
+        public void Update(string fullName, string email, string phoneNumber, GeneralStatus status, Guid updatedBy, string address)
         {
             FullName = fullName;
             Email = email;
@@ -47,6 +51,7 @@ namespace WebApplication1.Domain.Entities
             UpdatedBy = updatedBy;
             GeneralStatus = status;
             UpdatedAt = DateTime.UtcNow;
+            Address = address;
         }
 
         public void UpdateCode(string code)

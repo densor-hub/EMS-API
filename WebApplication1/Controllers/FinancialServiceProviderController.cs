@@ -1,5 +1,6 @@
 ﻿// Controllers/BankController.cs
 // Controllers/BankController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Enums;
@@ -8,8 +9,9 @@ using WebApplication1.Services.ControllerServices;
 
 namespace WebApplication1.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
+     [ApiController]
+    [Route("[controller]")]
+    [Authorize]
     public class FinancialServiceProviderController : ControllerBase
     {
         private readonly IFinancialServiceProviderService _bankService;
@@ -33,7 +35,7 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpPut("/{financialServiceProvider}")]
+        [HttpPut("{financialServiceProvider}")]
         public async Task<IActionResult> UpdateBank(Guid financialServiceProvider, [FromBody] FinancialServiceProviderUpdateDto updateDto)
         {
             try
@@ -48,11 +50,11 @@ namespace WebApplication1.Controllers
         }
 
         [HttpDelete("{financialServiceProvider}")]
-        public async Task<IActionResult> DeleteBank(Guid bankId)
+        public async Task<IActionResult> DeleteBank([FromRoute]Guid financialServiceProvider)
         {
             try
             {
-                await _bankService.DeleteBankAsync(bankId);
+                await _bankService.DeleteBankAsync(financialServiceProvider);
                 return NoContent();
             }
             catch (Exception ex)
@@ -61,8 +63,22 @@ namespace WebApplication1.Controllers
             }
         }
 
+        [HttpGet("{locationId:Guid}")]
+        public async Task<ActionResult<FinancialServiceProviderResponseDto>> GetAllBanksPerLocattion([FromRoute] Guid locationId, [FromQuery] GeneralStatus? status)
+        {
+            try
+            {
+                var result = await _bankService.GetFinancialServiceProviders(locationId, status);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("dropdown")]
-        public async Task<IActionResult> GetBanksForDropdown([FromQuery] Guid locationId, [FromQuery] GeneralStatus? status)
+        public async Task<ActionResult<FinancialServiceProviderDropdownDto>> GetBanksForDropdown([FromQuery] Guid locationId, [FromQuery] GeneralStatus? status)
         {
             try
             {
@@ -76,7 +92,7 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet("{financialServiceProvider}/contact-persons")]
-        public async Task<IActionResult> GetContactPersons(Guid bankId, [FromQuery] string? filter, [FromQuery] GeneralStatus? status)
+        public async Task<ActionResult<FinancialServiceProviderContactPersonResponseDto>> GetContactPersons(Guid bankId, [FromQuery] string? filter, [FromQuery] GeneralStatus? status)
         {
             try
             {
@@ -90,12 +106,26 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost("deposit")]
-        public async Task<IActionResult> MakeDeposit([FromBody] CreateTransactionDto depositDto)
+        public async Task<IActionResult> MakeDeposit([FromBody] CreateFinancialServiceDisbursementDTO depositDto)
         {
             try
             {
-                  await _bankService.MakeDepositAsync(depositDto);
+                  await _bankService.Disbursement(depositDto);
                 return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("deposits/{locationId:Guid}")]
+        public async Task<ActionResult<List<GetFinancialServiceDisbursementDTO>>> GetDeposits([FromRoute] Guid locationId, [FromQuery] Guid financialServiceProvider, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
+        {
+            try
+            {
+                var data = await _bankService.GetDisbursements(locationId, financialServiceProvider, startDate, endDate );
+                return Ok(data);
             }
             catch (Exception ex)
             {

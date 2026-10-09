@@ -9,24 +9,23 @@ namespace WebApplication1.Domain.Entities
         public Transaction Transaction { get; private set; }
         public Guid FinancialServiceProviderId { get; private set; }
         public FinancialServiceProvider FinancialServiceProvider { get; private set; }
-        public Guid ContactPersonId { get; private set; }
-        public FinancialServiceProviderContactPerson ContactPerson { get; private set; }
+        public virtual ICollection<FinancialServiceDisbursementContactPerson> FinancialServiceDisbursementContactPersons { get; private  set; }
         
 
         private FinancialServiceDisbursement()
         {
         }
 
-        private FinancialServiceDisbursement(Guid id, Guid contactPersonId,  Guid transactionId, Guid serviceProvider)
+        private FinancialServiceDisbursement(Guid id,  Guid transactionId, Guid serviceProvider)
         {
             Id = id;
-            ContactPersonId = contactPersonId;
+           // ContactPersonId = contactPersonId;
             TransactionId = transactionId;
             FinancialServiceProviderId = serviceProvider;
         }
 
-        public static FinancialServiceDisbursement Create(Guid id, Guid contactPersonId, Guid transactionId, Guid serviceProvider)
-       => new FinancialServiceDisbursement(id, contactPersonId, transactionId, serviceProvider);
+        public static FinancialServiceDisbursement Create(Guid id, Guid transactionId, Guid serviceProvider)
+       => new FinancialServiceDisbursement(id, transactionId, serviceProvider);
 
 
     }

@@ -10,6 +10,6 @@ namespace WebApplication1.Services.Emails.EmailService
     public interface IEmailSenderService
     {
         Task<EmailResult> SendEmailAsync(EmailMessage message);
-        Task<EmailResult> SendEmailAsync(string to, string subject, string body, bool isHtml = true);
+        Task<EmailResult> SendEmailAsync(string to, string subject, string body, List<string> ? Bcc = null, bool isHtml = true);
     }
 }

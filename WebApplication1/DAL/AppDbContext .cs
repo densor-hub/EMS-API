@@ -59,6 +59,7 @@ namespace WebApplication1.DAL
         public DbSet<FinancialServiceProvider> FinancialServiceProviders { get; set; }
         public DbSet<FinancialServiceProviderContactPerson> FinancialServiceProviderContactPersons { get; set; }
         public DbSet<FinancialServiceDisbursement> FinancialServiceDisbursement { get; set; }
+        public DbSet<FinancialServiceDisbursementContactPerson> FinancialServiceDisbursementContactPersons { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<PaymentConfirmationToken> PaymentConfirmationTokens { get; set; }
         public DbSet<Currency> Currencies { get; set; }

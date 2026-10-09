@@ -44,13 +44,16 @@ namespace WebApplication1.DAL.Repository
 
             for (int attempt = 0; attempt < maxAttempts; attempt++)
             {
-                var firstPart = new string(Enumerable.Repeat(chars, 5)
+                var firstPart = new string(Enumerable.Repeat(chars, 3)
                     .Select(s => s[random.Next(s.Length)]).ToArray());
 
-                var secondPart = new string(Enumerable.Repeat(chars, 5)
+                var secondPart = new string(Enumerable.Repeat(chars, 3)
                     .Select(s => s[random.Next(s.Length)]).ToArray());
 
-                var generatedCode = $"{firstPart}-{secondPart}";
+                var ThirdPart = new string(Enumerable.Repeat(chars, 3)
+                    .Select(s => s[random.Next(s.Length)]).ToArray());
+
+                var generatedCode = $"{firstPart}-{secondPart}-{ThirdPart}";
 
                 var exists = await _context.Coupons
                     .AnyAsync(l => l.Code.ToLower().Trim() == generatedCode.ToLower().Trim());
