@@ -1,0 +1,19 @@
+﻿# Build outputs
+bin/
+obj/
+
+# IDE state
+.vs/
+*.suo
+*.user
+
+# Local secrets
+secrets.json
+appsettings.Development.json
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
