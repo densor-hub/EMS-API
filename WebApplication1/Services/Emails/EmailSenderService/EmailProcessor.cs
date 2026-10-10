@@ -128,7 +128,7 @@ namespace WebApplication1.Services.Emails.EmailService
                 var sendStart = DateTime.UtcNow;
                 _logger.LogInformation("[{Id}] SMTP START at {Time:O}", email.Id, sendStart);
 
-                await emailSender.SendEmailAsync(
+                var sendResult = await emailSender.SendEmailAsync(
                     email.To, email.Subject, body, bccList, true);
 
                 var sendMs = (DateTime.UtcNow - sendStart).TotalMilliseconds;
@@ -136,7 +136,13 @@ namespace WebApplication1.Services.Emails.EmailService
                     "[{Id}] SMTP END at {Time:O} ({Ms}ms)",
                     email.Id, DateTime.UtcNow, sendMs);
 
-                // ── Mark as Sent ──
+                // ── CRITICAL: check the result. Sender can fail without throwing. ──
+                if (!sendResult.Success)
+                {
+                    throw new Exception($"Email sender reported failure: {sendResult.Message}");
+                }
+
+                // ── Mark as Sent (only reached when send actually succeeded) ──
                 email.Status = EmailQueueStatus.Sent;
                 email.SentAt = DateTime.UtcNow;
                 email.ErrorMessage = null;
