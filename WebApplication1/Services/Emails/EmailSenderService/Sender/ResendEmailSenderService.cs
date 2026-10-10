@@ -28,14 +28,40 @@ public class ResendEmailSenderService : IEmailSenderService
     {
         try
         {
+            // ── 1. Normalize the sender fields ──
+            var senderName = _settings.SenderName?.Trim();
+            var senderEmail = _settings.SenderEmail?.Trim();
+
+            // Log exactly what we have so we can debug in production
+            _logger.LogInformation(
+                "Resend config: SenderName='{Name}' SenderEmail='{Email}'",
+                senderName ?? "<null>",
+                senderEmail ?? "<null>");
+
+            if (string.IsNullOrWhiteSpace(senderEmail))
+            {
+                var err = "SenderEmail is not configured (empty or missing).";
+                _logger.LogError(err);
+                return new EmailResult { Success = false, Message = err };
+            }
+
+            // ── 2. Build the From string defensively ──
+            // Resend accepts either "email@example.com" or "Name <email@example.com>".
+            var from = string.IsNullOrWhiteSpace(senderName)
+                ? senderEmail
+                : $"{senderName} <{senderEmail}>";
+
+            _logger.LogInformation("Resend FROM = '{From}'", from);
+
+            // ── 3. Build the Resend message ──
             var msg = new ResendEmailMessage
             {
-                From = $"{_settings.SenderName} <{_settings.SenderEmail}>",
+                From = from,
                 To = new[] { message.To },
                 Subject = message.Subject,
                 HtmlBody = message.IsHtml ? message.Body : null,
                 TextBody = message.IsHtml ? null : message.Body,
-                Bcc = message.Bcc?.ToArray()
+                Bcc = message.Bcc?.Where(b => !string.IsNullOrWhiteSpace(b)).ToArray()
             };
 
             await _client.EmailSendAsync(msg);
@@ -72,7 +98,7 @@ public class ResendEmailSenderService : IEmailSenderService
             IsHtml = isHtml,
             Cc = new List<string>(),
             Bcc = Bcc ?? new List<string>(),
-            Attachments = new List<AppEmailAttachment>()   // ← alias used here
+            Attachments = new List<AppEmailAttachment>()
         };
 
         return await SendEmailAsync(message);
