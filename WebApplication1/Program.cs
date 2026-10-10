@@ -27,6 +27,7 @@ using WebApplication1.Domain.Interfaces;
 using WebApplication1.Infrastructure.Repositories;
 using WebApplication1.Services.ControllerServices.Implementations;
 using WebApplication1.Application.Interfaces;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,10 +53,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
 // Override token lifespan
 builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
 {
-    options.TokenLifespan = TimeSpan.FromHours(24);   // or FromDays(3), FromMinutes(30), etc.
+    options.TokenLifespan = TimeSpan.FromHours(24);
 });
 
 // 3. Register services
@@ -90,10 +92,8 @@ builder.Services.AddScoped<IVehicleAssignmentRepository, VehicleAssignmentReposi
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
-
 //notifications
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
-
 
 //Handler of services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -112,25 +112,39 @@ builder.Services.AddScoped<IVehicleService, VehicleService>();
 //Must be taken out
 builder.Services.AddScoped<IPasswordGenerator, PasswordGenerator>();
 
-
 //token generations
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPaymentTokenService, PaymentTokenService>();
 
-//builder.Services.AddScoped<IPurchaseCancellationRepository, >();
-
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
-builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 builder.Services.AddScoped<IEmailQueueRepository, EmailQueueRepository>();
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+// Bind EmailSettings (contains UseResend, SenderEmail, Smtp*, ResendApiToken)
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+// ─── Email sender: Resend or SMTP based on EmailSettings:UseResend ───
+var useResend = builder.Configuration.GetValue<bool>("EmailSettings:UseResend");
+
+if (useResend)
+{
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.Configure<ResendClientOptions>(o =>
+        o.ApiToken = builder.Configuration["EmailSettings:ResendApiToken"]!);
+    builder.Services.AddTransient<IResend, ResendClient>();
+    builder.Services.AddScoped<IEmailSenderService, ResendEmailSenderService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+}
+
 builder.Services.AddHostedService<EmailProcessor>();
-builder.Services.AddHttpContextAccessor(); // ✅ Required for IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 
 // 4. Add Controllers
 builder.Services.AddControllers();
-
 
 // 5. Add CORS
 builder.Services.AddCors(options =>
@@ -140,7 +154,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // using JWT authentication
+              .AllowCredentials();
     });
 });
 
@@ -150,7 +164,6 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "EMS API", Version = "v1" });
 
-    // Add JWT authentication to Swagger
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
@@ -176,15 +189,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Add SignalR
 builder.Services.AddSignalR();
-
 builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
-
-
-//seedData
 
 // Configure pipeline
 if (app.Environment.IsDevelopment())
@@ -205,8 +213,6 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// ⚠️ IMPORTANT: Your custom middleware should be HERE
-// After UseRouting but before UseAuthentication/UseAuthorization
 app.UseRefreshTokenMiddleware();
 
 app.UseAuthentication();
@@ -214,8 +220,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-
-// Database migration
 // Database migration + seeding
 using (var scope = app.Services.CreateScope())
 {
@@ -226,15 +230,12 @@ using (var scope = app.Services.CreateScope())
         await context.Database.MigrateAsync();
         Console.WriteLine("Database migrated successfully.");
 
-        // 1. Seed hierarchical menus (routes) first
         await SeedService.SeedMenusHierarchicalAsync(context);
         Console.WriteLine("Menus seeded successfully.");
 
-        // 2. Seed ADMIN position + its PositionRoutes
         await SeedService.InitializeSimpleAsync(context);
         Console.WriteLine("ADMIN position seeded successfully.");
 
-        // 3. Seed default company + super admin user
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         await SeedService.SeedDefaultCompanyAndAdminAsync(context, userManager, roleManager);

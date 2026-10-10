@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using WebApplication1.Services.Emails.TemplateService;
 using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
@@ -20,6 +20,10 @@ namespace WebApplication1.Services.Emails.EmailService
         private readonly IServiceProvider _services;
         private readonly ILogger<EmailProcessor> _logger;
 
+        // ── Tune these for testing ──
+        private static readonly TimeSpan StuckThreshold = TimeSpan.FromMinutes(5);
+        private const int BatchSize = 10;
+
         public EmailProcessor(IServiceProvider services, ILogger<EmailProcessor> logger)
         {
             _services = services;
@@ -28,108 +32,159 @@ namespace WebApplication1.Services.Emails.EmailService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation("EmailProcessor starting up. Stuck threshold = {T} min",
+                StuckThreshold.TotalMinutes);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    using (var scope = _services.CreateScope())
+                    using var scope = _services.CreateScope();
+                    var queueRepo = scope.ServiceProvider.GetRequiredService<IEmailQueueRepository>();
+                    var templateService = scope.ServiceProvider.GetRequiredService<IEmailTemplateService>();
+                    var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSenderService>();
+
+                    // ── 1. Recover stuck emails FIRST ──
+                    var recovered = await queueRepo.RecoverStuckEmailsAsync(StuckThreshold, stoppingToken);
+                    if (recovered > 0)
+                        _logger.LogWarning("Recovered {Count} email(s) stuck in Processing state.", recovered);
+
+                    // ── 2. NO DELETES (disabled for testing) ──
+                    // await queueRepo.DeleteSentEmailsAsync(TimeSpan.FromDays(14));
+                    // await queueRepo.DeleteStaleEmailsAsync(TimeSpan.FromDays(30));
+
+                    // ── 3. Fetch pending batch ──
+                    var emails = await queueRepo.GetPendingAsync(BatchSize);
+
+                    _logger.LogInformation("Fetched {Count} pending email(s).", emails.Count);
+
+                    foreach (var email in emails)
                     {
-                        var queueRepo = scope.ServiceProvider.GetRequiredService<IEmailQueueRepository>();
-                        var templateService = scope.ServiceProvider.GetRequiredService<IEmailTemplateService>();
-                        var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSenderService>();
+                        if (stoppingToken.IsCancellationRequested) break;
 
-                        var emails = await queueRepo.GetPendingAsync(10);
-
-                        await queueRepo.DeleteSentEmails();
-
-                        foreach (var email in emails)
-                        {
-                            try
-                            {
-                                // Mark as processing
-                                email.Status = EmailQueueStatus.Processing;
-                                email.LastAttemptAt = DateTime.UtcNow;
-                                await queueRepo.UpdateAsync(email);
-
-                                // Deserialize model + optional BCC.
-                                // Supports three shapes:
-                                //   1. legacy: raw model JSON, no envelope  → no BCC
-                                //   2. envelope without bccList             → no BCC
-                                //   3. envelope with bccList                → BCC recipients
-                                var (deserializedModel, bccList) = DeserializeQueuedEmail(email);
-
-                                // Render and send
-                                var body = await templateService.RenderEmailTemplateAsync(
-                                    (AllEmailsTemplateModel)deserializedModel,
-                                    email.TemplateName);
-
-                                await emailSender.SendEmailAsync(
-                                    email.To,
-                                    email.Subject,
-                                    body,
-                                    bccList,
-                                    true);
-
-                                // Mark as sent
-                                email.Status = EmailQueueStatus.Sent;
-                                email.SentAt = DateTime.UtcNow;
-                                await queueRepo.UpdateAsync(email);
-
-                                _logger.LogInformation(
-                                    "Sent email {Id} to {To} (BCC: {BccCount})",
-                                    email.Id, email.To, bccList.Count);
-                            }
-                            catch (JsonException ex)
-                            {
-                                // Malformed JSON — don't burn retries on a permanent failure
-                                email.RetryCount = QueuedEmail.MaxRetryAttempts;
-                                email.ErrorMessage = $"Malformed TemplateModelJson: {ex.Message}";
-                                email.Status = EmailQueueStatus.Failed;
-                                await queueRepo.UpdateAsync(email);
-
-                                _logger.LogError(ex,
-                                    "Email {Id} has malformed JSON, marking failed", email.Id);
-                            }
-                            catch (Exception ex)
-                            {
-                                email.RetryCount++;
-                                email.ErrorMessage = ex.Message;
-                                email.Status = email.RetryCount >= QueuedEmail.MaxRetryAttempts
-                                    ? EmailQueueStatus.Failed
-                                    : EmailQueueStatus.Pending;
-
-                                // Exponential backoff for retries
-                                if (email.Status == EmailQueueStatus.Pending)
-                                {
-                                    email.ScheduledFor = DateTime.UtcNow.AddMinutes(Math.Pow(2, email.RetryCount));
-                                }
-
-                                await queueRepo.UpdateAsync(email);
-
-                                _logger.LogError(ex,
-                                    "Failed to send email {Id} to {To}, retry {RetryCount}",
-                                    email.Id, email.To, email.RetryCount);
-                            }
-                        }
+                        await ProcessSingleEmailAsync(
+                            email, queueRepo, templateService, emailSender, stoppingToken);
                     }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error in email processor");
+                    _logger.LogError(ex, "Error in email processor main loop");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                }
+                catch (OperationCanceledException) { break; }
+            }
+
+            _logger.LogInformation("EmailProcessor stopped.");
+        }
+
+        private async Task ProcessSingleEmailAsync(
+            QueuedEmail email,
+            IEmailQueueRepository queueRepo,
+            IEmailTemplateService templateService,
+            IEmailSenderService emailSender,
+            CancellationToken stoppingToken)
+        {
+            var startedAt = DateTime.UtcNow;
+
+            try
+            {
+                // ── Mark as Processing ──
+                email.Status = EmailQueueStatus.Processing;
+                email.LastAttemptAt = startedAt;
+                await queueRepo.UpdateAsync(email);
+
+                _logger.LogInformation(
+                    "[{Id}] Marked Processing. To={To} Retry={Retry}",
+                    email.Id, email.To, email.RetryCount);
+
+                // ── Deserialize ──
+                var (deserializedModel, bccList) = DeserializeQueuedEmail(email);
+
+                _logger.LogInformation(
+                    "[{Id}] Deserialized model. Bcc={BccCount}",
+                    email.Id, bccList.Count);
+
+                // ── Render ──
+                var renderStart = DateTime.UtcNow;
+                var body = await templateService.RenderEmailTemplateAsync(
+                    (AllEmailsTemplateModel)deserializedModel,
+                    email.TemplateName);
+
+                _logger.LogInformation(
+                    "[{Id}] Rendered template in {Ms}ms. BodyLength={Len}",
+                    email.Id, (DateTime.UtcNow - renderStart).TotalMilliseconds, body?.Length ?? 0);
+
+                // ── Send ──
+                // IMPORTANT: not linking stoppingToken here — we want the send
+                // to finish even if shutdown is requested. It should only take seconds.
+                var sendStart = DateTime.UtcNow;
+                _logger.LogInformation("[{Id}] SMTP START at {Time:O}", email.Id, sendStart);
+
+                await emailSender.SendEmailAsync(
+                    email.To, email.Subject, body, bccList, true);
+
+                var sendMs = (DateTime.UtcNow - sendStart).TotalMilliseconds;
+                _logger.LogInformation(
+                    "[{Id}] SMTP END at {Time:O} ({Ms}ms)",
+                    email.Id, DateTime.UtcNow, sendMs);
+
+                // ── Mark as Sent ──
+                email.Status = EmailQueueStatus.Sent;
+                email.SentAt = DateTime.UtcNow;
+                email.ErrorMessage = null;
+                await queueRepo.UpdateAsync(email);
+
+                _logger.LogInformation(
+                    "[{Id}] SUCCESS. Sent to {To} in {TotalMs}ms (BCC: {BccCount})",
+                    email.Id, email.To,
+                    (DateTime.UtcNow - startedAt).TotalMilliseconds,
+                    bccList.Count);
+            }
+            catch (JsonException ex)
+            {
+                email.RetryCount = QueuedEmail.MaxRetryAttempts;
+                email.ErrorMessage = $"Malformed JSON: {ex.Message}";
+                email.Status = EmailQueueStatus.Failed;
+                await queueRepo.UpdateAsync(email);
+
+                _logger.LogError(ex, "[{Id}] Malformed JSON, marking Failed.", email.Id);
+            }
+            catch (Exception ex)
+            {
+                email.RetryCount++;
+                email.ErrorMessage = $"{ex.GetType().Name}: {ex.Message}";
+                email.Status = email.RetryCount >= QueuedEmail.MaxRetryAttempts
+                    ? EmailQueueStatus.Failed
+                    : EmailQueueStatus.Pending;
+
+                if (email.Status == EmailQueueStatus.Pending)
+                {
+                    var delayMinutes = Math.Min(Math.Pow(2, email.RetryCount), 60);
+                    email.ScheduledFor = DateTime.UtcNow.AddMinutes(delayMinutes);
+
+                    _logger.LogWarning(ex,
+                        "[{Id}] Send FAILED. Retry #{Retry} scheduled in {Delay} min.",
+                        email.Id, email.RetryCount, delayMinutes);
+                }
+                else
+                {
+                    _logger.LogError(ex,
+                        "[{Id}] Send FAILED permanently after {Retry} attempts.",
+                        email.Id, email.RetryCount);
+                }
+
+                await queueRepo.UpdateAsync(email);
             }
         }
 
-        /// <summary>
-        /// Deserializes <see cref="QueuedEmail.TemplateModelJson"/> into the
-        /// concrete template model, and pulls out any BCC list.
-        ///
-        /// Handles:
-        ///   * Legacy rows where the whole JSON is the model.
-        ///   * New rows where the JSON is <c>{ "model": ..., "bccList": [...] }</c>.
-        /// </summary>
         private (object model, List<string> bcc) DeserializeQueuedEmail(QueuedEmail email)
         {
             var modelType = Type.GetType(email.TemplateModelType)
@@ -141,14 +196,11 @@ namespace WebApplication1.Services.Emails.EmailService
                 throw new JsonException($"TemplateModelJson is empty for email {email.Id}.");
 
             using var doc = JsonDocument.Parse(json);
-
             var bccList = new List<string>();
 
-            // Envelope shape: JSON object with a "model" property
             if (doc.RootElement.ValueKind == JsonValueKind.Object &&
                 doc.RootElement.TryGetProperty("model", out var modelElement))
             {
-                // Extract BCC if present. Key name matches the writer.
                 if (doc.RootElement.TryGetProperty("bccList", out var bccElement) &&
                     bccElement.ValueKind == JsonValueKind.Array)
                 {
@@ -167,7 +219,6 @@ namespace WebApplication1.Services.Emails.EmailService
                 return (model, bccList);
             }
 
-            // Legacy shape: the whole JSON is the model
             var legacyModel = JsonSerializer.Deserialize(json, modelType);
             if (legacyModel is null)
                 throw new InvalidOperationException(

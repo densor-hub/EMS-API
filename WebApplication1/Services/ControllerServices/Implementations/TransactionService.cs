@@ -581,7 +581,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 CompanyName = $"{company.Name} - {location?.Name ?? ""}",
                 CompanyAddress = location?.Address ?? company?.Address ?? "",
                 CompanyPhone = location?.Phone ?? company?.PhoneNumber ?? "",
-                AppName = _emailSettings.AppName,
+                AppName =  "EMS",//_emailSettings.AppName,
                 ReceiverName = primaryContact?.Name ?? "",
                 PrimaryEmail = primaryContact?.Email ?? "",
                 Currency = payment?.Currency?.Code ?? "GHS",

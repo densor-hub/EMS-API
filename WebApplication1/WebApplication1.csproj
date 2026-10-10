@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>f61e07ed-f5bc-4269-9d7f-d452aeaa6012</UserSecretsId>
@@ -11,23 +11,23 @@
 		<!-- API & Documentation -->
 		<PackageReference Include="Handlebars.Net" Version="2.4.3" />
 		<PackageReference Include="MailKit" Version="4.15.0" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.20" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11" />
 		<PackageReference Include="NLog" Version="6.1.4" />
 		<PackageReference Include="QRCoder" Version="1.7.0" />
 		<PackageReference Include="StyleCop" Version="6.2.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
 
 		<!-- Authentication & Authorization -->
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.20" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.20" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
 
 		<!-- Entity Framework Core with PostgreSQL -->
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.20">
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.20">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -36,10 +36,13 @@
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
 		<PackageReference Include="ZXing.Net" Version="0.16.11" />
+
+		<!-- Email API -->
+		<PackageReference Include="Resend" Version="0.23.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="DAL\Migrations\" />
+		<Folder Include="DAL\Migrations\" />
 	</ItemGroup>
 
 </Project>

@@ -49,15 +49,49 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
         public async Task AddRangeAsync(IEnumerable<QueuedEmail> emails)
         {
             await _context.QueuedEmails.AddRangeAsync(emails);
-           // await _context.SaveChangesAsync();
+            // await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteSentEmails()
+        // 1. Purge sent emails older than the retention window (audit-safe)
+        public async Task<int> DeleteSentEmailsAsync(TimeSpan retention)
         {
-            var sentEmails = _context.QueuedEmails.Where(x => x.Status == EmailQueueStatus.Sent);
+            var cutoff = DateTime.UtcNow - retention;
 
-            _context.RemoveRange(sentEmails);
-            await _context.SaveChangesAsync();
+            return await _context.QueuedEmails
+                .Where(x => x.Status == EmailQueueStatus.Sent
+                            && x.SentAt != null
+                            && x.SentAt < cutoff)
+                .ExecuteDeleteAsync();
         }
+
+        // 2. Purge dead emails (failed forever, or stuck Processing too long)
+        public async Task<int> DeleteStaleEmailsAsync(TimeSpan age)
+        {
+            var cutoff = DateTime.UtcNow - age;
+
+            return await _context.QueuedEmails
+                .Where(x => (x.Status == EmailQueueStatus.Failed
+                             || x.Status == EmailQueueStatus.Processing)
+                            && x.CreatedAt < cutoff)
+                .ExecuteDeleteAsync();
+        }
+
+        // 3. Recover stuck Processing emails (the real bug fix)
+        public async Task<int> RecoverStuckEmailsAsync(
+            TimeSpan stuckThreshold,
+            CancellationToken ct = default)
+        {
+            var cutoff = DateTime.UtcNow - stuckThreshold;
+
+            return await _context.QueuedEmails
+                .Where(e => e.Status == EmailQueueStatus.Processing
+                            && e.LastAttemptAt != null
+                            && e.LastAttemptAt < cutoff)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(e => e.Status, EmailQueueStatus.Pending)
+                    .SetProperty(e => e.ScheduledFor, DateTime.UtcNow),
+                    ct);
+        }
+
     }
 }

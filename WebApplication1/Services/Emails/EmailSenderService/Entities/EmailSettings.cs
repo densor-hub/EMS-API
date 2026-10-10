@@ -8,14 +8,19 @@ namespace WebApplication1.Services.Emails.EmailService.Entities
 {
     public class EmailSettings
     {
-        public string SmtpServer { get; set; }
+        public bool UseResend { get; set; }
+        // Shared sender info (used by both SMTP and Resend)
+        public string SenderName { get; set; } = string.Empty;
+        public string SenderEmail { get; set; } = string.Empty;
+        public string AppUrl { get; set; } = string.Empty;
+
+        // SMTP-only (used when Email:UseResend = false)
+        public string SmtpServer { get; set; } = string.Empty;
         public int SmtpPort { get; set; }
-        public string SmtpUsername { get; set; }
-        public string SmtpPassword { get; set; }
-        //public bool EnableSsl { get; set; }
-        public string SenderEmail { get; set; }
-        public string SenderName { get; set; }
-        public string AppUrl { get; set; }
-        public string AppName { get; set; }
+        public string SmtpUsername { get; set; } = string.Empty;
+        public string SmtpPassword { get; set; } = string.Empty;
+
+        // Resend-only (used when Email:UseResend = true)
+        public string ResendApiToken { get; set; } = string.Empty;
     }
 }

@@ -13,8 +13,10 @@ namespace WebApplication1.Services.Emails.EmailService.Queuer
         Task AddRangeAsync(IEnumerable<QueuedEmail> emails);
         Task<List<QueuedEmail>> GetPendingAsync(int batchSize);
         Task UpdateAsync(QueuedEmail email);
+        Task<int> RecoverStuckEmailsAsync(TimeSpan stuckThreshold, CancellationToken ct = default);
+       // Task<int> DeleteSentEmailsOlderThanAsync(TimeSpan retention, CancellationToken ct = default);
 
-        Task DeleteSentEmails();
+        //Task DeleteSentEmails();
 
 
     }
