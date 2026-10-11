@@ -27,6 +27,7 @@ public class BrevoEmailSenderService : IEmailSenderService
     {
         try
         {
+            _logger.log($"BREVO API KEY {settings.BrevoApiToken}");
             var payload = new
             {
                 sender = new { name = _settings.SenderName, email = _settings.SenderEmail },
