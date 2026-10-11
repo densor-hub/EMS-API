@@ -125,15 +125,19 @@ builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
 // ─── Email sender: Resend or SMTP based on EmailSettings:UseResend ───
-var useResend = builder.Configuration.GetValue<bool>("EmailSettings:UseResend");
+var emailService = builder.Configuration.GetValue<bool>("EmailSettings:EmailService");
 
-if (useResend)
+if (emailService == "resend")
 {
     builder.Services.AddHttpClient<ResendClient>();
     builder.Services.Configure<ResendClientOptions>(o =>
         o.ApiToken = builder.Configuration["EmailSettings:ResendApiToken"]!);
     builder.Services.AddTransient<IResend, ResendClient>();
     builder.Services.AddScoped<IEmailSenderService, ResendEmailSenderService>();
+}
+else if (emailService == "brevo")
+{
+    builder.Services.AddHttpClient<IEmailSenderService, BrevoEmailSenderService>();
 }
 else
 {

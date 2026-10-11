@@ -8,7 +8,7 @@ namespace WebApplication1.Services.Emails.EmailService.Entities
 {
     public class EmailSettings
     {
-        public bool UseResend { get; set; }
+        public string EmailService { get; set; }
         // Shared sender info (used by both SMTP and Resend)
         public string SenderName { get; set; } = string.Empty;
         public string SenderEmail { get; set; } = string.Empty;
@@ -22,5 +22,6 @@ namespace WebApplication1.Services.Emails.EmailService.Entities
 
         // Resend-only (used when Email:UseResend = true)
         public string ResendApiToken { get; set; } = string.Empty;
+        public string BrevoApiToken { get;  set; } = string.Empty;  
     }
 }
