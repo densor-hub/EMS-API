@@ -125,7 +125,7 @@ builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
 // ─── Email sender: Resend or SMTP based on EmailSettings:UseResend ───
-var emailService = builder.Configuration.GetValue<bool>("EmailSettings:EmailService");
+var emailService = builder.Configuration.GetValue<string>("EmailSettings:EmailService");
 
 if (emailService == "resend")
 {
