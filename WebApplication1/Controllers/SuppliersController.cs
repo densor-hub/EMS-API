@@ -131,7 +131,7 @@ namespace WebApplication1.Controllers
             }
         }
 
-        // POST: api/employees
+        // POST: api/supplier
         [HttpPost("{locationId:Guid}")]
         public async Task<ActionResult> CreateSupplier([FromRoute] Guid locationId, [FromBody] CreateSupplierDto createDto)
         {
@@ -276,6 +276,52 @@ namespace WebApplication1.Controllers
             {
                 _logger.LogError(ex, "Error deleting supplier ");
                 return StatusCode(500, "An error occurred while deleting the supplier");
+            }
+        }
+
+
+        [HttpGet("Supplier/Price")]
+        public async Task<ActionResult<IEnumerable<GetSupplierDto>>> GetSuppliersPrice([FromQuery] Guid? locationId = null)
+        {
+            try
+            {
+                var user = await _userRepository.GetUserByRefreshTokenAsync();
+
+                if (user is null) return Unauthorized();
+                var suppliers = _supplierRepository.GetAllAsync((Guid)user.CompanyId);
+
+                if (locationId != null)
+                {
+                    suppliers = suppliers.Where(x => x.SupplierLocations.Any(x => x.LocationId == locationId));
+                }
+
+                var returnData = suppliers.Select(supplier => new GetSupplierDto
+                {
+                    Id = supplier.Id,
+                    FirstName = supplier.FirstName,
+                    LastName = supplier.LastName,
+                    Phone = supplier.Phone,
+                    Email = supplier.Email,
+                    Address = supplier.Address,
+                    Code = supplier.Code,
+                    TIN = supplier.TIN,
+                    SupplierCompanyName = supplier.SupplierCompanyName,
+                    Status = supplier.Status,
+                    StatusName = supplier.Status.ToString(),
+                    Locations = supplier.SupplierLocations.Select(x => new DropDownDTO
+                    {
+                        Name = x.Location.Name,
+                        Code = x.Location.Code,
+                        Id = x.LocationId
+                    }).ToList(),
+
+                });
+                return Ok(returnData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all employees");
+                return StatusCode(500, "An error occurred while retrieving employees");
             }
         }
 

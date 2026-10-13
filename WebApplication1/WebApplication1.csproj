@@ -45,4 +45,8 @@
 		<Folder Include="DAL\Migrations\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include="global.json" />
+	</ItemGroup>
+
 </Project>

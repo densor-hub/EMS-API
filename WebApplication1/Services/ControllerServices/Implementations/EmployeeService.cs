@@ -273,7 +273,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                     if (user != null)
                     {
-                        // Token generated against the committed user and stamp
+                        // Token generated against the committed user and stamppp
                         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
                         var encodedToken = Uri.EscapeDataString(resetToken);

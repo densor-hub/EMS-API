@@ -61,5 +61,10 @@ namespace WebApplication1.Domain.Entities
 
         }
 
+        public void Retire()
+        {
+            Status = StocktakeSubmissionStatusEnum.Retired;        
+        }
+
     }
 }

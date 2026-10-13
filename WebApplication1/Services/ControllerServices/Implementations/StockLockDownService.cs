@@ -279,6 +279,21 @@ namespace WebApplication1.Services
                       ((createDto.PhysicalUnitOfMeasureQuantity * stockLockDownItem.Item.QuantityInUnit) + createDto.PhysicalAdditionalPiecesQuantity) - systemAvailableQuantity
                   );
 
+                //check whther there has been any existing submisions declined 
+                //update them to retired
+                var prevSubmisisons =  _context.StockTakeItemSubmissions.Where(x=> x.StockLockDownItemId == stockLockDownItem.Id);//.ToListAsync();
+                if (prevSubmisisons.Any())
+                {
+                    var submissionsToRelegate = new List<StockTakeItemSubmission>();
+                    foreach(var item in prevSubmisisons)
+                    {
+                        item.Retire();
+                        submissionsToRelegate.Add(item);
+                    }
+
+                   _context.StockTakeItemSubmissions.UpdateRange(submissionsToRelegate);
+                }
+
                 // Create the submission
                 var result = await _submissionRepository.AddAsync(submission);
 
@@ -355,6 +370,7 @@ namespace WebApplication1.Services
                     //update stocklocksubmission
                     stockSubmission.Approve(user.Id);
                     await _submissionRepository.UpdateAsync(stockSubmission);
+
                 }
 
                 if (createDto.status == StocktakeSubmissionStatusEnum.Declined)

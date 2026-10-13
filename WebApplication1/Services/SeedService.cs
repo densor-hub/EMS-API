@@ -76,7 +76,7 @@ namespace WebApplication1.Services
                         Id = Guid.Parse("f0004e7b-21d7-42d6-9c15-2726ea394ab8"),
                         Title = "Deposits",
                         Path = "/disbursements/deposits",
-                        Level = 332,
+                        Level = 3.3,
                     }
                 },
             },
@@ -242,7 +242,7 @@ namespace WebApplication1.Services
                         Id = Guid.Parse("b8a1a4da-99e2-4b27-a616-6e0342bee40b"),
                         Title = "Financial Institutions",
                         Path = "/setup/financial-institutions",
-                        Level = 7.6,
+                        Level = 7.7,
                     },
                 },
             },

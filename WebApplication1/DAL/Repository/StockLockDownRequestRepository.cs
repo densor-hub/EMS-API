@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Domain.Entities;
+using WebApplication1.Domain.Enums;
 using WebApplication1.Domain.Repositories;
 
 namespace WebApplication1.DAL.Repository
@@ -30,11 +31,18 @@ namespace WebApplication1.DAL.Repository
         public  IQueryable<StockLockDownRequest> GetAllAsync(Guid? locationId, DateTime? startDate, DateTime? endDate)
         {
 
+            // var notRurturna
             var data = _dbSet
                 .Include(r => r.Location)
-                //.Include(r => r.StockLockDownItems)
-                //    .ThenInclude(x=> x.Submissions)
-                .Where(r => r.LocationId == locationId);
+                .Include(r => r.StockLockDownItems)
+                    .ThenInclude(x => x.Submissions)
+                .Where(r => r.LocationId == locationId 
+                              && (
+                                r.StockLockDownItems.Any(l => !l.Submissions.Any()) ||
+                                r.StockLockDownItems.Any(sldi => sldi.Submissions.Any(sub => sub.Status == StocktakeSubmissionStatusEnum.Declined || sub.Status == StocktakeSubmissionStatusEnum.Pending ))
+                              )
+                            )
+                            ;
 
             if (locationId.HasValue && locationId != Guid.Empty)
             {
