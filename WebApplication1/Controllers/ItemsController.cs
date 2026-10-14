@@ -185,9 +185,11 @@ namespace WebApplication1.Controllers
 
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
 
+                if (user == null) throw new Exception("Unautorized");
+
                 var items = _itemRepository.GetAllAsync(true);
                 items = items.Where(x =>
-                     x.CompanyId == user.CompanyId
+                     x.CompanyId ==  user.CompanyId
                      &&  x.GeneralStatus != GeneralStatus.SoftDeleted
                      && !(x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => _lockedItemStatuses.Contains((int)x.Status)))))
                         && x.ItemLocations.Any(x => x.LocationId == filter.LocationId && x.Status)
@@ -195,10 +197,11 @@ namespace WebApplication1.Controllers
 
                 items = items.Where(x => x.ItemLocations.Any(il => il.LocationId == filter.LocationId));
 
-                if (filter.Category != null)
-                {
-                    items = items.Where(x => x.Category == filter.Category);
-                }
+                if (filter.Category.HasValue)
+                    {
+                        var category = filter.Category.Value;  // unwrap to non-nullable
+                        items = items.Where(x => x.Category == category);
+                    }
 
                 if (!string.IsNullOrEmpty(filter.TextFilter))
                 {
