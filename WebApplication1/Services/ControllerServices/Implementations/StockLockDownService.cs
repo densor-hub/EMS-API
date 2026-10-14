@@ -362,9 +362,17 @@ namespace WebApplication1.Services
 
                 if (createDto.status == StocktakeSubmissionStatusEnum.Approved)
                 {
+                    // get stock trnasfers of the item that have been approved but not delivered yet
+                    //get customer sale trans of the item that has not been delivered yet
+                    //the sum of these two become the value that must be deducted from the  actual
                     //update stock
-                    stockLevel.AddActual(totalQuantityInPieces);
-                    stockLevel.AddAvailable(totalQuantityInPieces);
+
+                    //approcah two, difference of the two old availbale and new available should be added to the actual 
+                    var differenceOfAvailables = stockLevel.AvailableQuanity - stockSubmission.PhysicalAdditionalPiecesQuantity;
+
+                    stockLevel.ReplaceAvailbale(totalQuantityInPieces);
+                    stockLevel.AddActual(differenceOfAvailables);
+                    //stockLevel.AddAvailable(totalQuantityInPieces);
                     _context.StockLevels.Update(stockLevel);
 
                     //update stocklocksubmission

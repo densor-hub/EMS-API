@@ -32,6 +32,16 @@
             ActualQuantity+= increament;
         }
 
+        //  public void AddActual(int increament)
+        // {
+        //     ActualQuantity+= increament;
+        // }
+
+
+        public void ReplaceAvailbale(int verifiedAvailable)
+        {
+            AvailableQuanity = verifiedAvailable;
+        }
        
 
         public void AddAvailable(int increament)
