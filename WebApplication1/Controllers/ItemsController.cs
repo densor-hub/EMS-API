@@ -177,75 +177,85 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpGet("Stocking")]
-        public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTransactions([FromQuery] BrowseItemsFilter filter)
-        {
-            try
+       [HttpGet("Stocking")]
+public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTransactions([FromQuery] BrowseItemsFilter filter)
+{
+    try
+    {
+        var user = await _userRepository.GetUserByRefreshTokenAsync();
+        if (user == null) throw new Exception("Unauthorized");
+
+        if (user.CompanyId == null)
+            return BadRequest(new { Message = "User has no company assigned" });
+
+        // Unwrap nullable to plain Guid before the query
+        var companyId = user?.CompanyId.Value;
+        Console.WriteLine($"CompnayId {companyId}");
+        var locationId = filter?.LocationId;   // already non-nullable
+         Console.WriteLine($"locationId {locationId}");
+        var lockedStatuses = _lockedItemStatuses;
+
+        var items = _itemRepository.GetAllAsync(true);
+
+        items = items.Where(x =>
+            x.CompanyId == companyId
+            && x.GeneralStatus != GeneralStatus.SoftDeleted
+            && !(x.StockLockDownItems.Any(sld =>
+                !sld.Submissions.Any()
+                || sld.Submissions.Any(sub => lockedStatuses.Contains((int)sub.Status))))
+            && x.ItemLocations.Any(il => il.LocationId == locationId && il.Status)
+        );
+
+        if (filter is not null) {
+            if (filter.Category.HasValue)
             {
-
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
-
-                if (user == null) throw new Exception("Unautorized");
-
-                var items = _itemRepository.GetAllAsync(true);
-                items = items.Where(x =>
-                     x.CompanyId ==  user.CompanyId
-                     &&  x.GeneralStatus != GeneralStatus.SoftDeleted
-                     && !(x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => _lockedItemStatuses.Contains((int)x.Status)))))
-                        && x.ItemLocations.Any(x => x.LocationId == filter.LocationId && x.Status)
-                     );
-
-                items = items.Where(x => x.ItemLocations.Any(il => il.LocationId == filter.LocationId));
-
-                if (filter.Category.HasValue)
-                    {
-                        var category = filter.Category.Value;  // unwrap to non-nullable
-                        items = items.Where(x => x.Category == category);
-                    }
-
-                if (!string.IsNullOrEmpty(filter.TextFilter))
-                {
-                    var searchTerm = $"%{filter.TextFilter.Trim()}%";
-
-                    items = items.Where(x =>
-                        EF.Functions.Like(x.Name, searchTerm) ||
-                        EF.Functions.Like(x.Code, searchTerm)
-                    );
-                }
-
-                var returnData = await items.Select(x => new GetItemsResponseDTO
-                {
-                    Id = x.Id,
-                    Code = x.Code,
-                    Category = x.Category,
-                    CategoryName = x.Category.ToString(),
-                    //CostPrice = x.CostPrice,
-                   // CostPrice = filter.TransactionType == TransactionType.PURC ? x.CostPrice : null,
-                    Description = x.Description,
-                    Name = x.Name,
-                    SellingPrice =  x.SellingPrice,
-                    Status = x.Status,
-                    ReorderLevel = x.ReorderLevel,
-                    QuanityInUnit = x.QuantityInUnit,
-                    UnitOfMeasure = x.UnitOfMeasure,
-                    UnitOfMeasureName = x.UnitOfMeasure.ToString(),
-                    Locations = x.ItemLocations.Select(x => new DropDownDTO
-                    {
-                        Name = x.Location.Name,
-                        Code = x.Location.Code,
-                        Id = x.LocationId
-                    }).ToList(),
-                    Locked = x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => _lockedItemStatuses.Contains((int)x.Status))))
-                }).ToListAsync();
-
-                return Ok(returnData);
+                var category = filter.Category.Value;
+                items = items.Where(x => x.Category == category);
             }
-            catch (Exception ex)
+            if (!string.IsNullOrEmpty(filter.TextFilter))
             {
-                _logger.LogError(ex, "Error getting all items");
-                return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+                var searchTerm = $"%{filter.TextFilter.Trim()}%";
+                items = items.Where(x =>
+                    EF.Functions.Like(x.Name, searchTerm) ||
+                    EF.Functions.Like(x.Code, searchTerm)
+                );
             }
         }
+
+
+        var returnData = await items.Select(x => new GetItemsResponseDTO
+        {
+            Id = x.Id,
+            Code = x.Code,
+            Category = x.Category,
+            CategoryName = x.Category.ToString(),
+            Description = x.Description,
+            Name = x.Name,
+            SellingPrice = x.SellingPrice,
+            Status = x.Status,
+            ReorderLevel = x.ReorderLevel,
+            QuanityInUnit = x.QuantityInUnit,
+            UnitOfMeasure = x.UnitOfMeasure,
+            UnitOfMeasureName = x.UnitOfMeasure.ToString(),
+            Locations = x.ItemLocations.Select(il => new DropDownDTO
+            {
+                Name = il.Location.Name,
+                Code = il.Location.Code,
+                Id = il.LocationId
+            }).ToList(),
+            Locked = x.StockLockDownItems.Any(sld =>
+                !sld.Submissions.Any()
+                || sld.Submissions.Any(sub => lockedStatuses.Contains((int)sub.Status)))
+        }).ToListAsync();
+
+        return Ok(returnData);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error getting all items");
+        return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+    }
+}
 
 
 

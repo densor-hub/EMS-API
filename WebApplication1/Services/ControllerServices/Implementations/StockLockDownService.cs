@@ -136,8 +136,8 @@ namespace WebApplication1.Services
                 TransactionDate = x.TransactionDate,
                 SystemCreationDate = x.CreatedAt,
                 TransactionNumber = x.TransactionNumber,
-                TurnAroundTime= x.TurnAroundTime 
-              
+                TurnAroundTime= x.TurnAroundTime, 
+                Items = x.StockLockDownItems.Select(x=> x.Item.Name).ToList()
             }).ToListAsync();
         }
 
@@ -220,6 +220,7 @@ namespace WebApplication1.Services
                 UnitOfMeasure = x.StockLockDownItem.Item.UnitOfMeasure.ToString(),
                 TotalVariance = x.Variance,
                 TotalInPieces = (x.PhysicalUnitOfMeasureQuantity * x.QuanityPerUnitOfMeasure) + x.PhysicalAdditionalPiecesQuantity
+                
             }).ToListAsync();
         }
 
@@ -368,7 +369,7 @@ namespace WebApplication1.Services
                     //update stock
 
                     //approcah two, difference of the two old availbale and new available should be added to the actual 
-                    var differenceOfAvailables = stockLevel.AvailableQuanity - stockSubmission.PhysicalAdditionalPiecesQuantity;
+                    var differenceOfAvailables =  stockSubmission.PhysicalAdditionalPiecesQuantity - stockLevel.AvailableQuanity;
 
                     stockLevel.ReplaceAvailbale(totalQuantityInPieces);
                     stockLevel.AddActual(differenceOfAvailables);

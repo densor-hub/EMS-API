@@ -36,6 +36,8 @@ namespace WebApplication1.DAL.Repository
                 .Include(r => r.Location)
                 .Include(r => r.StockLockDownItems)
                     .ThenInclude(x => x.Submissions)
+                .Include(r => r.StockLockDownItems)
+                    .ThenInclude(x=> x.Item)
                 .Where(r => r.LocationId == locationId 
                               && (
                                 r.StockLockDownItems.Any(l => !l.Submissions.Any()) ||

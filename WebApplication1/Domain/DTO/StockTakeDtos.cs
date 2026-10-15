@@ -31,6 +31,7 @@ namespace WebApplication1.Domain.DTO
         public DateTime TransactionDate { get; set; }
         public DateTime? TurnAroundTime { get; set; } = null;
         public DateTime SystemCreationDate { get; set; }
+        public List<string> Items {get; set;}
     }
 
     public class GetStockLockDownByIdDto

@@ -119,6 +119,7 @@ builder.Services.AddScoped<IPaymentTokenService, PaymentTokenService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IEmailQueueRepository, EmailQueueRepository>();
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
+builder.Services.AddScoped<TokenCookieHelper>();
 
 // Bind EmailSettings (contains UseResend, SenderEmail, Smtp*, ResendApiToken)
 builder.Services.Configure<EmailSettings>(
@@ -158,7 +159,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowCredentials()
+              .WithExposedHeaders(CookieNames.RefreshHeaderName);
     });
 });
 
