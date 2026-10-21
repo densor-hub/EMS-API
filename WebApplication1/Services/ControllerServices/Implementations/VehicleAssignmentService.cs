@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApplication1.Application.DTOs;
-using WebApplication1.Application.Interfaces;
+using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Interfaces;
 using WebApplication1.Domain.Repository;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -167,6 +165,24 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             return dtos;
         }
 
-       
+        Task<VehicleAssignmentResponseDto> IVehicleAssignmentService.GetByIdAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<IEnumerable<VehicleAssignmentResponseDto>> IVehicleAssignmentService.GetAllAsync(Guid locationId, string type, Guid? driverId, string? vehicleNumber)
+        {
+            throw new NotImplementedException();
+        }
+
+        // public Task<VehicleAssignmentResponseDto> CreateAsync(CreateVehicleAssignmentDto createDto)
+        // {
+        //     throw new NotImplementedException();
+        // }
+
+        // public Task<VehicleAssignmentResponseDto> UpdateAsync(Guid id, UpdateVehicleAssignmentDto updateDto)
+        // {
+        //     throw new NotImplementedException();
+        // }
     }
 }

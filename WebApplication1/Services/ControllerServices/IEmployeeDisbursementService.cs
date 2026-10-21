@@ -3,7 +3,7 @@ using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Enums;
 using WebApplication1.DTOs;
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices
 {
     public interface IEmployeeDisbursementService
     {

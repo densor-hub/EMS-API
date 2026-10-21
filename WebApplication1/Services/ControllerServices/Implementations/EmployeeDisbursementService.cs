@@ -16,7 +16,7 @@ using WebApplication1.Services.Emails.EmailService.Queuer;
 using WebApplication1.Services.Emails.TemplateService.Enitities;
 using WebApplication1.Services.TokenService;
 
-namespace WebApplication1.Services.Implementations
+namespace WebApplication1.Services.ControllerServices.Implementations
 {
     public class EmployeeDisbursementService : IEmployeeDisbursementService
     {

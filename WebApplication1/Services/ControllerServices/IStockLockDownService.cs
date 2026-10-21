@@ -6,7 +6,7 @@ using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices
 {
     public interface IStockLockDownService
     {

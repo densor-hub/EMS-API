@@ -2,7 +2,7 @@
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices
 {
     public interface IEmployeeService
     {

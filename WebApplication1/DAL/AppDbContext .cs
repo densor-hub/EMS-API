@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
+
 using WebApplication1.Domain.Entities;
 using WebApplication1.Services.Hubs.Entities;
 
@@ -13,7 +14,6 @@ namespace WebApplication1.DAL
             : base(options)
         {
         }
-
         
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<AuditSnapshot> AuditSnapshots { get; set; }
@@ -65,6 +65,9 @@ namespace WebApplication1.DAL
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<DailyTransactionCounter> DailyTransactionCounters { get; set; }
         public DbSet<LocationSaleSequence> LocationSaleSequences { get; set; }
+        public DbSet<ItemSplitSetup> ItemSplitSetups {  get; set; }
+        public DbSet<ItemSplitTransaction> ItemSplitTransactions { get; set; }
+        public DbSet<StockAdjustment> StockAdjustments { get; set; }
         protected override void OnModelCreating(ModelBuilder builder) 
         {
             base.OnModelCreating(builder);

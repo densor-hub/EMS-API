@@ -1,7 +1,7 @@
 ﻿// Services/ICustomerService.cs
 using WebApplication1.Domain.DTO;
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices
 {
     public interface ICustomerService
     {

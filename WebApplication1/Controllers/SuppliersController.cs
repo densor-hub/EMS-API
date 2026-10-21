@@ -1,16 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using System.Threading.Tasks;
 using VMS.Modules.Licenses.Core.Emails.EmailSenderService.Entities;
 using WebApplication1.DAL;
-using WebApplication1.DAL.Repository;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
-using WebApplication1.Domain.Enums;
 using WebApplication1.Domain.Repository;
 using WebApplication1.Services.Emails.TemplateService.Enitities;
 

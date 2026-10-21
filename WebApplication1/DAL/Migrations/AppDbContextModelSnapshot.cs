@@ -17,7 +17,7 @@ namespace WebApplication1.DAL.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.20")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -1315,6 +1315,114 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("ItemId", "LocationId");
 
                     b.ToTable("ItemLocations", (string)null);
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitSetup", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("GeneralStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<Guid>("SourceItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SourceQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<Guid>("TargetItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TargetQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedById")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("GeneralStatus");
+
+                    b.HasIndex("SourceItemId");
+
+                    b.HasIndex("TargetItemId");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("SourceItemId", "GeneralStatus")
+                        .HasDatabaseName("IX_ItemSplitSetup_SourceItem_Status");
+
+                    b.HasIndex("SourceItemId", "TargetItemId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ItemSplitSetup_Source_Target");
+
+                    b.ToTable("ItemSplitSetups", (string)null);
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<Guid>("ItemSplitSetUpId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SourceItemNameSnapShot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TargetItemQuantitySnapShot")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TragetItemNameSnapShot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ItemSplitSetUpId", "CreatedAt")
+                        .HasDatabaseName("IX_ItemSplitTransaction_Setup_CreatedAt");
+
+                    b.HasIndex("LocationId", "CreatedAt")
+                        .HasDatabaseName("IX_ItemSplitTransaction_Location_CreatedAt");
+
+                    b.ToTable("ItemSplitTransactions", (string)null);
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Location", b =>
@@ -3079,6 +3187,67 @@ namespace WebApplication1.DAL.Migrations
                     b.Navigation("Location");
                 });
 
+            modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitSetup", b =>
+                {
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApplication1.Domain.Entities.Item", "SourceItem")
+                        .WithMany("SourceItem")
+                        .HasForeignKey("SourceItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApplication1.Domain.Entities.Item", "TargetItem")
+                        .WithMany("TargetItem")
+                        .HasForeignKey("TargetItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("SourceItem");
+
+                    b.Navigation("TargetItem");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitTransaction", b =>
+                {
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApplication1.Domain.Entities.ItemSplitSetup", "ItemSplitSetup")
+                        .WithMany("ItemSplitTransactions")
+                        .HasForeignKey("ItemSplitSetUpId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebApplication1.Domain.Entities.Location", "Location")
+                        .WithMany("ItemSplitTransactions")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ItemSplitSetup");
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("WebApplication1.Domain.Entities.Location", b =>
                 {
                     b.HasOne("WebApplication1.Domain.Entities.Company", "Company")
@@ -3675,13 +3844,22 @@ namespace WebApplication1.DAL.Migrations
                 {
                     b.Navigation("ItemLocations");
 
+                    b.Navigation("SourceItem");
+
                     b.Navigation("StockLevel");
 
                     b.Navigation("StockLockDownItems");
 
                     b.Navigation("SupplierItemCostPrices");
 
+                    b.Navigation("TargetItem");
+
                     b.Navigation("TransactionItems");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitSetup", b =>
+                {
+                    b.Navigation("ItemSplitTransactions");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Location", b =>
@@ -3697,6 +3875,8 @@ namespace WebApplication1.DAL.Migrations
                     b.Navigation("EmployeeLocations");
 
                     b.Navigation("ItemLocations");
+
+                    b.Navigation("ItemSplitTransactions");
 
                     b.Navigation("Sales");
 

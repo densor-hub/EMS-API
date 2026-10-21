@@ -1,0 +1,354 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\services\\controllerservices\\implementations\\itemsplitsetupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\services\\controllerservices\\implementations\\itemsplitsetupservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\domain\\repository\\iitemsplitsetuprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\domain\\repository\\iitemsplitsetuprepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\domain\\dto\\itemsplitdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\domain\\dto\\itemsplitdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\dal\\repository\\stocklevelrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\dal\\repository\\stocklevelrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\domain\\repository\\istocklevelrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\domain\\repository\\istocklevelrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\services\\controllerservices\\iitemsplitservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\services\\controllerservices\\iitemsplitservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\dal\\repository\\itemsplittransactionrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\dal\\repository\\itemsplittransactionrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\domain\\repository\\iitemsplittransactionrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\domain\\repository\\iitemsplittransactionrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\dal\\configurations\\itemsplitsetupconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\dal\\configurations\\itemsplitsetupconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\controllers\\itemsplitcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\controllers\\itemsplitcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\controllers\\appcontoller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\controllers\\appcontoller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\domain\\entities\\itemlocation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\domain\\entities\\itemlocation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\dal\\configurations\\dailytransactioncounterconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\dal\\configurations\\dailytransactioncounterconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Program Files\\dotnet\\sdk\\7.0.410\\Sdks\\Microsoft.NET.Sdk\\targets\\Microsoft.NET.TargetFrameworkInference.targets||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\dal\\repository\\stocklockdownrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\dal\\repository\\stocklockdownrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\services\\controllerservices\\implementations\\stocklockdownservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\services\\controllerservices\\implementations\\stocklockdownservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\controllers\\stocklockdowncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\controllers\\stocklockdowncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\services\\controllerservices\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\services\\controllerservices\\implementations\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|c:\\users\\densor.persol\\desktop\\p\\webapplication1\\webapplication1\\services\\seedservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDE1E68E-4E96-417C-9A64-C7945ECEA35F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\services\\seedservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ItemSplitDtos.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\DTO\\ItemSplitDtos.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Domain\\DTO\\ItemSplitDtos.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\DTO\\ItemSplitDtos.cs",
+              "RelativeToolTip": "WebApplication1\\Domain\\DTO\\ItemSplitDtos.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAAwCUAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T14:17:47.561Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "StockLevelRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\StockLevelRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\DAL\\Repository\\StockLevelRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\StockLevelRepository.cs",
+              "RelativeToolTip": "WebApplication1\\DAL\\Repository\\StockLevelRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T14:08:42.739Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "IStockLevelRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IStockLevelRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Domain\\Repository\\IStockLevelRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IStockLevelRepository.cs",
+              "RelativeToolTip": "WebApplication1\\Domain\\Repository\\IStockLevelRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T14:08:04.36Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ItemSplitSetupService.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\ItemSplitSetupService.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Services\\ControllerServices\\Implementations\\ItemSplitSetupService.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\ItemSplitSetupService.cs",
+              "RelativeToolTip": "WebApplication1\\Services\\ControllerServices\\Implementations\\ItemSplitSetupService.cs",
+              "ViewState": "AgIAAN8AAAAAAAAAAADgv/gAAACwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T13:58:26.436Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "IItemSplitSetupRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IItemSplitSetupRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Domain\\Repository\\IItemSplitSetupRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IItemSplitSetupRepository.cs",
+              "RelativeToolTip": "WebApplication1\\Domain\\Repository\\IItemSplitSetupRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T09:48:05.231Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "IItemSplitService.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\IItemSplitService.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Services\\ControllerServices\\IItemSplitService.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\IItemSplitService.cs",
+              "RelativeToolTip": "WebApplication1\\Services\\ControllerServices\\IItemSplitService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T09:54:13.25Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ItemSplitTransactionRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\ItemSplitTransactionRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\DAL\\Repository\\ItemSplitTransactionRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\ItemSplitTransactionRepository.cs",
+              "RelativeToolTip": "WebApplication1\\DAL\\Repository\\ItemSplitTransactionRepository.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAABkAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T11:14:12.055Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IItemSplitTransactionRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IItemSplitTransactionRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Domain\\Repository\\IItemSplitTransactionRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Repository\\IItemSplitTransactionRepository.cs",
+              "RelativeToolTip": "WebApplication1\\Domain\\Repository\\IItemSplitTransactionRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T11:12:44.569Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "ItemSplitSetUpConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Configurations\\ItemSplitSetUpConfiguration.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\DAL\\Configurations\\ItemSplitSetUpConfiguration.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Configurations\\ItemSplitSetUpConfiguration.cs",
+              "RelativeToolTip": "WebApplication1\\DAL\\Configurations\\ItemSplitSetUpConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T09:33:31.5Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "ItemSplitController.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\ItemSplitController.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Controllers\\ItemSplitController.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\ItemSplitController.cs",
+              "RelativeToolTip": "WebApplication1\\Controllers\\ItemSplitController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T10:27:50.171Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "AppContoller.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\AppContoller.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Controllers\\AppContoller.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\AppContoller.cs",
+              "RelativeToolTip": "WebApplication1\\Controllers\\AppContoller.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T10:28:00.254Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "ItemLocation.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Entities\\ItemLocation.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Domain\\Entities\\ItemLocation.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Domain\\Entities\\ItemLocation.cs",
+              "RelativeToolTip": "WebApplication1\\Domain\\Entities\\ItemLocation.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T09:38:25.16Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "WebApplication1\\Controllers\\AuthController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAGgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T09:27:34.479Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "DailyTransactionCounterConfiguration.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Configurations\\DailyTransactionCounterConfiguration.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\DAL\\Configurations\\DailyTransactionCounterConfiguration.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Configurations\\DailyTransactionCounterConfiguration.cs",
+              "RelativeToolTip": "WebApplication1\\DAL\\Configurations\\DailyTransactionCounterConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-17T09:38:34.275Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Microsoft.NET.TargetFrameworkInference.targets",
+              "DocumentMoniker": "C:\\Program Files\\dotnet\\sdk\\7.0.410\\Sdks\\Microsoft.NET.Sdk\\targets\\Microsoft.NET.TargetFrameworkInference.targets",
+              "RelativeDocumentMoniker": "..\\..\\..\\..\\..\\Program Files\\dotnet\\sdk\\7.0.410\\Sdks\\Microsoft.NET.Sdk\\targets\\Microsoft.NET.TargetFrameworkInference.targets",
+              "ToolTip": "C:\\Program Files\\dotnet\\sdk\\7.0.410\\Sdks\\Microsoft.NET.Sdk\\targets\\Microsoft.NET.TargetFrameworkInference.targets",
+              "RelativeToolTip": "..\\..\\..\\..\\..\\Program Files\\dotnet\\sdk\\7.0.410\\Sdks\\Microsoft.NET.Sdk\\targets\\Microsoft.NET.TargetFrameworkInference.targets",
+              "ViewState": "AgIAAJcAAAAAAAAAAAAowJ8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003801|",
+              "WhenOpened": "2026-10-13T18:58:37.117Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "StockLockDownRequestRepository.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\StockLockDownRequestRepository.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\DAL\\Repository\\StockLockDownRequestRepository.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\DAL\\Repository\\StockLockDownRequestRepository.cs",
+              "RelativeToolTip": "WebApplication1\\DAL\\Repository\\StockLockDownRequestRepository.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAowCQAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T18:56:21.662Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "StockLockDownService.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\StockLockDownService.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Services\\ControllerServices\\Implementations\\StockLockDownService.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\StockLockDownService.cs",
+              "RelativeToolTip": "WebApplication1\\Services\\ControllerServices\\Implementations\\StockLockDownService.cs",
+              "ViewState": "AgIAAHAAAAAAAAAAAADgv30AAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T18:55:57.386Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "StockLockDownController.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\StockLockDownController.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Controllers\\StockLockDownController.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Controllers\\StockLockDownController.cs",
+              "RelativeToolTip": "WebApplication1\\Controllers\\StockLockDownController.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAAYwCYAAABgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T18:54:08.386Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\AuthService.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Services\\ControllerServices\\Implementations\\AuthService.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\ControllerServices\\Implementations\\AuthService.cs",
+              "RelativeToolTip": "WebApplication1\\Services\\ControllerServices\\Implementations\\AuthService.cs",
+              "ViewState": "AgIAACYBAAAAAAAAAAAEwEYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T09:28:36.12Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "SeedService.cs",
+              "DocumentMoniker": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\SeedService.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Services\\SeedService.cs",
+              "ToolTip": "C:\\Users\\densor.PERSOL\\Desktop\\P\\WebApplication1\\WebApplication1\\Services\\SeedService.cs",
+              "RelativeToolTip": "WebApplication1\\Services\\SeedService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEYAAABHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-13T09:06:43.288Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

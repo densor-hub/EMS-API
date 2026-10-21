@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApplication1.DAL;
 using WebApplication1.Domain.Entities;
 
-namespace WebApplication1.Domain.Repositories
+namespace WebApplication1.Domain.Repository
 {
     public class DisbursementExternalResponseRepository : IDisbursementExternalResponseRepository
     {

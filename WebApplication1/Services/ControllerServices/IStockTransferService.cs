@@ -5,7 +5,7 @@ using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.QueryFilters;
 using WebApplication1.DTOs;
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices
 {
     public interface IStockTransferService
     {

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using WebApplication1.DAL;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Interfaces;
 using WebApplication1.Domain.Repository;
 
 namespace WebApplication1.Infrastructure.Repositories

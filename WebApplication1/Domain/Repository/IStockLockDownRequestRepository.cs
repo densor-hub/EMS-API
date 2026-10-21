@@ -1,7 +1,7 @@
 ﻿
 using WebApplication1.Domain.Entities;
 
-namespace WebApplication1.Domain.Repositories
+namespace WebApplication1.Domain.Repository
 {
     public interface IStockLockDownRequestRepository
     {

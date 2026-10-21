@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WebApplication1.Application.DTOs;
+using WebApplication1.Domain.DTO;
 
-namespace WebApplication1.Application.Interfaces
+namespace WebApplication1.Services.ControllerServices
 {
     public interface IVehicleAssignmentService
     {

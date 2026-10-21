@@ -11,6 +11,7 @@
         public ICollection<SupplierLocation> SupplierLocations { get; private set; }
         public virtual ICollection<Purchase> Purchases { get; private set; }
         public  virtual ICollection<SupplierItemCostPrice> SupplierItemCostPrices { get; private set; }
+        public virtual ICollection<StockAdjustment> StockAdjustments { get; private set; }
 
         public Supplier()
         {

@@ -1,7 +1,7 @@
 ﻿// DTOs/VehicleDtos.cs
 using WebApplication1.Domain.Enums;
 
-namespace WebApplication1.Application.DTOs
+namespace WebApplication1.Domain.DTO
 {
     public class CreateVehicleDto
     {

@@ -2,8 +2,9 @@
 
 namespace WebApplication1.Domain.Entities
 {
-    public class Sale : BaseEntity
+    public class Sale // : BaseEntity
     {
+        public Guid Id {get; private set;}
         public Guid TransactionId { get; private set; }
         public Transaction Transaction { get; private set; }
         public Guid? CustomerId { get; private set; }
@@ -26,8 +27,8 @@ namespace WebApplication1.Domain.Entities
             TransactionId = transactionId;
             CustomerId = customerId;
             SalesPersonId = salesPersonId;
-            CreatedAt = createdAt;
-            CreatedBy = createdBy;
+            // CreatedAt = createdAt;
+            // CreatedBy = createdBy;
             LocationId = locationId;      // ✅ don't forget this (was missing before)
             SaleDate = saleDate;
         }

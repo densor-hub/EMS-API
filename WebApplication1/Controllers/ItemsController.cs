@@ -109,7 +109,7 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting all items");
-                return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving items" });
             }
         }
 
@@ -173,7 +173,7 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting all items");
-                return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving items" });
             }
         }
 
@@ -253,7 +253,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
     catch (Exception ex)
     {
         _logger.LogError(ex, "Error getting all items");
-        return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+        return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving items" });
     }
 }
 
@@ -321,7 +321,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting all items");
-                return StatusCode(500, new { Message = "An error occurred while retrieving items" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving items" });
             }
         }
 
@@ -399,7 +399,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting low stock items for location {LocationId}", locationId);
-                return StatusCode(500, new { error = "An error occurred while retrieving low stock items" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving low stock items" });
             }
         }
 
@@ -439,7 +439,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving stock level for item ID {ItemId}", itemId);
-                return StatusCode(500, new { Message = "An error occurred while retrieving stock level" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while retrieving stock level" });
             }
         }
 
@@ -579,7 +579,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error updating item {Id}", dto.Id);
-                return StatusCode(500, new { Message = "An error occurred while updating the item" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while updating the item" });
             }
         }
 
@@ -605,7 +605,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting item {Id}", id);
-                return StatusCode(500, new { Message = "An error occurred while deleting the item" });
+                return StatusCode(500, new { Message = ex.Message ?? "An error occurred while deleting the item" });
             }
         }
     }

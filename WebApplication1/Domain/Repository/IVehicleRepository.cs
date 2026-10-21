@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
 
-namespace WebApplication1.Domain.Interfaces
+namespace WebApplication1.Domain.Repository
 {
     public interface IVehicleRepository
     {

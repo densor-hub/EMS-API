@@ -7,21 +7,20 @@ namespace WebApplication1.DTOs
 {
     public class GetPurchaseDto
     {
-        public Guid Id { get; set; }
-        public Guid TransactionId { get; set; }
-        public string TransactionCode { get; set; }
-        public Guid LocationId { get; set; }
-        public string LocationName { get; set; }
-        public Guid SupplierId { get; set; }
-        public string SupplierName { get; set; }
-
-        //public string PurchasedById { get; set; }
-        public string TransactionBy { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime TransactionDate { get; set; }
-        public decimal TotalAmount { get; set; }
-        public decimal PaidAmount { get; set; }
-        public decimal Balance { get; set; }
+        public Guid       Id              { get; set; }
+        public Guid       TransactionId   { get; set; }
+        public string     TransactionCode { get; set; } = string.Empty;
+        public Guid       LocationId      { get; set; }
+        public string     LocationName    { get; set; } = string.Empty;
+        public Guid?      SupplierId      { get; set; }
+        public string     SupplierName    { get; set; } = string.Empty;
+        public string     TransactionBy   { get; set; } = string.Empty;
+        public DateTime?  CreatedAt       { get; set; }
+        public DateTime?  TransactionDate { get; set; }
+        public decimal?   TotalAmount     { get; set; }
+        public decimal    PaidAmount      { get; set; }
+        public decimal?   Balance         { get; set; }   // ← nullable
+    
 
     }
 

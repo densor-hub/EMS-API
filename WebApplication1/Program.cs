@@ -22,12 +22,10 @@ using WebApplication1.Services.Emails.EmailService.Queuer;
 using WebApplication1.Services.ControllerServices;
 using WebApplication1.Services.TokenService.Handlers;
 using WebApplication1.Repositories;
-using WebApplication1.Domain.Repositories;
-using WebApplication1.Domain.Interfaces;
 using WebApplication1.Infrastructure.Repositories;
 using WebApplication1.Services.ControllerServices.Implementations;
-using WebApplication1.Application.Interfaces;
 using Resend;
+using WebApplication1.DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -91,6 +89,10 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IVehicleAssignmentRepository, VehicleAssignmentRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IStockLevelRepository, StockLevelRepository>();
+builder.Services.AddScoped<IItemSplitSetupRepository, ItemSplitSetupRepository>();
+builder.Services.AddScoped<IItemSplitTransactionRepository, ItemSplitTransactionRepository>();
+builder.Services.AddScoped<IStockAdjustmentRepository, StockAdjustmentRepository>();
 
 //notifications
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -108,6 +110,8 @@ builder.Services.AddScoped<IStockTransferService, StockTransferService>();
 builder.Services.AddScoped<IStockLockDownService, StockLockDownService>();
 builder.Services.AddScoped<IVehicleAssignmentService, VehicleAssignmentService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
+builder.Services.AddScoped<IItemSplitService, ItemSplitService>();
+
 
 //Must be taken out
 builder.Services.AddScoped<IPasswordGenerator, PasswordGenerator>();
@@ -126,23 +130,36 @@ builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
 // ─── Email sender: Resend or SMTP based on EmailSettings:UseResend ───
-var emailService = builder.Configuration.GetValue<string>("EmailSettings:EmailService");
+var emailService = builder.Configuration
+    .GetValue<string>("EmailSettings:EmailService")?
+    .Trim()
+    .ToLowerInvariant();
 
-if (emailService == "resend")
+switch (emailService)
 {
-    builder.Services.AddHttpClient<ResendClient>();
-    builder.Services.Configure<ResendClientOptions>(o =>
-        o.ApiToken = builder.Configuration["EmailSettings:ResendApiToken"]!);
-    builder.Services.AddTransient<IResend, ResendClient>();
-    builder.Services.AddScoped<IEmailSenderService, ResendEmailSenderService>();
-}
-else if (emailService == "brevo")
-{
-    builder.Services.AddHttpClient<IEmailSenderService, BrevoEmailSenderService>();
-}
-else
-{
-    builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+    case "resend":
+        builder.Services.AddHttpClient<ResendClient>();
+        builder.Services.Configure<ResendClientOptions>(o =>
+            o.ApiToken = builder.Configuration["EmailSettings:ResendApiToken"]!);
+        builder.Services.AddTransient<IResend, ResendClient>();
+        builder.Services.AddScoped<IEmailSenderService, ResendEmailSenderService>();
+        break;
+
+    case "brevo":
+        builder.Services.AddHttpClient<IEmailSenderService, BrevoEmailSenderService>(c =>
+        {
+            c.Timeout = TimeSpan.FromSeconds(30);
+        });
+        break;
+
+    case "smtp":
+        builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+        break;
+
+    default:
+        throw new InvalidOperationException(
+            $"EmailSettings:EmailService must be 'resend', 'brevo', or 'smtp'. " +
+            $"Got: '{emailService ?? "<null>"}'.");
 }
 
 builder.Services.AddHostedService<EmailProcessor>();

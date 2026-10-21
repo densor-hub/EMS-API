@@ -2,7 +2,7 @@
 
 namespace WebApplication1.Domain.Entities
 {
-    public class Purchase : BaseEntity
+    public class Purchase //--: BaseEntity
     {
         public Guid Id { get; private set; }
         public Guid TransactionId { get; private set; }
@@ -18,29 +18,23 @@ namespace WebApplication1.Domain.Entities
             
         }
 
-        private Purchase(Guid id,  Guid supplierId, Guid purchasedBy,  Guid transactionId, Guid createdBy, DateTime  createdAt)
+        private Purchase(Guid id,  Guid supplierId, Guid purchasedBy,  Guid transactionId)
         {
             Id = id;
             SupplierId = supplierId;
             PurcasedById = purchasedBy.ToString();
             TransactionId = transactionId;
-            GeneralStatus = GeneralStatus.Initiated;
-            CreatedBy = createdBy;
-            CreatedAt = createdAt;
+            // GeneralStatus = GeneralStatus.Initiated;
+            // CreatedBy = createdBy;
+            // CreatedAt = createdAt;
            //DisbursementId = disbursementId;
 
         }
 
         public static Purchase Create(Guid id, Guid supplierId, Guid purchasedBy,  Guid transactionId, Guid createdBy, DateTime createdAt)
-        => new Purchase(id,  supplierId, purchasedBy, transactionId, createdBy , createdAt );
+        => new Purchase(id,  supplierId, purchasedBy, transactionId );
 
-        public void Update (GeneralStatus status, Guid updatedBy, DateTime updatedAt)
-        {
-            GeneralStatus = status;    
-            UpdatedBy = updatedBy;
-            UpdatedAt = updatedAt;
-
-        }
+        
 
     }
 }

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Domain.DTO;
-using WebApplication1.Services;
+using WebApplication1.Services.ControllerServices;
 
 namespace WebApplication1.Controllers
 {

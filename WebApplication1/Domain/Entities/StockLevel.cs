@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Domain.Entities
+﻿using System;
+
+namespace WebApplication1.Domain.Entities
 {
-    public class StockLevel : BaseEntity
+    public class StockLevel// : BaseEntity
     {
+        public Guid Id { get; private set; }
         public int ActualQuantity { get; private set; } //UOM_QUANTITY
         public int AvailableQuanity { get; private set; } //UOM_QUANTITY
         public Guid ItemId { get; private set; }
@@ -40,7 +43,10 @@
 
         public void ReplaceAvailbale(int verifiedAvailable)
         {
+            var difference = verifiedAvailable - AvailableQuanity;
+
             AvailableQuanity = verifiedAvailable;
+            ActualQuantity = ActualQuantity + difference;
         }
        
 

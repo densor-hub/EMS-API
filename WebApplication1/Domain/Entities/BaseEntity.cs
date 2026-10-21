@@ -27,5 +27,13 @@ namespace WebApplication1.Domain.Entities
             DeletedAt = DateTime.UtcNow;
             IsDeleted = true;
         }
+
+        public void UpdateGeneralStatus (GeneralStatus status, Guid updatedBy, DateTime updatedAt)
+        {
+            GeneralStatus = status;    
+            UpdatedBy = updatedBy;
+            UpdatedAt = updatedAt;
+
+        }
     }
 }

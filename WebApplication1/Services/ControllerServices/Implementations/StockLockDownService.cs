@@ -5,12 +5,11 @@ using WebApplication1.DAL;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Repositories;
 using WebApplication1.Domain.Repository;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 //using WebApplication1.Exceptions; // You'll need to create this
 
-namespace WebApplication1.Services
+namespace WebApplication1.Services.ControllerServices.Implementations
 {
     public class StockLockDownService : IStockLockDownService
     {

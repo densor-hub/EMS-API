@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
-using WebApplication1.Application.DTOs;
-using WebApplication1.Application.Interfaces;
+using WebApplication1.Domain.DTO;
+using WebApplication1.Services.ControllerServices;
 
 namespace WebApplication1.API.Controllers
 {

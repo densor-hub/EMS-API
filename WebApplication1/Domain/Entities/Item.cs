@@ -27,7 +27,8 @@ namespace WebApplication1.Domain.Entities
         //public ICollection<TransactionItemDelivered> TransactionItemsDelivered { get; private set; }
         public virtual ICollection<TransactionItem> TransactionItems { get; private set; }
         public virtual ICollection<SupplierItemCostPrice> SupplierItemCostPrices { get; private set; }
-
+        public virtual ICollection <ItemSplitSetup> SourceItem {  get; private set; }
+        public virtual ICollection<ItemSplitSetup> TargetItem { get; private set; }
 
 
 

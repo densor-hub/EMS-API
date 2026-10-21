@@ -75,4 +75,37 @@ namespace WebApplication1.Controllers
         public int Quantity { get; set; }
         
     }
+
+    public record CreateStockAdjustmentRequest(
+        Guid ItemId,
+        Guid LocationId,
+        int Quantity,
+        Guid? SupplierId,
+        DateTime TransactionDate);
+
+    // Verify request — approve or decline
+    public record VerifyStockAdjustmentRequest(
+        bool Approve,
+        string Remarks, 
+        GeneralStatus Status);           // true = approve, false = decline
+
+    // ---- Response ----
+
+    public record StockAdjustmentDto(
+        Guid Id,
+        Guid ItemId,
+        string ItemName,
+        Guid LocationId,
+        string LocationName,
+        int Quantity,
+        Guid? SupplierId,
+        string? SupplierName,
+        DateTime CreatedAt,
+        DateTime TransactionDate,
+        string CreatedById,
+        GeneralStatus GeneralStatus,
+        string? ApprovedById,
+        DateTime? ApprovedAt,
+        string StatusName
+       );
 }

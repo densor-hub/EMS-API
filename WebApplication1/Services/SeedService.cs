@@ -191,7 +191,7 @@ namespace WebApplication1.Services
             {
                 Id = Guid.Parse("2f3a4b5c-6d7e-4f8a-9b0c-1d2e3f4a5b6c"),
                 Title = "Set up",
-                Path = "/dashboard/setup",
+                Path = "/setup",
                 Level = 7,
                 Children = new List<MenuDefinition>
                 {
@@ -237,7 +237,7 @@ namespace WebApplication1.Services
                         Path = "/setup/suppliers",
                         Level = 7.6,
                     },
-                     new MenuDefinition
+                    new MenuDefinition
                     {
                         Id = Guid.Parse("b8a1a4da-99e2-4b27-a616-6e0342bee40b"),
                         Title = "Financial Institutions",
@@ -252,6 +252,30 @@ namespace WebApplication1.Services
                     Title = "Coupons",
                     Path = "/coupons",
                     Level = 8,
+                },
+             new MenuDefinition
+                {
+                    Id = Guid.Parse("345391B1-B9CC-43FB-B125-4E22970FEAEE"),
+                    Title = "Splits",
+                    Path = "/setup/split-item",
+                    Level = 9,
+                    Children = new List<MenuDefinition>
+                    {
+                        new MenuDefinition
+                        {
+                            Id = Guid.Parse("91F733D9-23DF-483D-B776-C2B8C8110CF2"),
+                            Title = "Split Formulas",
+                            Path = "/splits/split-formulas",
+                            Level = 9.1,
+                        },
+                        new MenuDefinition
+                        {
+                            Id = Guid.Parse("C2C48D2B-8884-4D2E-81C9-7F94ED03DF6E"),
+                            Title = "Split Activity",
+                            Path = "/splits/split-activity",
+                            Level = 9.2,
+                        }
+                    },
                 },
 
             new MenuDefinition

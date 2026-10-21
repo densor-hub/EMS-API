@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WebApplication1.Domain.DTO;
-using WebApplication1.Services;
+using WebApplication1.Services.ControllerServices;
 using WebApplication1.Services.TokenService;
 
 namespace WebApplication1.Controllers

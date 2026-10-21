@@ -1,15 +1,11 @@
 ﻿// Controllers/PurchasesController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApplication1.DAL.Repository;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.QueryFilters;
 using WebApplication1.Domain.Repository;
 using WebApplication1.DTOs;
-using WebApplication1.Services;
 using WebApplication1.Services.ControllerServices;
-using WebApplication1.Services.TokenService;
 
 namespace WebApplication1.Controllers
 {

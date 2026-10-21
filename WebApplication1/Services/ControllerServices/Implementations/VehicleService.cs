@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using WebApplication1.Application.DTOs;
-using WebApplication1.Application.Interfaces;
 using WebApplication1.DAL.Repository;
+using WebApplication1.Domain.DTO;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Interfaces;
 using WebApplication1.Domain.Repository;
 
 namespace WebApplication1.Services.ControllerServices.Implementations

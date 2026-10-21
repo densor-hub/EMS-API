@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Enums;
-using WebApplication1.Domain.Repositories;
+using WebApplication1.Domain.Repository;
 
 namespace WebApplication1.DAL.Repository
 {

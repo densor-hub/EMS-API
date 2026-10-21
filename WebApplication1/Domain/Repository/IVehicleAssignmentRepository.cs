@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using WebApplication1.Domain.Entities;
 
-namespace WebApplication1.Domain.Interfaces
+namespace WebApplication1.Domain.Repository
 {
     public interface IVehicleAssignmentRepository
     {

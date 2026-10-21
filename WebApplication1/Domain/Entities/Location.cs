@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using WebApplication1.Domain.Enums;
 
 namespace WebApplication1.Domain.Entities
@@ -43,6 +45,8 @@ namespace WebApplication1.Domain.Entities
         public virtual ICollection<FinancialServiceProvider> Banks { get; private set; }
         public virtual ICollection<Vehicle> Vehicles { get; private set; }
         public virtual ICollection<Sale> Sales { get; private set; }
+        public virtual ICollection<ItemSplitTransaction> ItemSplitTransactions { get; private set; }
+        public virtual ICollection<StockAdjustment> StockAdjustments { get; private set; }
         ///public virtual ICollection<LocationSaleSequence> LocationSaleSequences { get; private set; }
 
 

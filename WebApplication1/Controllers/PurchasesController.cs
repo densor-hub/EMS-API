@@ -25,14 +25,16 @@ namespace WebApplication1.Controllers
 
 
         [HttpGet("Requests")]
-        public async Task<ActionResult<IEnumerable<GetPurchaseDto>>> GetAllPurchases(
+        public async Task<ActionResult<PagedResult<GetPurchaseDto>>> GetAllPurchases(
             [FromQuery] Guid locationId,
             [FromQuery] Guid? supplierId = null,
-            [FromQuery] Guid? salesPersonId = null)
+            [FromQuery] Guid? salesPersonId = null,
+            [FromQuery] int? page =1,
+            [FromQuery] int? pageSize =1)
         {
             try
             {
-                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Initiated, supplierId, salesPersonId);
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Initiated, supplierId, salesPersonId, page, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -43,14 +45,16 @@ namespace WebApplication1.Controllers
 
 
         [HttpGet("Approved")]
-        public async Task<ActionResult<IEnumerable<GetPurchaseDto>>> GetApproved(
+        public async Task<ActionResult<PagedResult<GetPurchaseDto>>> GetApproved(
            [FromQuery] Guid locationId,
            [FromQuery] Guid? supplierId = null,
-           [FromQuery] Guid? salesPersonId = null)
+           [FromQuery] Guid? salesPersonId = null,
+           [FromQuery] int? page =1,
+            [FromQuery] int? pageSize =1)
         {
             try
             {
-                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Approved, supplierId, salesPersonId);
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Approved, supplierId, salesPersonId,  page, pageSize);
                 return Ok(result);
             }
             catch (Exception ex)
