@@ -55,6 +55,8 @@ namespace WebApplication1.Domain.DTO
         public Guid SaleDeliveryRequestId { get; set; }
         public DateTime CreatedAt { get; set;}
         public bool IsDelivered { get; set; }
+        public bool IsFullyPaid { get; set; }
+        public bool HasSystemCustomer { get; set; }
 
     }
 }

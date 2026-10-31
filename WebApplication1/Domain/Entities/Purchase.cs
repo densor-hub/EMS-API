@@ -7,10 +7,13 @@ namespace WebApplication1.Domain.Entities
         public Guid Id { get; private set; }
         public Guid TransactionId { get; private set; }
         public Transaction Transaction { get; private set; }
-        public Guid SupplierId { get; private set; }
-        public  Supplier Supplier { get; private set; }
+        public Guid? SupplierId { get; private set; }
+        public  virtual Supplier Supplier { get; private set; }
         public  string PurcasedById { get; private set; }
         public ApplicationUser PurcasedBy { get; private set; }
+        public string? ApprovedById { get; private set; }
+        public ApplicationUser? ApprovedBy { get; private set; }
+        public DateTime ApprovedAt { get; private set;}
         //public PurchaseStatusEnum Status { get; private set; }
 
         private Purchase()
@@ -18,7 +21,7 @@ namespace WebApplication1.Domain.Entities
             
         }
 
-        private Purchase(Guid id,  Guid supplierId, Guid purchasedBy,  Guid transactionId)
+        private Purchase(Guid id,  Guid? supplierId, Guid purchasedBy,  Guid transactionId)
         {
             Id = id;
             SupplierId = supplierId;
@@ -31,10 +34,34 @@ namespace WebApplication1.Domain.Entities
 
         }
 
-        public static Purchase Create(Guid id, Guid supplierId, Guid purchasedBy,  Guid transactionId, Guid createdBy, DateTime createdAt)
+        public static Purchase Create(Guid id, Guid? supplierId, Guid purchasedBy,  Guid transactionId, Guid createdBy, DateTime createdAt)
         => new Purchase(id,  supplierId, purchasedBy, transactionId );
 
-        
+        public void Guard()
+        {
+            if (Transaction.GeneralStatus == GeneralStatus.SoftDeleted)
+                throw new InvalidOperationException("Cannot approve a deleted transaction.");
+
+            if (ApprovedById is not null)
+                throw new InvalidOperationException("Purchase has already been approved.");
+        }
+
+        public void Approve(string approvedById, DateTime approvedAt)
+        {
+            Guard();
+            ApprovedById = approvedById;
+            ApprovedAt = approvedAt;
+            Transaction.GeneralStatus = GeneralStatus.Approved;
+        }
+
+        public void Decline(string rejectedById, DateTime rejectedAt)
+        {
+            Guard();
+            ApprovedById = rejectedById;
+            ApprovedAt = rejectedAt;
+            Transaction.GeneralStatus = GeneralStatus.Declined;
+        }
+
 
     }
 }

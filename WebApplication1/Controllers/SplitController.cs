@@ -108,13 +108,12 @@ namespace WebApplication1.API.Controllers
 
         }
 
-        [HttpGet("Transaction")]
-        public async Task<ActionResult<IReadOnlyList<ItemSplitTransactionDto>>> GetAllTransactions(
-            CancellationToken ct)
+        [HttpGet("Transactions/{locationId:Guid}")]
+        public async Task<ActionResult<IReadOnlyList<ItemSplitTransactionDto>>> GetAllTransactions([FromRoute]Guid locationId , CancellationToken ct)
         {
             try
             {
-                var result = await _service.GetAllTransactionsAsync(ct);
+                var result = await _service.GetAllTransactionsAsync(locationId, ct);
                 return Ok(result);
             }
             catch (Exception ex)

@@ -34,7 +34,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Initiated, supplierId, salesPersonId, page, pageSize);
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Active, supplierId, salesPersonId, page, pageSize, 1);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -43,8 +43,26 @@ namespace WebApplication1.Controllers
             }
         }
 
+        [HttpGet("ManagerCheck")]
+        public async Task<ActionResult<PagedResult<GetPurchaseDto>>> ManagerCheck(
+            [FromQuery] Guid locationId,
+            [FromQuery] Guid? supplierId = null,
+            [FromQuery] Guid? salesPersonId = null,
+            [FromQuery] int? page =1,
+            [FromQuery] int? pageSize =1)
+        {
+            try
+            {
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Active, supplierId, salesPersonId, page, pageSize, 2);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
-        [HttpGet("Approved")]
+        [HttpGet("PendingRecievals")]
         public async Task<ActionResult<PagedResult<GetPurchaseDto>>> GetApproved(
            [FromQuery] Guid locationId,
            [FromQuery] Guid? supplierId = null,
@@ -54,7 +72,7 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Approved, supplierId, salesPersonId,  page, pageSize);
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Approved, supplierId, salesPersonId,  page, pageSize, 3);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -63,6 +81,25 @@ namespace WebApplication1.Controllers
             }
         }
 
+
+        [HttpGet("PendingPayments")]
+        public async Task<ActionResult<PagedResult<GetPurchaseDto>>> PendingPayments(
+           [FromQuery] Guid locationId,
+           [FromQuery] Guid? supplierId = null,
+           [FromQuery] Guid? salesPersonId = null,
+           [FromQuery] int? page =1,
+           [FromQuery] int? pageSize =1)
+        {
+            try
+            {
+                var result = await _purchaseService.GetAllAsync(locationId, GeneralStatus.Approved, supplierId, salesPersonId,  page, pageSize, 4);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
 
         [HttpPost]
@@ -111,47 +148,6 @@ namespace WebApplication1.Controllers
             }
         }
 
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> DeletePurchase(Guid id, [FromBody] string reason)
-        //{
-        //    try
-        //    {
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //        if (user == null)
-        //            return Unauthorized(new { message = "User not found" });
-
-        //        var userId = Guid.Parse(user.Id);
-        //        var result = await _purchaseService.DeleteAsync(id, userId, reason);
-
-        //        if (!result)
-        //            return NotFound(new { message = "Purchase not found" });
-
-        //        return Ok(new { message = "Purchase deleted successfully" });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = ex.Message });
-        //    }
-        //}
-
-        //[HttpPost("cancel")]
-        //public async Task<ActionResult<PurchaseCancellationDto>> CancelPurchase([FromBody] CreatePurchaseCancellationDto createDto)
-        //{
-        //    try
-        //    {
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //        if (user == null)
-        //            return Unauthorized(new { message = "User not found" });
-
-        //        var userId = Guid.Parse(user.Id);
-        //        var result = await _purchaseService.CancelAsync(createDto, userId);
-
-        //        return Ok(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = ex.Message });
-        //    }
-        //}
+       
     }
 }

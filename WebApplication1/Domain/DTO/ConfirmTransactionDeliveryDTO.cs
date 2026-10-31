@@ -23,4 +23,6 @@ namespace WebApplication1.Domain.DTO
         public string? Code { get; set; }
         public decimal? UnitPrice { get; set; }
      }
+
+    
 }

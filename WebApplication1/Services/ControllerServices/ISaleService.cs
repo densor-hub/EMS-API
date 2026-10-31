@@ -13,6 +13,5 @@ namespace WebApplication1.Services.ControllerServices
         Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber);
         Task<List<GetSaleBackLogDto>> GetSaleDeliveryBacklog(Guid locationId, DateTime? date = null);
 
-
     }
 }

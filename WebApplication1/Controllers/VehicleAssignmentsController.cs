@@ -6,8 +6,8 @@ using WebApplication1.Services.ControllerServices;
 
 namespace WebApplication1.API.Controllers
 {
+    [Route("[controller]")]
     [ApiController]
-    [Route("api/[controller]")]
     public class VehicleAssignmentsController : ControllerBase
     {
         private readonly IVehicleAssignmentService _assignmentService;

@@ -20,6 +20,7 @@ namespace WebApplication1.DTOs
         public decimal?   TotalAmount     { get; set; }
         public decimal    PaidAmount      { get; set; }
         public decimal?   Balance         { get; set; }   // ← nullable
+        public string Status {get; set;} = string.Empty;
     
 
     }
@@ -52,9 +53,9 @@ namespace WebApplication1.DTOs
         public Guid? BusinessPartnerId { get; set; }
         public TransactionResultsType TransactionResultsType { get; set; }
         public DateTime? Date { get; set; } = DateTime.UtcNow;
-        public decimal TotalAmount { get; set; }
+        // public decimal TransportationAmount { get; set; }
         public decimal TaxAmount { get; set; }
-        public decimal DiscountAmount { get; set; }
+        // public decimal DiscountAmount { get; set; }
         public decimal AmountPaid { get; set; }
         public PaymentMethods PaymentMethod { get; set; }
         public List<CreateTransactionItemDto> Items { get; set; }
@@ -89,7 +90,18 @@ namespace WebApplication1.DTOs
         public Guid LocationId { get; set; }
         public GeneralStatus Status { get; set; }
         public DateTime Date { get; set; }
+        public string? Remarks { get; set; }
+        public decimal? Transportaion {get; set;}
+    }
+
+    public class UpdateAdjustmentPurchaseDto
+    {
+        public Guid TransactionId { get; set; }
+        public Guid LocationId { get; set; }
+        public GeneralStatus Status { get; set; }
+        public DateTime Date { get; set; }
         public string Remarks { get; set; }
+        public decimal Transportaion {get; set;}
     }
 
 
@@ -107,7 +119,7 @@ namespace WebApplication1.DTOs
 
     public class TransactionPaymentsDto
     {
-        public Guid TransationId { get; set; } = Guid.Empty;
+        public string TransactionId { get; set; } = "";
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; }
         public PaymentMethods PaymentMethod { get; set; } //PaymentMethods converted to string

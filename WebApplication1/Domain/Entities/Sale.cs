@@ -13,7 +13,7 @@ namespace WebApplication1.Domain.Entities
         public ApplicationUser SalesPerson { get; private set; }
         public ICollection<SaleTransDeliveryRequest> SaleTransDeliveryRequests { get; private set; }
         public Guid? LocationId { get; private set; }
-        public int IncrementalId { get; private set; }
+       // public int IncrementalId { get; private set; }
 
         // ✅ New: the day this sale belongs to
         public DateOnly SaleDate { get; private set; }
@@ -39,9 +39,6 @@ namespace WebApplication1.Domain.Entities
             => new Sale(id, transactionId, customerId, salesPersonId,
                         createdAt, createdBy, locationId, saleDate);
 
-        public void SetIncrementalId(int incrementalId)
-        {
-            IncrementalId = incrementalId;
-        }
+       
     }
 }

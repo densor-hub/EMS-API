@@ -75,30 +75,33 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             {
 
                 var transaction = Transaction.Create(Guid.NewGuid(), transactionNumber, DateTime.SpecifyKind(createDto.Date ?? DateTime.UtcNow, DateTimeKind.Utc),
-                    0, createDto.TaxAmount, createDto.DiscountAmount, Guid.Parse(user.Id), DateTime.UtcNow, createDto.TransactionResultsType, createDto.TransactionType.ToString(),
+                    0, createDto.TaxAmount,  Guid.Parse(user.Id), DateTime.UtcNow, createDto.TransactionResultsType, createDto.TransactionType.ToString(),
                     location.Id, createDto.BusinessPartnerId.HasValue && createDto.BusinessPartnerId != Guid.Empty && createDto.TransactionType != TransactionType.TRAN);
 
-                if (!string.IsNullOrEmpty(createDto.CouponCode))
-                {
-                    var coupon = await _context.Coupons.FirstOrDefaultAsync(x => x.LocationId == location.Id && x.Code.ToUpper().Trim() == (createDto.CouponCode ?? string.Empty).ToUpper().Trim());
-                    if(coupon == null) { throw new Exception("Invalid Coupon Submitted");  }
+                // if (transaction.TransactionType == TransactionType.SALE.ToString())
+                // {
+                //     if (!string.IsNullOrEmpty(createDto.CouponCode))
+                //     {
+                //         var coupon = await _context.Coupons.FirstOrDefaultAsync(x => x.LocationId == location.Id && x.Code.ToUpper().Trim() == (createDto.CouponCode ?? string.Empty).ToUpper().Trim());
+                //         if(coupon == null) { throw new Exception("Invalid Coupon Submitted");  }
 
-                    if (coupon.Used)
-                    {
-                        throw new Exception("Coupon has been used already");
-                    }
+                //         if (coupon.Used)
+                //         {
+                //             throw new Exception("Coupon has been used already");
+                //         }
 
-                    if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
-                    {
-                        throw new Exception("Coupon has expired");
-                    }
+                //         if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
+                //         {
+                //             throw new Exception("Coupon has expired");
+                //         }
 
-                    coupon.Use(Guid.Parse(user.Id));
+                //         // coupon.Use(Guid.Parse(user.Id));
 
-                     _context.Coupons.Update(coupon);
+                //         // _context.Coupons.Update(coupon);
 
-                    transaction.SetCoupon(coupon.Id);
-                }
+                //      //   transaction.SetCoupon(coupon.Id);
+                //     }
+                // }
                 await _context.Transactions.AddAsync(transaction);
 
 
@@ -128,30 +131,34 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
 
             var qrCode = "";
-            var saleCount = 0;
+            var saleDeliveryCount = 0;
             var EmailReceiver = new EmailReceiver();
 
             if (transaction.TransactionType == TransactionType.PURC.ToString())
             {
                 var supplier = await _context.Suppliers.Where(x => x.Id == BusinessPartnerId).FirstOrDefaultAsync();
-                if (supplier == null) { throw new Exception("Supplier not found"); }
+               /// if (supplier == null) { throw new Exception("Supplier not found"); }
 
-                var purchase = Purchase.Create(Guid.NewGuid(), supplier.Id, Guid.Parse(user.Id), transaction.Id, Guid.Parse(user.Id), DateTime.UtcNow);
+                var purchase = Purchase.Create(Guid.NewGuid(), supplier is not null ? supplier.Id : null, Guid.Parse(user.Id), transaction.Id, Guid.Parse(user.Id), DateTime.UtcNow);
                 await _context.Purchases.AddAsync(purchase);
 
-                EmailReceiver.Email = supplier?.Email??"";
-                EmailReceiver.Name =$"{supplier?.FirstName??""} {supplier?.LastName ?? ""}";
-                EmailReceiver.Code = supplier?.Code ?? "";
-                EmailReceiver.Id = supplier?.Id ?? Guid.Empty;
+                if (supplier is not null)
+                {
+                    
+                    EmailReceiver.Email = supplier?.Email??"";
+                    EmailReceiver.Name =$"{supplier?.FirstName??""} {supplier?.LastName ?? ""}";
+                    EmailReceiver.Code = supplier?.Code ?? "";
+                    EmailReceiver.Id = supplier?.Id ?? Guid.Empty;
+                }
             }
             else if (transaction.TransactionType == TransactionType.SALE.ToString())
             {
                 var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
                 var sale = Sale.Create(Guid.NewGuid(), transaction.Id, BusinessPartnerId.HasValue && BusinessPartnerId.Value != Guid.Empty ? BusinessPartnerId.Value : null, user.Id, DateTime.UtcNow, Guid.Parse(user.Id), transaction.LocationId, todayUtc);
 
-                 saleCount = await GetNextSaleIncrementalAsync(transaction.LocationId, todayUtc);
+                
 
-                sale.SetIncrementalId(saleCount);
+               // sale.SetIncrementalId(saleDeliveryCount);
             
                 await _context.Sales.AddAsync(sale);
 
@@ -169,8 +176,12 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 else
                 {
                     //HERE IS AN INSTANT SALE
-                    var newDeliveryRequest = SaleTransDeliveryRequest.Create(Guid.NewGuid(), sale.Id, false, DateTime.UtcNow, user.Id, DateTime.UtcNow);
-                    await _context.SaleTransDeliveryRequests.AddAsync(newDeliveryRequest);
+                     saleDeliveryCount = await GetNextSaleIncrementalAsync(transaction.LocationId, todayUtc);
+
+                    var newDeliveryRequest = SaleTransDeliveryRequest.Create(Guid.NewGuid(), sale.Id, false, DateTime.UtcNow, user.Id, DateTime.UtcNow, transaction.LocationId);
+                     newDeliveryRequest.SetIncrementalId(saleDeliveryCount);
+
+                     await _context.SaleTransDeliveryRequests.AddAsync(newDeliveryRequest);
                     //generate QR Code using the deliveryRequestId
                     qrCode = _qrCodeService.GenerateQrCodeBase64(newDeliveryRequest.Id.ToString(), 300, 300);
                 }
@@ -197,6 +208,22 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 var stockTransferRequest = StockTransfer.Create(Guid.NewGuid(), transaction.Id, transaction.TransactionDate, StockTransferEnum.Pending, transaction.LocationId, (Guid)BusinessPartnerId, Guid.Parse(user.Id), DateTime.UtcNow);
                 await _context.StockTransfers.AddAsync(stockTransferRequest);
             }
+            else if (transaction.TransactionType == TransactionType.ADJS.ToString())
+            {
+                var supplier = await _context.Suppliers.FirstOrDefaultAsync(x=> x.Id == (BusinessPartnerId.HasValue ? BusinessPartnerId.Value : Guid.Empty));
+
+                var stockAdjustment =  StockAdjustment.Create(Guid.NewGuid(), transaction.Id, supplier?.Id );
+                await _context.StockAdjustments.AddAsync(stockAdjustment);
+                
+               var locationManager = await _context.EmployeeLocations
+               .Include(x=> x.Employee)
+               .Where(x=> x.Id == transaction.LocationId && x.IsManager).FirstOrDefaultAsync(); 
+
+                EmailReceiver.Email = locationManager?.Employee?.Email ?? "";
+                EmailReceiver.Name = $"{locationManager?.Employee?.FirstName ?? ""} {locationManager?.Employee?.LastName ?? ""}";
+                EmailReceiver.Code = locationManager?.Employee?.Code ?? "";
+                EmailReceiver.Id = locationManager?.Employee?.Id ?? Guid.Empty;
+            }
 
             else
             {
@@ -216,7 +243,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 EmailReceiver.Id = employee?.Id ?? Guid.Empty;
             }
 
-            return new SpecificTransactionCreationReturnDto { QrCode = qrCode, EmailReceiver = EmailReceiver, Count = saleCount};
+            return new SpecificTransactionCreationReturnDto { QrCode = qrCode, EmailReceiver = EmailReceiver, Count = saleDeliveryCount};
         }
 
 
@@ -287,15 +314,17 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 if (createDto.TransactionType == TransactionType.PURC)
                 {
-                    var existingSupplierPrice = await _context.SupplierItemCostPrices.FirstOrDefaultAsync(x => x.SupplierId == createDto.BusinessPartnerId && x.ItemId == item.Id && x.Price == transactionItem.UnitPrice);
-                    if (existingSupplierPrice == null)
+                   if (createDto.BusinessPartnerId != null && createDto.BusinessPartnerId != Guid.Empty)
                     {
-                        var newSupplierPrice = SupplierItemCostPrice.Create(Guid.NewGuid(), (Guid)createDto.BusinessPartnerId, item.Id, transactionItem.UnitPrice, userId.ToString(), DateTime.UtcNow);
-                        await _context.SupplierItemCostPrices.AddAsync(newSupplierPrice);
-                    }
+                         var existingSupplierPrice = await _context.SupplierItemCostPrices.FirstOrDefaultAsync(x => x.SupplierId == createDto.BusinessPartnerId && x.ItemId == item.Id && x.Price == transactionItem.UnitPrice);
+                        if (existingSupplierPrice == null)
+                        {
+                            var newSupplierPrice = SupplierItemCostPrice.Create(Guid.NewGuid(), (Guid)createDto.BusinessPartnerId, item.Id, transactionItem.UnitPrice, userId.ToString(), DateTime.UtcNow);
+                            await _context.SupplierItemCostPrices.AddAsync(newSupplierPrice);
+                        }
 
-                    if (submittedItem.UnitPrice > item?.CostPrice)
-                        transactionItem.SetToPending();
+                        if (submittedItem.UnitPrice > item?.CostPrice) transactionItem.SetToPending();
+                    }
                         //throw new Exception($"Selling Price of {item.Name} cannot be less than {item.SellingPrice}");
                 }
 
@@ -414,6 +443,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             try
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
+                if (user == null) { throw new Exception("Unauthorized"); }
 
                 if (!string.IsNullOrEmpty(createDto.CouponCode))
                 {
@@ -457,29 +487,31 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
             var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-            if (user == null) { throw new Exception("Invalid transaction"); }
+            if (user == null) { throw new Exception("Unauthorized"); }
 
             if (transRecord == null) { throw new Exception("Submitted transaction not found"); }
             
 
             Guid? couponId = null;
+            decimal couponAmount = 0;
             if (!string.IsNullOrEmpty(createDto.CouponCode))
             {
                 var coupon = await _context.Coupons.Where(x => x.Code.ToUpper().Trim() == createDto.CouponCode.ToUpper().Trim() && x.LocationId == transRecord.LocationId).FirstOrDefaultAsync();
 
                 if (coupon != null)
                 {
-                    //if (coupon.Used)
-                    //{
-                    //    throw new Exception("Coupon has been used already");
-                    //}
+                    if (coupon.Used)
+                    {
+                       throw new Exception("Coupon has been used already");
+                    }
 
-                    //if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
-                    //{
-                    //    throw new Exception("Coupon has expired");
-                    //}
+                    if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate.Value.Date < DateTime.Today.Date)
+                    {
+                       throw new Exception("Coupon has expired");
+                    }
 
                     couponId = coupon.Id;
+                    couponAmount = coupon.Amount;
                 }
                 else
                 {
@@ -488,16 +520,44 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             }
 
             //validate amount being paid
-            var totalAmount = transRecord.TotalAmount;
-            var totalPayments = transRecord.TransactionPayments != null ? transRecord.TransactionPayments.Sum(x => x.Amount) : 0;
+            var totalAmount = transRecord.TotalAmount ;
+            var totalAlreadyMadePayments = transRecord.TransactionPayments != null ? transRecord.TransactionPayments.Sum(x => x.Amount) : 0;
 
-            var balance = totalAmount - (totalPayments + createDto.Amount);
+            if (totalAlreadyMadePayments >= totalAmount)
+            {
+                throw new Exception($"Amount of {(totalAlreadyMadePayments):N0} has already been paid");
+            }
+            var balance = totalAmount - (totalAlreadyMadePayments + (createDto.Amount + couponAmount));
 
            if (transRecord.TransactionType != TransactionType.SALE.ToString())
             {
                 if (balance < 0)
                 {
-                    throw new Exception($"Balance left to be paid is {(totalAmount - totalPayments):N0}");
+                    throw new Exception($"Balance left to be paid is {(totalAmount - totalAlreadyMadePayments):N0}");
+                }
+            } 
+            else
+            {
+
+                if (emailReceiver == null) //Sales that have specified customers
+                {
+                    if (totalAmount > totalAlreadyMadePayments + createDto.Amount + couponAmount)
+                    {
+                        throw new Exception($"Amount to be paid is {(totalAmount - totalAlreadyMadePayments):N0}");
+                    }
+                } 
+                else {
+                    var minimumThreshHold = await _context.SystemControls.Where(x=> x.LocationId == transRecord.LocationId)
+                                                .Select(x=> x.MinimumSalePaymentPercentage).FirstOrDefaultAsync();
+                    
+                    if (minimumThreshHold != null && minimumThreshHold > 0)
+                    {
+                        if (totalAlreadyMadePayments == 0) // this makes it first time payment
+                        {
+                            var validMinimumPayment = (minimumThreshHold / 100m) * totalAmount;
+                            if (validMinimumPayment > createDto.Amount) throw new Exception($"Minimum payment threshold is {(validMinimumPayment):N0}");
+                        }
+                    }
                 }
             }
 
@@ -524,7 +584,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
               );
 
 
-            if (transRecord.TotalAmount > 0 )
+            if (transRecord.TotalAmount > 0 || createDto.Amount > 0)
             {
                 await _context.TransactionPayments.AddAsync(payment);
             }
@@ -535,7 +595,18 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             if (transRecord.RequiresExternalApproval)
             {
                 var emailReciversList = new List<EmailReceiver> { emailReceiver };
-                await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReciversList);
+
+                var config = await _context.SystemControls.Where(x=> x.LocationId ==  transRecord.LocationId).FirstOrDefaultAsync();
+                if (config is not null)
+                {
+                    if (config.RecordingOldTransactions == false)
+                    {
+                        await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReciversList);
+                    }
+                } 
+                else {
+                  await SaveTransactionEmailTemplate(transRecord, user, payment, batchId, emailReciversList);
+                }
             }
 
             return (transRecord, user, payment);
@@ -756,7 +827,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         }
 
 
-        public async Task<string> DeliverItems(
+        public async Task<TransactionCreatedReturnDataDto> DeliverItems(
             ConfirmTransactionDeliveryDTO createDto,
             ApplicationUser user,
             SaleTransDeliveryRequest? saleTransDeliveryRequest,
@@ -768,6 +839,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             {
                 var qrCode = string.Empty;
                 var userId = Guid.Parse(user.Id);
+                var saleDeliveryCount = 0;
 
                 // 1. Validate location access
                 var validLocation = await _employeeLocationRepository.HasAccessToLocation(createDto.LocationId)
@@ -819,10 +891,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 var inClause = string.Join(", ", itemIdParams.Select(p => p.ParameterName));
 
                 var sql = $@"
-            SELECT * FROM {quotedTable}
-            WHERE ""LocationId"" = {{0}} AND ""ItemId"" IN ({inClause})
-            ORDER BY ""ItemId""
-            FOR UPDATE";
+                    SELECT * FROM {quotedTable}
+                    WHERE ""LocationId"" = {{0}} AND ""ItemId"" IN ({inClause})
+                    ORDER BY ""ItemId""
+                    FOR UPDATE";
 
                 var parameters = new object[] { validLocation.Id }.Concat(itemIdParams).ToArray();
 
@@ -874,26 +946,40 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         throw new Exception($"Quantity delivered for {transactionItem.Item.Name} exceeds quantity ordered.");
 
                     bool isSale = transRecord.TransactionType == TransactionType.SALE.ToString();
+                    bool isDelivered = !isSale || (isSale && saleTransDeliveryRequest != null);
 
                     if (isSale && saleTransDeliveryRequest == null && saleTransDeliveryRequestToBeCreated == null)
                     {
                         if (salesDictionary.TryGetValue(transRecord.Id, out var saleInfo) &&
                             saleInfo.CustomerId.HasValue && saleInfo.CustomerId != Guid.Empty)
                         {
+
+                            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+                            saleDeliveryCount = await GetNextSaleIncrementalAsync(transRecord.LocationId, todayUtc);
+
+                            var hasCustomer =  saleInfo.CustomerId.HasValue && saleInfo.CustomerId != Guid.Empty;
                             saleTransDeliveryRequestToBeCreated = SaleTransDeliveryRequest.Create(
                                 Guid.NewGuid(),
                                 saleInfo.Id,
                                 false,
                                 DateTime.UtcNow,
                                 user.Id,
-                                DateTime.SpecifyKind(createDto.Date, DateTimeKind.Utc));
+                                DateTime.SpecifyKind(createDto.Date, DateTimeKind.Utc),
+                                transRecord.LocationId);
+                            saleTransDeliveryRequestToBeCreated.SetIncrementalId(saleDeliveryCount);
+                            
+                            if (hasCustomer) // if sale and has customer,  then the delivered should be true
+                            {
+                                saleTransDeliveryRequestToBeCreated.Delivered(user.Id);
+                                isDelivered = true;
+                            }
 
                             await _context.SaleTransDeliveryRequests.AddAsync(saleTransDeliveryRequestToBeCreated, cancellationToken);
                             qrCode = _qrCodeService.GenerateQrCodeBase64(saleTransDeliveryRequestToBeCreated.Id.ToString());
                         }
                     }
 
-                    bool isDelivered = !isSale || (isSale && saleTransDeliveryRequest != null);
+                    
 
                     if (saleTransDeliveryRequest != null && saleTransDeliveryRequest.Sale.Customer != null //added customer check because customers triger DeliveryItems to set the ItemsDelivered to Pending, but instant sale does not trigger such so instant sale will have no customer and will have to create ItemsDelivered with status Deliverred
                        && (!saleTransDeliveryRequest.IsDelivered || transactionItem.TransactionItemsDelivered.Any(x => !x.IsDelivered)))
@@ -935,7 +1021,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     {
                         var stockLevel = stockLevels.FirstOrDefault(x => x.ItemId == transactionItem.ItemId);
 
-                        if (transRecord.TransactionType == TransactionType.PURC.ToString())
+                        if (transRecord.TransactionType == TransactionType.PURC.ToString()
+                        || transRecord.TransactionType == TransactionType.ADJS.ToString())
                         {
                             if (stockLevel == null)
                             {
@@ -980,18 +1067,41 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     saleTransDeliveryRequest.IsDelivered && saleTransDeliveryRequest.Sale.Customer !=null && //Again custmer check to ensure that emauks are sent to transactions that have customers
                     saleTransDeliveryRequest.TransactionItemDelivered != null && saleTransDeliveryRequest.TransactionItemDelivered.All(x => x.IsDelivered))
                 {
-                    var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
+                    var config =  await _context.SystemControls.Where(x=> x.LocationId == transRecord.LocationId).FirstOrDefaultAsync();
+                    if (config != null)
+                    {
+                         if (config.RecordingOldTransactions == false)
+                        {
+                            var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
 
-                    var emailRceiverList = new List<EmailReceiver> { emailReceiver };
-                    await SaveTransactionEmailTemplate(transRecord, user, null,
-                      saleTransDeliveryRequestToBeCreated != null ? saleTransDeliveryRequestToBeCreated.Id :  saleTransDeliveryRequest != null ? saleTransDeliveryRequest.Id : batchId,
-                      emailRceiverList);
+                            if (emailReceiver != null)
+                            {
+                                var emailReceiverList = new List<EmailReceiver> { emailReceiver };
+                                await SaveTransactionEmailTemplate(transRecord, user, null,
+                                saleTransDeliveryRequestToBeCreated != null ? saleTransDeliveryRequestToBeCreated.Id :  saleTransDeliveryRequest != null ? saleTransDeliveryRequest.Id : batchId,
+                                emailReceiverList);
+                            }
+                        }
+                    } 
+                    else {
+                           var emailReceiver = await GetEmailRceiverForExistsingTransaction(transRecord);
+
+                            if (emailReceiver != null)
+                            {
+                                var emailReceiverList = new List<EmailReceiver> { emailReceiver };
+                                await SaveTransactionEmailTemplate(transRecord, user, null,
+                                saleTransDeliveryRequestToBeCreated != null ? saleTransDeliveryRequestToBeCreated.Id :  saleTransDeliveryRequest != null ? saleTransDeliveryRequest.Id : batchId,
+                                emailReceiverList);
+                            }
+                        
+                    }
                 }
-
+                
+                
                 await _context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
 
-                return qrCode;
+                return new TransactionCreatedReturnDataDto {QrCode =qrCode, Count = saleDeliveryCount};
             }
             catch (PostgresException ex) when (ex.SqlState == "55P03") // Lock timeout
             {
@@ -1021,7 +1131,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     .Select(x => new { x.Supplier })
                     .FirstOrDefaultAsync();
 
-                if (purchase == null || purchase.Supplier == null) { throw new Exception("Supplier not found"); }
+                if (purchase == null || purchase.Supplier == null) return null;
 
 
                 EmailReceiver.Email = purchase.Supplier?.Email ?? "";
@@ -1037,7 +1147,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     .Select(x => new { x.Customer })
                     .FirstOrDefaultAsync();
 
-                if (sale == null || sale.Customer == null) { throw new Exception("Customer not found"); }
+                if (sale == null || sale.Customer == null) return null;
 
 
                 var customer = sale.Customer;
@@ -1122,24 +1232,27 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 //process items
                 await ProcessTransactionItemsAsync(transactionResults, createDto, Guid.Parse(user.Id));
 
-                var transactionPayemntDto = new TransactionPaymentsDto
-                {
-                    Amount = createDto.AmountPaid,
-                    CurrencyCode = createDto.CurrencyCode ?? "",
-                    PaymentDate = (DateTime)createDto.Date,
-                    PaymentMethod = createDto.PaymentMethod,
-                    Remarks = createDto.Remarks,
-                    TransationId = transactionResults.Id,
-                    CouponCode = createDto.CouponCode ?? "",
-                   
-                };
-
-                //add paymentUtcNow
+               //add paymentUtcNow
                 //if purchasecahse and not aproved yet, dont add payment details
-                if (transactionResults.TransactionType != TransactionType.PURC.ToString()) // PPURCHASE requires approval, and payment is done on commitin
-                {
-                    await AddPaymentInternalCallAsync(transactionResults, transactionPayemntDto, null, paymentTransactionNumber, ReturnDto.EmailReceiver);
-                }
+                // if (transactionResults.TransactionType != TransactionType.PURC.ToString()) // PPURCHASE requires approval, and payment is done on commitin
+                // {
+                    if (createDto.AmountPaid >  0)
+                    {
+                        var transactionPayemntDto = new TransactionPaymentsDto
+                        {
+                            Amount = createDto.AmountPaid,
+                            CurrencyCode = createDto.CurrencyCode ?? "",
+                            PaymentDate = (DateTime)createDto.Date,
+                            PaymentMethod = createDto.PaymentMethod,
+                            Remarks = createDto.Remarks,
+                            TransactionId = transactionResults.Id.ToString(),
+                            CouponCode = createDto.CouponCode ?? "",
+                        
+                        };
+                        await AddPaymentInternalCallAsync(transactionResults, transactionPayemntDto, null, paymentTransactionNumber, ReturnDto.EmailReceiver);
+                    }
+                     
+                // }
 
                 await _context.SaveChangesAsync();
                 await atomicTransaction.CommitAsync();
@@ -1256,6 +1369,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
         public async Task<TransactionCreatedReturnDataDto> DeliveryRequest(Guid TransactionId, DateTime DeliveryDate)
         {
+            var saleDeliveryCount = 0;
             var user = await _userRepository.GetUserByRefreshTokenAsync();
 
             if (user == null) { throw new Exception("User not found"); }
@@ -1272,14 +1386,18 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             if (deliveryRequest is not null) throw new Exception("There exists a delivery request that is pending completion");
 
-            var newDeliveryRequest = SaleTransDeliveryRequest.Create(Guid.NewGuid(), sale.Id, false, DateTime.UtcNow, user.Id, DeliveryDate);
+            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+            saleDeliveryCount = await GetNextSaleIncrementalAsync(sale.Transaction.LocationId, todayUtc);
+            var newDeliveryRequest = SaleTransDeliveryRequest.Create(Guid.NewGuid(), sale.Id, false, DateTime.UtcNow, user.Id, DeliveryDate, sale.Transaction.LocationId);
+
+            newDeliveryRequest.SetIncrementalId(saleDeliveryCount);
 
             //generate QR Code using the deliveryRequestId
             var qrCode = _qrCodeService.GenerateQrCodeBase64(newDeliveryRequest.Id.ToString(), 300, 300);
             await _context.SaleTransDeliveryRequests.AddRangeAsync(newDeliveryRequest);
             await _context.SaveChangesAsync();
 
-            return new TransactionCreatedReturnDataDto { QrCode = qrCode, TransactionNumber = sale.Transaction.TransactionNumber, Count = sale.IncrementalId };
+            return new TransactionCreatedReturnDataDto { QrCode = qrCode, TransactionNumber = sale.Transaction.TransactionNumber, Count = saleDeliveryCount };
         }
 
         public async Task CancelAsync(TransactionCancellationDto createDto)
@@ -1334,21 +1452,19 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 throw new InvalidOperationException(
                     "GetNextSaleIncrementalAsync must be called inside an active transaction.");
 
-
-
             // ✅ Use the two-arg form with a namespace key, executed as a scalar query
             await _context.Database.ExecuteSqlInterpolatedAsync($@"
                 SELECT pg_advisory_xact_lock(
                     hashtext('SaleIncremental'),
                     hashtext({locationId.ToString()} || ':' || {todayUtc.ToString("yyyy-MM-dd")})
                 )
-    ");
+            ");
             // NOTE: ExecuteSqlInterpolatedAsync works here because Npgsql allows
             // a SELECT as a non-query, but a scalar call is safer across versions.
             // If you get "expected 1 row" errors, switch to the scalar version below.
 
-            var count = await _context.Sales
-                .Where(s => s.LocationId == locationId && s.SaleDate == todayUtc)
+            var count = await _context.SaleTransDeliveryRequests
+                .Where(s => s.LocationId == locationId && s.DateOnly == todayUtc)
                 .CountAsync();
 
             return count + 1;
@@ -1362,14 +1478,15 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
                 if (user == null) { new Exception("Unauthorized"); }
-                var purchase = await _context.Purchases.Include(x => x.Transaction)
+                var purchase = await _context.Purchases
+                    .Include(x => x.Transaction)
                     .Where(x => x.Id == purcaseId).FirstOrDefaultAsync();
 
                 if (purchase == null) throw new Exception("Purchase not found");
 
-                if (purchase.GeneralStatus != GeneralStatus.Approved) throw new Exception("Invalid Status");
+                if (purchase.Transaction.GeneralStatus != GeneralStatus.Approved) throw new Exception("Invalid Status");
 
-                purchase.Update(GeneralStatus.Committed, Guid.Parse(user?.Id), DateTime.UtcNow);
+                purchase.Transaction.UpdateGeneralStatus(GeneralStatus.Committed, Guid.Parse(user?.Id), DateTime.UtcNow);
 
                 var transactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", purchase.Transaction.LocationId);
 

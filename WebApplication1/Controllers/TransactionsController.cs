@@ -61,9 +61,17 @@ namespace WebApplication1.Controllers
             try
             {
                 if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
-
+                
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
-                var transaction = await _transactionRepository.GetByIdAsync(createDto.TransationId);
+
+
+                // Guid outId = Guid.Empty;
+                // var isId = Guid.TryParse(createDto.TransationId, out outId );
+
+                // var transaction =  isId ? await _transactionRepository.GetByIdAsync(createDto.TransationId) : await _transactionRepository.GetByTransactionNumberAsync(createDto.TransationId.ToString());
+                var transaction = Guid.TryParse(createDto.TransactionId, out var outId)
+                    ? await _transactionRepository.GetByIdAsync(outId)
+                    : await _transactionRepository.GetByTransactionNumberAsync(createDto.TransactionId);
                 if (transaction == null) return BadRequest("Transaction not found");
 
                  var paymentResults =  await _transactionService.AddPaymentExternalCallAsync(transaction, createDto, null);
@@ -85,7 +93,11 @@ namespace WebApplication1.Controllers
                 if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
 
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
-                var transaction = await _transactionRepository.GetByIdAsync(createDto.TransationId);
+
+                var transaction = Guid.TryParse(createDto.TransactionId, out var outId)
+                    ? await _transactionRepository.GetByIdAsync(outId)
+                    : await _transactionRepository.GetByTransactionNumberAsync(createDto.TransactionId);
+
                 if (transaction == null) return BadRequest("Transaction not found");
 
                 var paymentResults = await _transactionService.AddPaymentExternalCallAsync(transaction, createDto, null);
@@ -112,11 +124,10 @@ namespace WebApplication1.Controllers
             {
                 //    if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
 
-
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
-                var qrCode = await _transactionService.DeliverItems(createDto, user, null);
+                var returnDataDto = await _transactionService.DeliverItems(createDto, user, null);
 
-                return StatusCode(201, new TransactionCreatedReturnDataDto {QrCode = qrCode });
+                return StatusCode(201, new TransactionCreatedReturnDataDto {QrCode = returnDataDto.QrCode, Count = returnDataDto.Count });
             }
             catch (Exception ex)
             {
@@ -124,65 +135,13 @@ namespace WebApplication1.Controllers
             }
         }
 
-        //[HttpPut]
-        //public async Task<IActionResult> Update([FromBody] UpdatePurchaseDto updateDto)
-        //{
-        //    try
-        //    {
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //        var purchase = await _purchaseService.UpdateAsync(updateDto.PurchaseId, updateDto, Guid.Parse(user.Id));
-        //        if (purchase == null)
-        //            return NotFound();
-        //        return Ok(purchase);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
-
-        //[HttpPost("DeliveryRequest")]
-        //public async Task<ActionResult> DeliveryRequest([FromBody] CreateDeliveryRequestDto createDto)
-        //{
-        //    try
-        //    {
-        //        //    if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment metho");
-
-
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //       var responseQrCode =  await _transactionService.DeliveryRequest(createDto.TransactionId);
-
-        //        return StatusCode(201, new {QrCode = responseQrCode });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
-
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete([FromBody] UpdateSaleDto dto)
-        //{
-        //    try
-        //    {
-        //        var user = await _userRepository.GetUserByRefreshTokenAsync();
-        //        var result = await _purchaseService.DeleteAsync(dto.Id, Guid.Parse(user.Id), dto.Notes);
-        //        if (!result)
-        //            return NotFound();
-        //        return NoContent();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(ex.Message);
-        //    }
-        //}
+        
 
         [HttpPost("Cancel")]
         public async Task<IActionResult> Create([FromBody] TransactionCancellationDto cancelDto)
         {
             try
             {
-
                  await _transactionService.CancelAsync(cancelDto);
                 return StatusCode(200);
             }
@@ -191,9 +150,6 @@ namespace WebApplication1.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-       
-
 
     }
 }

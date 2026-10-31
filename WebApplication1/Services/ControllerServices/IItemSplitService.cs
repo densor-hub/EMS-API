@@ -37,6 +37,7 @@ namespace WebApplication1.Services.ControllerServices
             CancellationToken ct = default);
 
         Task<IReadOnlyList<ItemSplitTransactionDto>> GetAllTransactionsAsync(
+            Guid locationId,
             CancellationToken ct = default);
 
         Task<ItemSplitTransactionDto?> GetTransactionByIdAsync(

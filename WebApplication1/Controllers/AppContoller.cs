@@ -83,7 +83,7 @@ namespace WebApplication1.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Get profile failed");
-                    return StatusCode(500, new { message = "An error occurred while fetching profile" });
+                    return StatusCode(500, new { message =ex.Message ??  "An error occurred while fetching profile" });
                 }
             }
 
@@ -130,7 +130,7 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Get profile failed");
-                return StatusCode(500, new { message = "An error occurred while fetching profile" });
+                return StatusCode(500, new { message = ex.Message ?? "An error occurred while fetching profile" });
             }
         }
 

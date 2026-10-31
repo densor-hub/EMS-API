@@ -42,14 +42,14 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GetSupplierDto>>> GetAllSuppliers([FromQuery] Guid? locationId = null)
+        public async Task<ActionResult<IEnumerable<GetSupplierDto>>> GetAllSuppliers([FromQuery] Guid? companyId, [FromQuery] Guid? locationId = null)
         {
             try
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-                if (user is null) return Unauthorized();
-                var suppliers =  _supplierRepository.GetAllAsync((Guid)user.CompanyId);
+                //if (user is null) return Unauthorized();
+                var suppliers =  _supplierRepository.GetAllAsync((Guid)companyId);
 
                 if (locationId != null)
                 {

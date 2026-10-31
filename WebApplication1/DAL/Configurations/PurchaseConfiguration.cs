@@ -11,8 +11,8 @@ namespace WebApplication1.DAL.Configurations
             // Apply base PostgreSQL configuration
             BaseEntityConfiguration.ConfigureForPostgres(builder);
 
-            builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
-            builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
+            // builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
+            // builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
 
             builder.HasIndex(x => x.PurcasedById);
             builder.HasIndex(x => x.SupplierId);
@@ -33,7 +33,7 @@ namespace WebApplication1.DAL.Configurations
             builder.HasOne(x => x.Supplier)
                 .WithMany(x => x.Purchases)
                 .HasForeignKey(x => x.SupplierId)
-                .IsRequired(true)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

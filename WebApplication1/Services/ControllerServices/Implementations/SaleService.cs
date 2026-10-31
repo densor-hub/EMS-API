@@ -42,7 +42,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 .Include(p => p.Transaction)
                     .ThenInclude(t => t.TransactionPayments) // Added this
                 .Where(x => x.Transaction.LocationId == locationId
-                         && x.GeneralStatus == generalStatus
+                         && x.Transaction.GeneralStatus == generalStatus
                          && (type.ToUpper().Trim()  == "GENERAL" ? x.Customer == null:
                             type.ToUpper().Trim() == "CUSTOMER" ? x.Customer != null && (customerId !=null ? x.CustomerId == customerId : true) :false)
                          && (salesPersonId != null && salesPersonId != Guid.Empty ? x.SalesPersonId == salesPersonId.ToString() : true))
@@ -59,7 +59,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                 ? sales.Customer.FirstName + " " + sales.Customer.LastName
                                 : "",
                             //TransactionBy = sales.SalesPerson != null ? sales.SalesPerson.FullName : "",
-                            CreatedAt = sales.CreatedAt,
+                            CreatedAt = sales.Transaction.CreatedAt,
                             TransactionDate = sales.Transaction != null ? sales.Transaction.TransactionDate : DateTime.MinValue,
                             TotalAmount = sales.Transaction != null ? sales.Transaction.TotalAmount : 0,
                             PaidAmount  = sales.Transaction != null ? sales.Transaction.TransactionPayments != null ?
@@ -85,9 +85,9 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
             var sales = await _context.Sales
                 .Include(s => s.Transaction)
-                .Where(s => s.CreatedAt.Date >= startDate.Date &&
-                           s.CreatedAt.Date <= endDate.Date &&
-                           s.GeneralStatus != GeneralStatus.SoftDeleted)
+                .Where(s => s.Transaction.CreatedAt.Date >= startDate.Date &&
+                           s.Transaction.CreatedAt.Date <= endDate.Date &&
+                           s.Transaction.GeneralStatus != GeneralStatus.SoftDeleted)
                 .ToListAsync();
 
             return sales.Sum(s => s.Transaction?.TotalAmount ?? 0);
@@ -101,17 +101,20 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             var data = _context.SaleTransDeliveryRequests
                 .Include(x=> x.Sale)
                 .ThenInclude(x=> x.Transaction)
-                .Where(x => x.Sale.SaleDate == todayUtc && x.Sale.LocationId == locationId)
+                    .ThenInclude(x=> x.TransactionPayments)
+                .Where(x => x.DateOnly == todayUtc && x.LocationId == locationId)
                 .OrderBy(X=> X.CreatedAt);
 
             return data.Select(x=> new GetSaleBackLogDto
             {
-                SaleDate = x.Sale.SaleDate,
-                DailyCountNumber = x.Sale.IncrementalId,
+                SaleDate = x.DateOnly,
+                DailyCountNumber = x.IncrementalId,
                 TransactionNumber = x.Sale.Transaction.TransactionNumber,
                 SaleDeliveryRequestId = x.Id,
                 CreatedAt = x.CreatedAt,
-                IsDelivered = x.IsDelivered
+                IsDelivered = x.IsDelivered,
+                IsFullyPaid = x.Sale.Transaction.TotalAmount <= x.Sale.Transaction.TransactionPayments.Sum(x=> x.Amount),
+                HasSystemCustomer = x.Sale.Customer != null
             }).ToListAsync();
         }
 
@@ -196,8 +199,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                                 ? deliveryRequest.Sale.Customer.FirstName + " " + deliveryRequest.Sale.Customer.LastName
                                 : "",
                 //TransactionBy = sales.SalesPerson != null ? sales.SalesPerson.FullName : "",
-                CreatedAt = deliveryRequest.Sale.CreatedAt,
-                Count = deliveryRequest.Sale.IncrementalId,
+                CreatedAt = deliveryRequest.Sale.Transaction.CreatedAt,
+                Count = deliveryRequest.IncrementalId,
                 TransactionDate = deliveryRequest.Sale.Transaction != null ? deliveryRequest.Sale.Transaction.TransactionDate : DateTime.MinValue,
                 TotalAmount = transactionTotal,
                 PaidAmount = totalPayment,

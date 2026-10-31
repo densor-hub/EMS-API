@@ -238,7 +238,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("ApplicationRoutes", (string)null);
+                    b.ToTable("ApplicationRoutes");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.ApplicationUser", b =>
@@ -301,17 +301,10 @@ namespace WebApplication1.DAL.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
-                    b.Property<bool?>("Status")
-                        .IsRequired()
+                    b.Property<bool>("Status")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
@@ -488,7 +481,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -556,7 +551,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("PhoneNumber")
                         .IsUnique();
 
-                    b.ToTable("Companies", (string)null);
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.ConfirmationCodes", b =>
@@ -619,7 +614,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("character varying(15)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -660,7 +657,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("Coupons", (string)null);
+                    b.ToTable("Coupons");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Currency", b =>
@@ -701,7 +698,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -776,7 +775,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.DailyTransactionCounter", b =>
@@ -821,7 +820,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -899,7 +900,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("UserAccountId")
                         .IsUnique();
 
-                    b.ToTable("Employees", (string)null);
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.EmployeeDisbursement", b =>
@@ -926,7 +927,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.ToTable("EmployeeDisbursements", (string)null);
+                    b.ToTable("EmployeeDisbursements");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.EmployeeLocation", b =>
@@ -936,7 +937,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -979,7 +982,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("EmployeeId", "LocationId");
 
-                    b.ToTable("EmployeeLocations", (string)null);
+                    b.ToTable("EmployeeLocations");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.FinancialServiceDisbursement", b =>
@@ -1000,7 +1003,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionId");
 
-                    b.ToTable("FinancialServiceDisbursement", (string)null);
+                    b.ToTable("FinancialServiceDisbursement");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.FinancialServiceDisbursementContactPerson", b =>
@@ -1013,7 +1016,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1027,7 +1032,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("DisbursementId");
 
-                    b.ToTable("FinancialServiceDisbursementContactPersons", (string)null);
+                    b.ToTable("FinancialServiceDisbursementContactPersons");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.FinancialServiceProvider", b =>
@@ -1046,7 +1051,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1090,7 +1097,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("FinancialServiceProviders", (string)null);
+                    b.ToTable("FinancialServiceProviders");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.FinancialServiceProviderContactPerson", b =>
@@ -1109,7 +1116,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1177,7 +1186,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("FinancialServiceProviderId");
 
-                    b.ToTable("FinancialServiceProviderContactPersons", (string)null);
+                    b.ToTable("FinancialServiceProviderContactPersons");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Item", b =>
@@ -1200,7 +1209,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid?>("CreatedAtLocationId")
                         .HasColumnType("uuid");
@@ -1264,7 +1275,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("CreatedAtLocationId");
 
-                    b.ToTable("Items", (string)null);
+                    b.ToTable("Items");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.ItemLocation", b =>
@@ -1274,7 +1285,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1314,7 +1327,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("ItemId", "LocationId");
 
-                    b.ToTable("ItemLocations", (string)null);
+                    b.ToTable("ItemLocations");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.ItemSplitSetup", b =>
@@ -1442,7 +1455,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1504,7 +1519,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("CompanyId", "TypeOfLocation");
 
-                    b.ToTable("Locations", (string)null);
+                    b.ToTable("Locations");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.LocationSaleSequence", b =>
@@ -1514,7 +1529,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1550,7 +1567,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("LocationId")
                         .IsUnique();
 
-                    b.ToTable("LocationSaleSequences", (string)null);
+                    b.ToTable("LocationSaleSequence");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Payment", b =>
@@ -1572,7 +1589,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1626,7 +1645,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionId");
 
-                    b.ToTable("TransactionPayments", (string)null);
+                    b.ToTable("TransactionPayments");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.PaymentConfirmationToken", b =>
@@ -1636,7 +1655,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
@@ -1681,7 +1702,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("Token", "IsUsed");
 
-                    b.ToTable("PaymentConfirmationTokens", (string)null);
+                    b.ToTable("PaymentConfirmationTokens");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.PinCode", b =>
@@ -1719,7 +1740,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -1764,7 +1787,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("CompanyId");
 
-                    b.ToTable("Positions", (string)null);
+                    b.ToTable("Positions");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.PositionRoutes", b =>
@@ -1800,41 +1823,25 @@ namespace WebApplication1.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("ApprovedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("GeneralStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                    b.Property<string>("ApprovedById")
+                        .HasColumnType("text");
 
                     b.Property<string>("PurcasedById")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("SupplierId")
+                    b.Property<Guid?>("SupplierId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ApprovedById");
 
                     b.HasIndex("PurcasedById");
 
@@ -1843,10 +1850,10 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.ToTable("Purchases", (string)null);
+                    b.ToTable("Purchases");
                 });
 
-            modelBuilder.Entity("WebApplication1.Domain.Entities.Sale", b =>
+            modelBuilder.Entity("WebApplication1.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1855,26 +1862,44 @@ namespace WebApplication1.DAL.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedBy")
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("DeviceInfo")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.Sale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("CustomerId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("GeneralStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("IncrementalId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("LocationId")
                         .HasColumnType("uuid");
@@ -1892,15 +1917,11 @@ namespace WebApplication1.DAL.Migrations
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("LocationId");
 
                     b.HasIndex("LocationId1");
 
@@ -1909,11 +1930,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.HasIndex("LocationId", "SaleDate", "IncrementalId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Sales_Location_Date_Incremental");
-
-                    b.ToTable("Sales", (string)null);
+                    b.ToTable("Sales");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.SaleTransDeliveryRequest", b =>
@@ -1929,11 +1946,20 @@ namespace WebApplication1.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateOnly>("DateOnly")
+                        .HasColumnType("date");
+
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("IncrementalId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDelivered")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("SaleId")
                         .HasColumnType("uuid");
@@ -1952,7 +1978,42 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
+                    b.HasIndex("LocationId", "DateOnly", "IncrementalId")
+                        .IsUnique();
+
                     b.ToTable("SaleTransDeliveryRequests");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.StockAdjustment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ApprovedById")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<Guid?>("SupplierId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TransactionId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedById");
+
+                    b.HasIndex("SupplierId");
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("TransactionId", "SupplierId", "ApprovedById");
+
+                    b.ToTable("StockAdjustments", (string)null);
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.StockLevel", b =>
@@ -1968,22 +2029,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("GeneralStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("ItemId")
                         .HasColumnType("uuid");
@@ -1991,11 +2039,8 @@ namespace WebApplication1.DAL.Migrations
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -2004,7 +2049,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("ItemId", "LocationId")
                         .IsUnique();
 
-                    b.ToTable("StockLevels", (string)null);
+                    b.ToTable("StockLevels");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.StockLockDownComment", b =>
@@ -2018,7 +2063,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<string>("CreatedById")
                         .IsRequired()
@@ -2043,7 +2090,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionType");
 
-                    b.ToTable("StockLockDownComments", (string)null);
+                    b.ToTable("StockLockDownComments");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.StockLockDownItem", b =>
@@ -2053,7 +2100,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2091,7 +2140,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("StockLockDownRequestId");
 
-                    b.ToTable("StockLockDownItems", (string)null);
+                    b.ToTable("StockLockDownItems");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.StockLockDownRequest", b =>
@@ -2193,7 +2242,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2242,7 +2293,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.ToTable("StockTransfers", (string)null);
+                    b.ToTable("StockTransfers");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Supplier", b =>
@@ -2263,7 +2314,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2337,7 +2390,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("Suppliers", (string)null);
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.SupplierItemCostPrice", b =>
@@ -2347,7 +2400,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<string>("CreatedById")
                         .IsRequired()
@@ -2372,7 +2427,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("SupplierItemCostPrices", (string)null);
+                    b.ToTable("SupplierItemCostPrices");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.SupplierLocation", b =>
@@ -2382,7 +2437,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2420,7 +2477,47 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("SupplierId");
 
-                    b.ToTable("SupplierLocations", (string)null);
+                    b.ToTable("SupplierLocations");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.SystemControl", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("DefaultPageSize")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("LocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("MinimumSalePaymentPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PosPrinterSize")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("RecordingOldTransactions")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("SaleToDeliveryMode")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId")
+                        .IsUnique();
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("SystemControls");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Transaction", b =>
@@ -2433,7 +2530,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2488,14 +2587,11 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CouponId")
-                        .IsUnique();
-
                     b.HasIndex("LocationId");
 
                     b.HasIndex("TransactionType");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionComment", b =>
@@ -2509,7 +2605,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<string>("CreatedById")
                         .IsRequired()
@@ -2538,7 +2636,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionType");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionItem", b =>
@@ -2548,7 +2646,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2592,7 +2692,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionId");
 
-                    b.ToTable("TransactionItems", (string)null);
+                    b.ToTable("TransactionItems");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionItemDelivered", b =>
@@ -2605,7 +2705,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2649,7 +2751,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionItemId");
 
-                    b.ToTable("TransactionItemsDelivered", (string)null);
+                    b.ToTable("TransactionItemsDelivered");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionItemReceived", b =>
@@ -2662,7 +2764,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2698,7 +2802,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionItemId");
 
-                    b.ToTable("TransactionItemReceived", (string)null);
+                    b.ToTable("TransactionItemReceived");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionItemReversal", b =>
@@ -2731,7 +2835,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("TransactionItemReceivedId");
 
-                    b.ToTable("TransactionItemReversals", (string)null);
+                    b.ToTable("TransactionItemReversals");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.TransactionTransportation", b =>
@@ -2793,7 +2897,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2830,7 +2936,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("Vehicles", (string)null);
+                    b.ToTable("Vehicles");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.VehicleAssignments", b =>
@@ -2843,7 +2949,9 @@ namespace WebApplication1.DAL.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
@@ -2883,7 +2991,7 @@ namespace WebApplication1.DAL.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("VehicleAssignments", (string)null);
+                    b.ToTable("VehicleAssignments");
                 });
 
             modelBuilder.Entity("WebApplication1.Services.Hubs.Entities.Notification", b =>
@@ -3341,6 +3449,10 @@ namespace WebApplication1.DAL.Migrations
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Purchase", b =>
                 {
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedById");
+
                     b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "PurcasedBy")
                         .WithMany("Purchases")
                         .HasForeignKey("PurcasedById")
@@ -3350,8 +3462,7 @@ namespace WebApplication1.DAL.Migrations
                     b.HasOne("WebApplication1.Domain.Entities.Supplier", "Supplier")
                         .WithMany("Purchases")
                         .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("WebApplication1.Domain.Entities.Transaction", "Transaction")
                         .WithOne()
@@ -3359,11 +3470,24 @@ namespace WebApplication1.DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("ApprovedBy");
+
                     b.Navigation("PurcasedBy");
 
                     b.Navigation("Supplier");
 
                     b.Navigation("Transaction");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.Sale", b =>
@@ -3408,6 +3532,11 @@ namespace WebApplication1.DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("WebApplication1.Domain.Entities.Location", "Location")
+                        .WithMany("SaleTransDeliveryRequests")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("WebApplication1.Domain.Entities.Sale", "Sale")
                         .WithMany("SaleTransDeliveryRequests")
                         .HasForeignKey("SaleId")
@@ -3421,9 +3550,36 @@ namespace WebApplication1.DAL.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("Location");
+
                     b.Navigation("Sale");
 
                     b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.StockAdjustment", b =>
+                {
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WebApplication1.Domain.Entities.Supplier", "Supplier")
+                        .WithMany("StockAdjustments")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("WebApplication1.Domain.Entities.Transaction", "Transaction")
+                        .WithOne()
+                        .HasForeignKey("WebApplication1.Domain.Entities.StockAdjustment", "TransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedBy");
+
+                    b.Navigation("Supplier");
+
+                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("WebApplication1.Domain.Entities.StockLevel", b =>
@@ -3616,20 +3772,29 @@ namespace WebApplication1.DAL.Migrations
                     b.Navigation("Supplier");
                 });
 
-            modelBuilder.Entity("WebApplication1.Domain.Entities.Transaction", b =>
+            modelBuilder.Entity("WebApplication1.Domain.Entities.SystemControl", b =>
                 {
-                    b.HasOne("WebApplication1.Domain.Entities.Coupon", "Coupon")
+                    b.HasOne("WebApplication1.Domain.Entities.Location", "Location")
                         .WithOne()
-                        .HasForeignKey("WebApplication1.Domain.Entities.Transaction", "CouponId")
+                        .HasForeignKey("WebApplication1.Domain.Entities.SystemControl", "LocationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("WebApplication1.Domain.Entities.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById");
+
+                    b.Navigation("Location");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("WebApplication1.Domain.Entities.Transaction", b =>
+                {
                     b.HasOne("WebApplication1.Domain.Entities.Location", "Location")
                         .WithMany("Transactions")
                         .HasForeignKey("LocationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Coupon");
 
                     b.Navigation("Location");
                 });
@@ -3770,6 +3935,8 @@ namespace WebApplication1.DAL.Migrations
                 {
                     b.Navigation("Purchases");
 
+                    b.Navigation("RefreshTokens");
+
                     b.Navigation("Sales");
 
                     b.Navigation("StockLockDownComments");
@@ -3878,6 +4045,8 @@ namespace WebApplication1.DAL.Migrations
 
                     b.Navigation("ItemSplitTransactions");
 
+                    b.Navigation("SaleTransDeliveryRequests");
+
                     b.Navigation("Sales");
 
                     b.Navigation("StockLevels");
@@ -3934,6 +4103,8 @@ namespace WebApplication1.DAL.Migrations
             modelBuilder.Entity("WebApplication1.Domain.Entities.Supplier", b =>
                 {
                     b.Navigation("Purchases");
+
+                    b.Navigation("StockAdjustments");
 
                     b.Navigation("SupplierItemCostPrices");
 

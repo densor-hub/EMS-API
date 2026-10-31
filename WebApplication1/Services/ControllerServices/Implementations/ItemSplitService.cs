@@ -345,11 +345,12 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         // 7. GET ALL (transactions)
         // ------------------------------------------------------------
         public async Task<IReadOnlyList<ItemSplitTransactionDto>> GetAllTransactionsAsync(
+            Guid locationId,
             CancellationToken ct = default)
         {
             try
             {
-                return await _txRepo.GetAll()
+                return await _txRepo.GetAll(locationId)
                     .OrderByDescending(x => x.CreatedAt)
                     .Select(x => new ItemSplitTransactionDto(
                         x.Id,
@@ -381,9 +382,9 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
             try
             {
-                return await _txRepo.GetAll()
-                    .Where(x => x.Id == id)
-                    .Select(x => new ItemSplitTransactionDto(
+                var x = await _txRepo.GetByIdAsync(id);
+
+                return    new ItemSplitTransactionDto(
                         x.Id,
                         x.ItemSplitSetUpId,
                         x.ItemSplitSetup.SourceItemId,
@@ -394,8 +395,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                         x.ItemSplitSetup.TargetQuantity,
                         x.TargetItemQuantitySnapShot,
                         x.CreatedById,
-                        x.CreatedAt))
-                    .FirstOrDefaultAsync(ct);
+                        x.CreatedAt);
             }
             catch (Exception ex) when (ex is not InvalidOperationException)
             {

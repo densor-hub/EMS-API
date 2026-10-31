@@ -4,7 +4,7 @@ namespace WebApplication1.DAL.Repositories
 {
     public interface IItemSplitTransactionRepository
     {
-        IQueryable<ItemSplitTransaction> GetAll();
+        IQueryable<ItemSplitTransaction> GetAll(Guid locationId);
         Task<ItemSplitTransaction?> GetByIdAsync(Guid id, CancellationToken ct = default);
         Task<ItemSplitTransaction?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default);
         Task<bool> ExistsAsync(Guid id, CancellationToken ct = default);

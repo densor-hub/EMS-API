@@ -15,6 +15,7 @@ namespace WebApplication1.Services.ControllerServices
             Guid? salesPersonId,
             int? page =1,
             int? pageSize =20,
+            int? stage = 1,
             CancellationToken ct = default
         );
          Task ManagerCheck(UpdatePurchaseDto updateDto);

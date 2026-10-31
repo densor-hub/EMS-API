@@ -17,7 +17,7 @@ namespace WebApplication1.Services.ControllerServices
         //Task<string> CreateSpecificTypeOfTransaction(Transaction transaction, ApplicationUser user, Guid? BusinessPartnerId);
         Task ProcessTransactionItemsAsync(Transaction tranaction, CreateTransactionDto createDto, Guid userId);
         Task<IEnumerable<TransactionItemsReceivedDto>> GetAllDeliveredItemsToDate(Guid transactionId);
-        Task<string> DeliverItems(ConfirmTransactionDeliveryDTO createDto, ApplicationUser user, SaleTransDeliveryRequest? saleTransDeliveryRequest, CancellationToken cancellationToken = default);
+        Task<TransactionCreatedReturnDataDto> DeliverItems(ConfirmTransactionDeliveryDTO createDto, ApplicationUser user, SaleTransDeliveryRequest? saleTransDeliveryRequest, CancellationToken cancellationToken = default);
         Task SaveTransactionEmailTemplate(Transaction transaction, ApplicationUser user, Payment payment, Guid? BatchId, List<EmailReceiver>? emailReceivers);
         Task<TransactionCreatedReturnDataDto> CompleteTransationProcess(CreateTransactionDto createDto, TransactionResultsType? transactionResultsType);
         Task<TransactionCreatedReturnDataDto> DeliveryRequest(Guid TransactionId, DateTime DeliveryDate);

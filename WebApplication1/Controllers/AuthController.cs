@@ -1,6 +1,7 @@
 // Controllers/AuthController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using WebApplication1.Domain.DTO;
 using WebApplication1.Services.ControllerServices;
@@ -15,15 +16,17 @@ namespace WebApplication1.Controllers
         private readonly IAuthService _authService;
         private readonly TokenCookieHelper _cookieHelper;
         private readonly ILogger<AuthController> _logger;
-
+        private readonly JwtOptions _jwtOptions;
         public AuthController(
             IAuthService authService,
             TokenCookieHelper cookieHelper,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            IOptions<JwtOptions> jwtOptions)
         {
             _authService  = authService;
             _cookieHelper = cookieHelper;
             _logger       = logger;
+            _jwtOptions = jwtOptions.Value;
         }
 
         // ---------------------------------------------------------------------
@@ -81,7 +84,7 @@ namespace WebApplication1.Controllers
         // ---------------------------------------------------------------------
         // Refresh
         // ---------------------------------------------------------------------
-        [HttpPost("refresh-token")]
+        [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<ActionResult<AuthResponseDTO>> RefreshToken()
         {
@@ -114,30 +117,18 @@ namespace WebApplication1.Controllers
         // ---------------------------------------------------------------------
         // Logout
         // ---------------------------------------------------------------------
-        [HttpPost("logout")]
+       [HttpPost("logout")]
         [Authorize]
         public async Task<IActionResult> Logout()
         {
-            try
-            {
-                var userId      = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var accessToken = Request.Headers[CookieNames.AuthorizationHeaderName]
-                    .FirstOrDefault()?.Replace("Bearer ", "");
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+            var access = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var refresh = Request.Cookies[_jwtOptions.RefreshCookie.Name]
+                        ?? Request.Headers[_jwtOptions.RefreshHeaderName].FirstOrDefault();
 
-                await _authService.LogoutAsync(userId, accessToken);
-
-                // One call clears both cookies with matching options
-                _cookieHelper.ClearAll(Response);
-
-                return Ok(new { message = "Logged out successfully" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Logout failed");
-                return StatusCode(500, new { message = ex.Message });
-            }
+            await _authService.LogoutAsync(userId, access, refresh);
+            return Ok(new { message = "Logged out" });
         }
-
         // ---------------------------------------------------------------------
         // Profile
         // ---------------------------------------------------------------------

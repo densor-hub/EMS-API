@@ -48,15 +48,15 @@ namespace WebApplication1.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<GetLocationDTO>>> GetAll([FromQuery] Guid? LocationId, [FromQuery] bool OnlyActive = false, [FromQuery] string? TextFilter="")
+        public async Task<ActionResult<List<GetLocationDTO>>> GetAll([FromQuery] Guid? LocationId, [FromQuery] Guid? companyId, [FromQuery] bool OnlyActive = false, [FromQuery] string? TextFilter="")
         {
             try
             {
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
+                //var user = await _userRepository.GetUserByRefreshTokenAsync();
 
                 var locations = _locationRepository.GetAll();
 
-                locations = locations.Where(x => x.CompanyId == user.CompanyId);
+                locations = locations.Where(x => x.CompanyId == companyId);
 
                 if (LocationId != Guid.Empty) locations = locations.Where(x => x.Id != LocationId);
 

@@ -1,64 +1,115 @@
-﻿// ... other usings ...
-
+﻿// Program.cs
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using WebApplication1.DAL.Repository;
+using System.Text;
 using WebApplication1.DAL;
+using WebApplication1.DAL.Repository;
+using WebApplication1.DAL.Repositories;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
-using WebApplication1.Services.TokenService;
-using WebApplication1;
-using WebApplication1.Services.PasswordService;
-using WebApplication1.Services.Hubs.Repositories;
-using ERDMS.Modules.Messaging.Core.DAL.Repositories;
-using WebApplication1.Services.Emails.TemplateService;
-using WebApplication1.Services.QrCodeService;
-using WebApplication1.Services.Emails.EmailService.Entities;
-//using WebApplication1.Services.Emails.EmailSenderService.Sender;
-using WebApplication1.Services.Emails.EmailService;
-using WebApplication1.Services;
-using WebApplication1.Services.Emails.EmailService.Queuer;
-using WebApplication1.Services.ControllerServices;
-using WebApplication1.Services.TokenService.Handlers;
-using WebApplication1.Repositories;
 using WebApplication1.Infrastructure.Repositories;
+using WebApplication1.Repositories;
+using WebApplication1.Services;
+using WebApplication1.Services.ControllerServices;
 using WebApplication1.Services.ControllerServices.Implementations;
+using WebApplication1.Services.Emails.EmailService;
+using WebApplication1.Services.Emails.EmailService.Entities;
+using WebApplication1.Services.Emails.EmailService.Queuer;
+using WebApplication1.Services.Emails.TemplateService;
+using WebApplication1.Services.Hubs.Repositories;
+using WebApplication1.Services.PasswordService;
+using WebApplication1.Services.QrCodeService;
+using WebApplication1.Services.TokenService;
+using WebApplication1.Services.TokenService.Handlers;
+using ERDMS.Modules.Messaging.Core.DAL.Repositories;
 using Resend;
-using WebApplication1.DAL.Repositories;
+using WebApplication1;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var allowedOrigins = builder.Configuration
-    .GetSection("CorsSettings:AllowedOrigins")
-    .Get<string[]>();
-
-// 1. Configure Database
+// ─────────────────────────────────────────────────────────────
+// 1. Database
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Configure Identity
+// ─────────────────────────────────────────────────────────────
+// 2. Identity
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    options.User.RequireUniqueEmail = true;
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 8;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireLowercase = true;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.User.RequireUniqueEmail           = true;
+    options.Password.RequireDigit             = true;
+    options.Password.RequiredLength           = 8;
+    options.Password.RequireNonAlphanumeric   = true;
+    options.Password.RequireUppercase         = true;
+    options.Password.RequireLowercase         = true;
+    options.Lockout.DefaultLockoutTimeSpan    = TimeSpan.FromMinutes(15);
+    options.Lockout.MaxFailedAccessAttempts   = 5;
 })
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// Override token lifespan
-builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
-{
-    options.TokenLifespan = TimeSpan.FromHours(24);
-});
+builder.Services.Configure<DataProtectionTokenProviderOptions>(o =>
+    o.TokenLifespan = TimeSpan.FromHours(24));
 
-// 3. Register services
+// ─────────────────────────────────────────────────────────────
+// 3. JWT options — bind ONCE, validate ONCE
+//    (was incorrectly bound to "EmailSettings" further down)
+// ─────────────────────────────────────────────────────────────
+builder.Services
+    .AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Secret) && o.Secret.Length >= 32,
+              "Jwt:Secret must be at least 32 characters")
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Issuer),   "Jwt:Issuer is required")
+    .Validate(o => !string.IsNullOrWhiteSpace(o.Audience), "Jwt:Audience is required")
+    .Validate(o => o.RefreshTokenExpirationDays > 0,
+              "Jwt:RefreshTokenExpirationDays must be > 0")
+    .ValidateOnStart();
+
+// ─────────────────────────────────────────────────────────────
+// 4. JWT bearer authentication (MISSING in the original)
+//    Use the same JwtOptions instance the TokenService uses.
+// ─────────────────────────────────────────────────────────────
+var jwtOptionsSnapshot = builder.Configuration
+    .GetSection(JwtOptions.SectionName)
+    .Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Jwt configuration section missing.");
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptionsSnapshot.Secret));
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.SaveToken            = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey         = signingKey,
+            ValidateIssuer           = true,
+            ValidIssuer              = jwtOptionsSnapshot.Issuer,
+            ValidateAudience         = true,
+            ValidAudience            = jwtOptionsSnapshot.Audience,
+            ValidateLifetime         = true,
+            ClockSkew                = TimeSpan.FromSeconds(jwtOptionsSnapshot.ClockSkewSeconds)
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// ─────────────────────────────────────────────────────────────
+// 5. Domain repositories
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
 builder.Services.AddScoped<ICouponRepository, CouponRepository>();
@@ -74,11 +125,9 @@ builder.Services.AddScoped<IItemLocationRepository, ItemLocationRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 builder.Services.AddScoped<IPositionRepository, PositionRepository>();
-
 builder.Services.AddScoped<IStockLockDownRequestRepository, StockLockDownRequestRepository>();
 builder.Services.AddScoped<IStockLockDownItemRepository, StockLockDownItemRepository>();
 builder.Services.AddScoped<IStockTakeItemSubmissionRepository, StockTakeItemSubmissionRepository>();
-
 builder.Services.AddScoped<ISupplierLocationRepository, SupplierLocationRepository>();
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<ITransactionCodeRepository, TransactionCodeRepository>();
@@ -93,11 +142,11 @@ builder.Services.AddScoped<IStockLevelRepository, StockLevelRepository>();
 builder.Services.AddScoped<IItemSplitSetupRepository, ItemSplitSetupRepository>();
 builder.Services.AddScoped<IItemSplitTransactionRepository, ItemSplitTransactionRepository>();
 builder.Services.AddScoped<IStockAdjustmentRepository, StockAdjustmentRepository>();
-
-//notifications
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
-//Handler of services
+// ─────────────────────────────────────────────────────────────
+// 6. Application services
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
@@ -111,25 +160,24 @@ builder.Services.AddScoped<IStockLockDownService, StockLockDownService>();
 builder.Services.AddScoped<IVehicleAssignmentService, VehicleAssignmentService>();
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IItemSplitService, ItemSplitService>();
+builder.Services.AddScoped<IStockAdjustmentService, StockAdjustmentService>();
 
-
-//Must be taken out
 builder.Services.AddScoped<IPasswordGenerator, PasswordGenerator>();
 
-//token generations
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPaymentTokenService, PaymentTokenService>();
+builder.Services.AddScoped<TokenCookieHelper>();
 
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IEmailQueueRepository, EmailQueueRepository>();
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
-builder.Services.AddScoped<TokenCookieHelper>();
 
-// Bind EmailSettings (contains UseResend, SenderEmail, Smtp*, ResendApiToken)
+// ─────────────────────────────────────────────────────────────
+// 7. Email settings (was wrongly binding JwtOptions to this)
+// ─────────────────────────────────────────────────────────────
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// ─── Email sender: Resend or SMTP based on EmailSettings:UseResend ───
 var emailService = builder.Configuration
     .GetValue<string>("EmailSettings:EmailService")?
     .Trim()
@@ -147,9 +195,7 @@ switch (emailService)
 
     case "brevo":
         builder.Services.AddHttpClient<IEmailSenderService, BrevoEmailSenderService>(c =>
-        {
-            c.Timeout = TimeSpan.FromSeconds(30);
-        });
+            c.Timeout = TimeSpan.FromSeconds(30));
         break;
 
     case "smtp":
@@ -165,23 +211,34 @@ switch (emailService)
 builder.Services.AddHostedService<EmailProcessor>();
 builder.Services.AddHttpContextAccessor();
 
-// 4. Add Controllers
+// ─────────────────────────────────────────────────────────────
+// 8. Controllers
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
-// 5. Add CORS
+// ─────────────────────────────────────────────────────────────
+// 9. CORS — must match JwtOptions.RefreshHeaderName and refresh cookie name.
+//    WithCredentials is required to send/receive the refresh cookie.
+// ─────────────────────────────────────────────────────────────
+var allowedOrigins = builder.Configuration
+    .GetSection("CorsSettings:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials()
-              .WithExposedHeaders(CookieNames.RefreshHeaderName);
+              .WithExposedHeaders(jwtOptionsSnapshot.RefreshHeaderName);
     });
 });
 
-// 6. Add Swagger
+// ─────────────────────────────────────────────────────────────
+// 10. Swagger
+// ─────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -190,10 +247,10 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Name        = "Authorization",
+        In          = ParameterLocation.Header,
+        Type        = SecuritySchemeType.ApiKey,
+        Scheme      = "Bearer"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -204,10 +261,10 @@ builder.Services.AddSwaggerGen(options =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id   = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
@@ -217,7 +274,9 @@ builder.Services.AddDistributedMemoryCache();
 
 var app = builder.Build();
 
-// Configure pipeline
+// ─────────────────────────────────────────────────────────────
+// 11. Pipeline — order matters
+// ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -230,20 +289,24 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// CORS must run BEFORE auth so preflight OPTIONS gets CORS headers.
 app.UseCors("AllowSpecificOrigins");
+
+app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-app.UseRefreshTokenMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+// If this middleware looks at HttpContext.User it must run AFTER UseAuthentication.
+app.UseRefreshTokenMiddleware();
+
 app.MapControllers();
 
-// Database migration + seeding
+// ─────────────────────────────────────────────────────────────
+// 12. Migrate + seed
+// ─────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -251,18 +314,13 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         await context.Database.MigrateAsync();
-        Console.WriteLine("Database migrated successfully.");
 
         await SeedService.SeedMenusHierarchicalAsync(context);
-        Console.WriteLine("Menus seeded successfully.");
-
         await SeedService.InitializeSimpleAsync(context);
-        Console.WriteLine("ADMIN position seeded successfully.");
 
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        await SeedService.SeedDefaultCompanyAndAdminAsync(context, userManager, roleManager);
-        Console.WriteLine("Default company and super admin seeded successfully.");
+        // await SeedService.SeedDefaultCompanyAndAdminAsync(context, userManager, roleManager);
     }
     catch (Exception ex)
     {

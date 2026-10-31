@@ -71,7 +71,7 @@ namespace WebApplication1.Services
                         Path = "/disbursements/miscellaneous-approval",
                         Level = 3.2,
                     },
-                      new MenuDefinition
+                    new MenuDefinition
                     {
                         Id = Guid.Parse("f0004e7b-21d7-42d6-9c15-2726ea394ab8"),
                         Title = "Deposits",
@@ -82,9 +82,9 @@ namespace WebApplication1.Services
             },
             new MenuDefinition
             {
-                Id = Guid.Parse("5e6f7a8b-9c0d-4e1f-9a2b-3c4d5e6f7a8b"), // keep original Stock Management Id
-                Title = "Stock Management",
-                Path = "/stock-management/stock",
+                Id = Guid.Parse("068277fd-7d18-4a98-849e-e6a86e583c71"), // keep original Stock Management Id
+                Title = "Stock Check",
+                Path = "/stock-check",
                 Level = 4,
                 Children = new List<MenuDefinition>
                 {
@@ -92,24 +92,24 @@ namespace WebApplication1.Services
                     {
                         Id = Guid.Parse("0d1e2f3a-4b5c-4d6e-9f7a-8b9c0d1e2f3a"),
                         Title = "Stock Lock",
-                        Path = "/stock-management/stock-lock",
-                        Level = 4.1,
+                        Path = "/stock-check/stock-lock",
+                        Level = 4.11,
                     },
                     new MenuDefinition
                     {
                         Id = Guid.Parse("a1b2c3d4-e5f6-4a7b-9c8d-0e1f2a3b4c5d"),
                         Title = "Stock Take",
-                        Path = "/stock-management/stock-take",
-                        Level = 4.2,
+                        Path = "/stock-check/stock-take",
+                        Level = 4.12,
                     },
                     new MenuDefinition
                     {
                         Id = Guid.Parse("f7a8b9c0-d1e2-4f3a-9b4c-5d6e7f8a9b0c"),
-                        Title = "Stock Verification",
-                        Path = "/stock-management/stock-verification",
-                        Level = 4.3,
+                        Title = "Verification",
+                        Path = "/stock-check/verification",
+                        Level = 4.13,
                     },
-                },
+                }
             },
             new MenuDefinition
             {
@@ -160,8 +160,8 @@ namespace WebApplication1.Services
                     new MenuDefinition
                     {
                         Id = Guid.Parse("d2e3f4a5-c6b7-4d89-9f1a-2b3c4d5e6f7a"),
-                        Title = "Request",
-                        Path = "/purchases/request",
+                        Title = "Purchase",
+                        Path = "/purchases/purchase",
                         Level = 6.1,
                     },
                     new MenuDefinition
@@ -174,8 +174,8 @@ namespace WebApplication1.Services
                     new MenuDefinition
                     {
                         Id = Guid.Parse("d4e5f6a7-e8d9-4dab-9b3c-4d5e6f7a8b9c"),
-                        Title = "Receivals",
-                        Path = "/purchases/receivals",
+                        Title = "Stock In",
+                        Path = "/purchases/stock-in",
                         Level = 6.3,
                     },
                     new MenuDefinition
@@ -247,43 +247,49 @@ namespace WebApplication1.Services
                 },
             },
             new MenuDefinition
+            {
+                Id = Guid.Parse("f3a92b41-7e6d-4c58-9a10-2d8f4b7c1e63"),
+                Title = "Coupons",
+                Path = "/coupons",
+                Level = 8,
+            },
+            new MenuDefinition
+            {
+                Id = Guid.Parse("345391B1-B9CC-43FB-B125-4E22970FEAEE"),
+                Title = "Splits",
+                Path = "/setup/split-item",
+                Level = 9,
+                Children = new List<MenuDefinition>
                 {
-                    Id = Guid.Parse("f3a92b41-7e6d-4c58-9a10-2d8f4b7c1e63"),
-                    Title = "Coupons",
-                    Path = "/coupons",
-                    Level = 8,
-                },
-             new MenuDefinition
-                {
-                    Id = Guid.Parse("345391B1-B9CC-43FB-B125-4E22970FEAEE"),
-                    Title = "Splits",
-                    Path = "/setup/split-item",
-                    Level = 9,
-                    Children = new List<MenuDefinition>
+                    new MenuDefinition
                     {
-                        new MenuDefinition
-                        {
-                            Id = Guid.Parse("91F733D9-23DF-483D-B776-C2B8C8110CF2"),
-                            Title = "Split Formulas",
-                            Path = "/splits/split-formulas",
-                            Level = 9.1,
-                        },
-                        new MenuDefinition
-                        {
-                            Id = Guid.Parse("C2C48D2B-8884-4D2E-81C9-7F94ED03DF6E"),
-                            Title = "Split Activity",
-                            Path = "/splits/split-activity",
-                            Level = 9.2,
-                        }
+                        Id = Guid.Parse("91F733D9-23DF-483D-B776-C2B8C8110CF2"),
+                        Title = "Split Formulas",
+                        Path = "/splits/split-formulas",
+                        Level = 9.1,
                     },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("C2C48D2B-8884-4D2E-81C9-7F94ED03DF6E"),
+                        Title = "Split Activity",
+                        Path = "/splits/split-activity",
+                        Level = 9.2,
+                    }
                 },
-
+            },
             new MenuDefinition
             {
                 Id = Guid.Parse("3a4b5c6d-7e8f-4a9b-9c0d-1e2f3a4b5c6d"),
                 Title = "Reports",
                 Path = "/reports",
                 Level = 9,
+            },
+            new MenuDefinition
+            {
+                Id = Guid.Parse("0ed7f127-faef-4150-b209-61336408b178"),
+                Title = "Settings",
+                Path = "/settings",
+                Level = 10,
             },
         };
 
@@ -350,7 +356,7 @@ namespace WebApplication1.Services
 
             await context.SaveChangesAsync();
 
-            // ✅ Delete relegated menus (cascades/removes any PositionRoutes tied to them)
+            // Delete relegated menus (cascades/removes any PositionRoutes tied to them)
             await DeleteRelegatedMenusAsync(context);
 
             context.ChangeTracker.Clear();
@@ -459,86 +465,30 @@ namespace WebApplication1.Services
                 context.PositionRoutes.Add(positionRoute);
             }
 
+            await SeedSystemControlAsync(context);
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
         }
 
-        public static async Task SeedDefaultCompanyAndAdminAsync(
-            AppDbContext context,
-            UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+        /// <summary>
+        /// Seeds a single global SystemControl row (LocationId = null) with the
+        /// default values if no SystemControl record exists yet.
+        /// </summary>
+        public static async Task SeedSystemControlAsync(AppDbContext context)
         {
-            // 0. Ensure roles exist
-            foreach (var roleName in new[] { "SuperAdmin", "CompanyAdmin" })
-            {
-                if (!await roleManager.RoleExistsAsync(roleName))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(roleName));
-                    Console.WriteLine($"Role '{roleName}' created.");
-                }
-            }
+            var systemUserId = new Guid("00000000-0000-0000-0000-000000000001");
+            // Already seeded? Nothing to do.
+            if (await context.SystemControls.AnyAsync())
+                return;
 
-            // 1. Default company
-            var defaultCompanyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-            var defaultCompany = await context.Companies
-                .FirstOrDefaultAsync(c => c.Id == defaultCompanyId);
+            var systemControl = SystemControl.Create(Guid.NewGuid(), null, false, false, 50, 57, 10, "GHS", null);
 
-            if (defaultCompany == null)
-            {
-                defaultCompany = Company.Create(
-                    defaultCompanyId, "Default Company", "1234567890",
-                    "admin@company.com", true, DateTime.UtcNow);
-                await context.Companies.AddAsync(defaultCompany);
-                await context.SaveChangesAsync();
-                Console.WriteLine("Default company created.");
-            }
+            await context.SystemControls.AddAsync(systemControl);
+            await context.SaveChangesAsync();
 
-            // 2. Super admin user
-            var adminEmail = "superadmin@company.com";
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
-            if (adminUser == null)
-            {
-                adminUser = new ApplicationUser
-                {
-                    UserName = adminEmail,
-                    Email = adminEmail,
-                    FullName = "Super Administrator",
-                    CompanyId = defaultCompanyId,
-                    EmailConfirmed = true,
-                    PhoneNumberConfirmed = true,
-                    CreatedAt = DateTime.UtcNow,
-                    Status = true
-                };
-
-                var result = await userManager.CreateAsync(adminUser, "Admin@123");
-
-                if (!result.Succeeded)
-                {
-                    Console.WriteLine(
-                        "Failed to create super admin: " +
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
-                    return;
-                }
-                Console.WriteLine("Super admin user created.");
-            }
-
-            // 3. Ensure super admin has both roles (idempotent)
-            var currentRoles = await userManager.GetRolesAsync(adminUser);
-            foreach (var roleName in new[] { "SuperAdmin", "CompanyAdmin" })
-            {
-                if (!currentRoles.Contains(roleName))
-                {
-                    var roleResult = await userManager.AddToRoleAsync(adminUser, roleName);
-                    if (roleResult.Succeeded)
-                        Console.WriteLine($"Assigned role '{roleName}' to super admin.");
-                    else
-                        Console.WriteLine(
-                            $"Failed to assign role '{roleName}': " +
-                            string.Join(", ", roleResult.Errors.Select(e => e.Description)));
-                }
-            }
+            context.ChangeTracker.Clear();
         }
+
     }
 
     // Helper class for menu definitions

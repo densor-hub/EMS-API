@@ -11,6 +11,9 @@ namespace WebApplication1.Domain.Entities
         public  Item Item { get; private set; }
         public Guid LocationId { get; private set; }
         public  Location Location { get; private set; }
+        public DateTime CreatedAt {get; private set;}
+        public DateTime UpdatedAt {get; private set;}
+
 
         private StockLevel()
         {

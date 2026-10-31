@@ -46,7 +46,7 @@ namespace WebApplication1.Domain.Entities
         public virtual ICollection<Vehicle> Vehicles { get; private set; }
         public virtual ICollection<Sale> Sales { get; private set; }
         public virtual ICollection<ItemSplitTransaction> ItemSplitTransactions { get; private set; }
-        public virtual ICollection<StockAdjustment> StockAdjustments { get; private set; }
+        public virtual ICollection<SaleTransDeliveryRequest> SaleTransDeliveryRequests { get; private set; }
         ///public virtual ICollection<LocationSaleSequence> LocationSaleSequences { get; private set; }
 
 

@@ -14,7 +14,7 @@ namespace WebApplication1.DAL.Configurations
             builder.HasKey(x => x.Id);
 
             builder.Property(c => c.CreatedAt).IsRequired().HasColumnType("timestamp with time zone");
-            builder.Property(c => c.UpdatedAt).IsRequired(false).HasColumnType("timestamp with time zone");
+            builder.Property(c => c.UpdatedAt).HasColumnType("timestamp with time zone");
 
             builder.HasIndex(x => new { x.ItemId, x.LocationId }).IsUnique();
 

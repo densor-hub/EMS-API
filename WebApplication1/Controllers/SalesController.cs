@@ -70,7 +70,13 @@ namespace WebApplication1.Controllers
 
             try
             {
-                if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment method");
+                bool config = LocationConfiguration.GetDirectSaleOperations();
+
+                if (config)
+                {
+                    if (!Enum.IsDefined(typeof(PaymentMethods), createDto.PaymentMethod)) return BadRequest("Invalid payment method");
+                }
+                
                 if (!Enum.IsDefined(typeof(TransactionResultsType), createDto.TransactionResultsType)) return BadRequest("Invalid transaction type");
 
                 var location = await _locationRepository.GetByIdAsync(createDto.LocationId);

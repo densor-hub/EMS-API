@@ -18,8 +18,8 @@ namespace WebApplication1.DAL.Repositories
         public IQueryable<StockAdjustment> GetAll()
         {
             return _context.StockAdjustments
-                .Include(x => x.Item)
-                .Include(x => x.Location)
+                .Include(x => x.Transaction)
+                // .Include(x => x.Location)
                 .Include(x => x.Supplier)
                 .AsNoTracking();
         }
@@ -30,8 +30,8 @@ namespace WebApplication1.DAL.Repositories
             CancellationToken ct = default)
         {
             return await _context.StockAdjustments
-                .Include(x => x.Item)
-                .Include(x => x.Location)
+               // .Include(x => x.Item)
+                .Include(x => x.Transaction)
                 .Include(x => x.Supplier)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id, ct);

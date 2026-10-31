@@ -7,6 +7,7 @@ namespace WebApplication1.Domain.Repository
     {
         Task<Transaction> AddAsync(Transaction tranaction);
         Task<Transaction?> GetByIdAsync(Guid id);
+        Task<Transaction?> GetByTransactionNumberAsync(string transactionNumber);
         IQueryable<Transaction> GetAllAsync(Guid? locationId, string transactionType, Guid? userId);
         Task<Transaction> UpdateAsync (Transaction transaction);
     }

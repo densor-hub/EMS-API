@@ -15,9 +15,9 @@ namespace WebApplication1.DAL.Repositories
 
         // Returns a composable queryable — callers add Include/Where/OrderBy.
         // No tracking; use GetByIdForUpdateAsync if you intend to mutate.
-        public IQueryable<ItemSplitTransaction> GetAll()
+        public IQueryable<ItemSplitTransaction> GetAll(Guid locationId)
         {
-            return _context.ItemSplitTransactions
+            return _context.ItemSplitTransactions.Where(x=> x.LocationId == locationId)
                 .Include(x => x.ItemSplitSetup)
                 .AsNoTracking();
         }

@@ -144,8 +144,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 await transaction.RollbackAsync();
                 throw;
             } 
-            
-
            
         }
 
@@ -321,66 +319,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         }
 
 
-        //public async Task MakeDepositAsync(CreateTransactionDto depositDto)
-        //{
-        //    var transaction = await _dbContext.Database.BeginTransactionAsync();
-
-        //    // Validate bank exists
-        //    var financialServiceProvider = await _servceProviderRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
-        //    if (financialServiceProvider == null)
-        //    {
-        //        throw new Exception($"Financial service provider not found.");
-        //    }
-
-        //    // Validate contact person belongs to the bank and is active
-        //    var contactPerson = await _contactPersonRepository.GetByIdAsync(depositDto.BusinessPartnerId.Value);
-        //    if (contactPerson == null || contactPerson.FinancialServiceProviderId != depositDto.BusinessPartnerId)
-        //    {
-        //        throw new Exception("Invalid contact person.");
-        //    }
-
-        //    if (contactPerson.GeneralStatus != GeneralStatus.Active)
-        //    {
-        //        throw new Exception("The selected contact person is not active.");
-        //    }
-
-        //    var currency = await _currencyRepository.GetByCurrencyCodeAsync(depositDto.CurrencyCode);
-
-        //    if (currency == null) throw new Exception("Invalid currency");
-        //    // Create deposit entity
-
-        //    var user = await _userRepository.GetUserByRefreshTokenAsync();
-
-        //    if (user == null) throw new Exception("User not found");
-        //    // Create deposit entity
-        //    try
-        //    {
-        //        await _transactionService.CompleteTransationProcess(depositDto, null );
-        //    } catch(Exception ex)
-        //    {
-        //        await transaction.RollbackAsync();
-        //        throw ex;
-        //    }
-
-           
-        //    //}
-
-        //    //return new DepositResponseDto
-        //    //{
-        //    //    FinancialServiceProviderId = financialServiceProvider.Id,
-        //    //    FinancialServiceProviderName = financialServiceProvider.Name,
-        //    //    Amount = depositDto.AmountPaid,
-        //    //    ContactPersonId = contactPerson.Id,
-        //    //    ContactPersonName = contactPerson.FullName
-        //    //    //CreatedAt = tra.CreatedAt,
-        //    //    //TransactionNumber = deposit.TransactionNumber,
-        //    //    //DepositDate = deposit.DepositDate,
-        //    //    //DepositId = deposit.Id,
-        //    //    //Description = deposit.Description,
-        //    //    //Status = deposit.Status.ToString()
-
-        //    //};
-        //}
 
         public async Task Disbursement(CreateFinancialServiceDisbursementDTO createDto)
         {
@@ -401,11 +339,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
             var transactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("DEPO", location.Id);
 
-            var transactionRecord = Transaction.Create(Guid.NewGuid(), transactionNumber, DateTime.SpecifyKind(createDto.Date ?? DateTime.UtcNow, DateTimeKind.Utc), createDto.TotalAmount, 0, 0, Guid.Parse(user.Id), DateTime.UtcNow, TransactionResultsType.FinancialServiceProviderDisbursement, TransactionType.DEPO.ToString(), location.Id, false);
+            var transactionRecord = Transaction.Create(Guid.NewGuid(), transactionNumber, DateTime.SpecifyKind(createDto.Date ?? DateTime.UtcNow, DateTimeKind.Utc), createDto.TotalAmount, 0, Guid.Parse(user.Id), DateTime.UtcNow, TransactionResultsType.FinancialServiceProviderDisbursement, TransactionType.DEPO.ToString(), location.Id, false);
            await  _dbContext.Transactions.AddAsync(transactionRecord);
 
-
-             var paymentTransactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", transactionRecord.LocationId);
+            var paymentTransactionNumber = await _transactionCodeRepository.GenerateTransactionCodeAsync("TXP", transactionRecord.LocationId);
 
             var payment = Payment.Create(
                   Guid.NewGuid(),

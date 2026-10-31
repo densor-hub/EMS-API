@@ -4,7 +4,7 @@
     {
         SALE=1, //sale
         PURC =2, //purchase
-        STOC=3, //stock lock
+        ADJS=3, //stock adjustment
         TRAN=4, // stock transfer
         DEPO=5, // financial deposit
         SLP=6, //salary payment

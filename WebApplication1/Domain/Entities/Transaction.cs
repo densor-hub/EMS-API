@@ -13,10 +13,11 @@ namespace WebApplication1.Domain.Entities
         public Guid LocationId { get; set; }
         public Location Location { get; set; }
         public Guid? CouponId { get; private set; }
-        public virtual Coupon? Coupon { get; private set; }
+       // public virtual Coupon? Coupon { get; private set; }
         public bool RequiresExternalApproval { get; set; }
        // public string CurrencyCode { get; private set; }
         public string? Notes { get; private set; } = null;
+       // public bool OldTransaction {get; private}
         // Foreign keys
         public ICollection<TransactionItem> TransactionItems { get; private set; }
         public ICollection<Payment> TransactionPayments { get; private set; }
@@ -28,7 +29,7 @@ namespace WebApplication1.Domain.Entities
             
         }
       
-        private Transaction(Guid id, string transactionNumber,DateTime transactionDate, decimal total, decimal taxAmount, decimal discount, Guid createdBy, DateTime createdAt, TransactionResultsType? transactionResult, string transactionType, Guid locationId, bool requiresExternalApproval)
+        private Transaction(Guid id, string transactionNumber,DateTime transactionDate, decimal total, decimal taxAmount,  Guid createdBy, DateTime createdAt, TransactionResultsType? transactionResult, string transactionType, Guid locationId, bool requiresExternalApproval)
         {
             Id  = id;
             TransactionNumber = transactionNumber;
@@ -36,7 +37,7 @@ namespace WebApplication1.Domain.Entities
             TotalAmount = total;
             TaxAmount = taxAmount;
             //DiscountAmount = discount;
-          //  PaymentStatus = paymentStatus;
+            //PaymentStatus = paymentStatus;
             CreatedAt = createdAt;
             CreatedBy   = createdBy;
             TransactionResultsType = transactionResult;
@@ -45,27 +46,12 @@ namespace WebApplication1.Domain.Entities
             RequiresExternalApproval = requiresExternalApproval;
         }
 
-        public static Transaction Create(Guid id, string transactionNumber, DateTime transactionDate, decimal total, decimal taxAmount, decimal discount,  Guid createdBy, DateTime createdAt, TransactionResultsType? transactionResult, string transactionType, Guid locationId, bool requiresExternalApproval)
-       => new Transaction(id, transactionNumber, transactionDate, total, taxAmount, discount, createdBy, createdAt, transactionResult, transactionType, locationId, requiresExternalApproval);
+        public static Transaction Create(Guid id, string transactionNumber, DateTime transactionDate, decimal total, decimal taxAmount,  Guid createdBy, DateTime createdAt, TransactionResultsType? transactionResult, string transactionType, Guid locationId, bool requiresExternalApproval)
+       => new Transaction(id, transactionNumber, transactionDate, total, taxAmount, createdBy, createdAt, transactionResult, transactionType, locationId, requiresExternalApproval);
 
-        public void SetCoupon(Guid couponId)
-        {
-            CouponId = couponId;
-        }
         public void UpdateTotalAmountWithCalculatedValue(decimal calculatedAmount)
         {
             TotalAmount = calculatedAmount;
-        }
-
-        public void Update( decimal total, decimal taxAmount,   Guid updatedBy, DateTime updatedAt)
-        {
-           // Date = date;
-            TotalAmount = total;
-            TaxAmount = taxAmount;
-           // DiscountAmount = discount;
-           // PaymentStatus = paymentStatus;
-            UpdatedAt = updatedAt;
-            UpdatedBy = updatedBy;
         }
 
         public void Cancel(DateTime updatedAt, Guid updatedBy)
@@ -75,9 +61,9 @@ namespace WebApplication1.Domain.Entities
             UpdatedBy= updatedBy;
         }
 
-        public void ApplyCoupon(Guid couponId)
-        {
-            CouponId = couponId;
-        }
+        // public void ApplyCoupon(Guid couponId)
+        // {
+        //    // CouponId = couponId;
+        // }
     }
 }

@@ -8,7 +8,7 @@ namespace WebApplication1.Services.ControllerServices
         Task RegisterAsync(RegisterDTO request);
         Task<AuthResponseDTO> LoginAsync(LoginRequest request);
         Task<AuthResponseDTO> RefreshTokenAsync(string refreshToken);
-        Task LogoutAsync(string userId, string accessToken);
+        Task LogoutAsync(string userId, string accessToken, string? refreshToken);
         Task ChangePasswordAsync(string userId, string currentPassword, string newPassword);
         Task<object> GetProfileAsync(string userId);
         Task DeleteUserAsync(string userId, string currentUserId);

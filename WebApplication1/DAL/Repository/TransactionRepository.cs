@@ -57,5 +57,15 @@ namespace WebApplication1.DAL.Repository
             await Task.CompletedTask;
             return transaction;
         }
+
+        public  async Task<Transaction?> GetByTransactionNumberAsync(string transactionNumber)
+        {
+            if (string.IsNullOrEmpty(transactionNumber)) return null;
+            return await _context.Transactions
+                .Include(x => x.TransactionPayments)
+                .Include(x => x.TransactionItems)
+                    .ThenInclude(x => x.TransactionItemsDelivered)
+                .Where(x => x.TransactionNumber.ToLower().Trim() == transactionNumber.ToLower().Trim()).FirstOrDefaultAsync();
+        }
     }
 }

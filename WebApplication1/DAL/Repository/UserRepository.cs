@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿// WebApplication1/DAL/Repository/UserRepository.cs
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using WebApplication1.Domain.Entities;
 using WebApplication1.Domain.Repository;
+using WebApplication1.Services.TokenService;
 
 namespace WebApplication1.DAL.Repository
 {
@@ -10,94 +13,82 @@ namespace WebApplication1.DAL.Repository
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly JwtOptions _jwtOptions;
         private readonly ILogger<UserRepository> _logger;
 
         public UserRepository(
             UserManager<ApplicationUser> userManager,
             IHttpContextAccessor contextAccessor,
+            IOptions<JwtOptions> jwtOptions,
             ILogger<UserRepository> logger)
         {
-            _userManager = userManager;
+            _userManager    = userManager;
             _contextAccessor = contextAccessor;
-            _logger = logger;
+            _jwtOptions     = jwtOptions.Value;
+            _logger         = logger;
         }
 
         public async Task DeleteUserAsync(ApplicationUser user)
         {
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)
-            {
                 throw new InvalidOperationException(
-                    $"Failed to delete user: {string.Join(", ", result.Errors.Select(e => e.Description))}"
-                );
-            }
+                    $"Failed to delete user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
 
         public async Task<ApplicationUser?> GetUserByRefreshTokenAsync()
         {
-            var refreshTokenHeader = _contextAccessor.HttpContext?.Request.Headers["X-Refresh-Token"].FirstOrDefault();
-            var refreshTokenCookie = _contextAccessor.HttpContext?.Request.Cookies["refresh_token"];
+            var ctx    = _contextAccessor.HttpContext;
+            var header = ctx?.Request.Headers[_jwtOptions.RefreshHeaderName].FirstOrDefault();
+            var cookie = ctx?.Request.Cookies[_jwtOptions.RefreshCookie.Name];
+
+            var candidates = new[] { header, cookie }
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t!.Trim())
+                .Distinct()
+                .ToList();
 
             _logger.LogInformation(
-                "[UserRepo] Header token present: {HasHeader}, Cookie token present: {HasCookie}",
-                !string.IsNullOrEmpty(refreshTokenHeader),
-                !string.IsNullOrEmpty(refreshTokenCookie)
-            );
+                "[UserRepo] Refresh candidates → header={HasHeader}, cookie={HasCookie}, distinct={Count}",
+                !string.IsNullOrEmpty(header), !string.IsNullOrEmpty(cookie), candidates.Count);
 
-            // Cookie takes priority — it's the freshest value set by the server.
-            var refreshToken = !string.IsNullOrEmpty(refreshTokenCookie)
-                ? refreshTokenCookie
-                : refreshTokenHeader;
-
-            if (string.IsNullOrEmpty(refreshToken))
+            if (candidates.Count == 0)
             {
-                _logger.LogWarning("[UserRepo] No refresh token supplied by client");
+                _logger.LogWarning("[UserRepo] No refresh token supplied (header/cookie both empty)");
                 return null;
             }
 
-            var prefix = refreshToken.Substring(0, Math.Min(6, refreshToken.Length));
-            _logger.LogInformation("[UserRepo] Using token prefix: {Prefix}...", prefix);
+            var now = DateTime.UtcNow;
+            var user = await _userManager.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.RefreshTokens.Any(t =>
+                        candidates.Contains(t.Token) &&
+                        t.RevokedAt == null &&
+                        t.ExpiresAt > now));
 
-            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
-
-            if (user == null)
-            {
-                _logger.LogWarning("[UserRepo] No user matched token prefix {Prefix}", prefix);
-
-                var tokensInDb = await _userManager.Users
-                    .Where(u => u.RefreshToken != null && u.RefreshToken != "")
-                    .Select(u => new { u.Email, Prefix = u.RefreshToken!.Substring(0, 6) })
-                    .ToListAsync();
-                _logger.LogInformation("[UserRepo] Tokens in DB: {@Tokens}", tokensInDb);
-            }
+            if (user is null)
+                _logger.LogWarning("[UserRepo] No active refresh token matched ({Count} candidates)", candidates.Count);
 
             return user;
         }
 
         public async Task<Guid> GetCurrentUserId()
         {
-            var userIdClaim = _contextAccessor.HttpContext?.User?
-                .FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                _contextAccessor.HttpContext?.User?
-                .FindFirst("sub")?.Value;
-
-            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+            var id = _contextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? _contextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
+            return Guid.TryParse(id, out var g) ? g : Guid.Empty;
         }
 
         public Task<ApplicationUser?> GetUserByEmailAsync(string email)
-        {
-            return _userManager.FindByEmailAsync(email);
-        }
+            => _userManager.FindByEmailAsync(email);
 
         public async Task UpdateUserAsync(ApplicationUser user)
         {
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
-            {
                 throw new InvalidOperationException(
-                    $"Failed to update user: {string.Join(", ", result.Errors.Select(e => e.Description))}"
-                );
-            }
+                    $"Failed to update user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
         }
     }
 }
