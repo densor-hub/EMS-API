@@ -47,13 +47,13 @@ namespace WebApplication1.Middleware
                 var result = await tokenService.TryRefreshAsync(refreshToken);
                 if (result is not null)
                 {
-                    cookieHelper.SetRefreshToken(context.Response, result.NewRefreshToken);
-                    cookieHelper.SetAccessToken(context.Response,  result.NewAccessToken);
+                    cookieHelper.SetRefreshToken(context.Response, result.RefreshToken);
+                    cookieHelper.SetAccessToken(context.Response,  result.AccessToken);
 
                     if (context.Request.IsMobileClient())
-                        cookieHelper.ExposeRefreshTokenToMobile(context.Response, result.NewRefreshToken);
+                        cookieHelper.ExposeRefreshTokenToMobile(context.Response, result.RefreshToken);
 
-                    var principal = tokenService.ValidateAccessToken(result.NewAccessToken);
+                    var principal = tokenService.ValidateAccessToken(result.AccessToken);
                     if (principal is not null)
                     {
                         context.User = principal;
@@ -83,7 +83,7 @@ namespace WebApplication1.Middleware
             {
                 "/Auth/Login",
                 "/Auth/Register",
-                "/Auth/Refresh-Token",
+                "/Auth/Refresh",
                 "/Auth/Account/Confirm",
                 "/Auth/Set-Password",
                 "/Auth/Forgot-Password",

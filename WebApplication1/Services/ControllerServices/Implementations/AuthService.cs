@@ -1,4 +1,5 @@
 ﻿// Services/Implementations/AuthService.cs
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -43,8 +44,51 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         }
 
         // ────────────────────────────────────────────────────────────
-        // Helpers
+        // Cookie helpers — single source of truth
         // ────────────────────────────────────────────────────────────
+
+        private static readonly string[] AllCookiePaths =
+            { "/", "/api", "/api/auth" };
+
+        private CookieOptions BuildOptions(DateTimeOffset? expires = null) => new()
+        {
+            HttpOnly = _jwtOptions.RefreshCookie.HttpOnly,
+            Secure   = _jwtOptions.RefreshCookie.Secure,
+            SameSite = _jwtOptions.RefreshCookie.SameSite,
+            Path     = _jwtOptions.RefreshCookie.Path,
+            Domain   = _jwtOptions.RefreshCookie.Domain,
+            Expires  = expires,
+        };
+
+        /// <summary>Deletes the refresh cookie at every historical path.</summary>
+       private void ClearRefreshCookieAtAllPaths()
+        {
+            var http = _httpContextAccessor.HttpContext;
+            if (http is null) return;
+
+            var paths = AllCookiePaths
+                .Append(_jwtOptions.RefreshCookie.Path)
+                .Distinct()
+                .ToArray();
+
+            foreach (var path in paths)
+            {
+                http.Response.Cookies.Delete(_jwtOptions.RefreshCookie.Name, new CookieOptions
+                {
+                    Path     = path,
+                    Domain   = _jwtOptions.RefreshCookie.Domain,
+                    Secure   = _jwtOptions.RefreshCookie.Secure,      // already bool
+                    SameSite = _jwtOptions.RefreshCookie.SameSite,    // already SameSiteMode
+                    HttpOnly = _jwtOptions.RefreshCookie.HttpOnly,    // use the property
+                });
+            }
+        }
+
+        private void WriteRefreshCookie(string token, DateTime expiresAt)
+        {
+            _httpContextAccessor.HttpContext?.Response.Cookies.Append(
+                _jwtOptions.RefreshCookie.Name, token, BuildOptions(expiresAt));
+        }
 
         private (string? deviceInfo, string? ip) GetClientInfo()
         {
@@ -54,25 +98,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 http?.Connection.RemoteIpAddress?.ToString()
             );
         }
-
-        private CookieOptions BuildCookieOptions(DateTimeOffset? expires = null) => new()
-        {
-            HttpOnly = _jwtOptions.RefreshCookie.HttpOnly,
-            Secure   = _jwtOptions.RefreshCookie.Secure
-                        ?? (_httpContextAccessor.HttpContext?.Request.IsHttps ?? true),
-            SameSite = Enum.Parse<SameSiteMode>(_jwtOptions.RefreshCookie.SameSite, ignoreCase: true),
-            Path     = _jwtOptions.RefreshCookie.Path,
-            Domain   = _jwtOptions.RefreshCookie.Domain,
-            Expires  = expires
-        };
-
-        private void WriteRefreshCookie(string token, DateTime expiresAt)
-            => _httpContextAccessor.HttpContext?.Response.Cookies.Append(
-                _jwtOptions.RefreshCookie.Name, token, BuildCookieOptions(expiresAt));
-
-        private void ClearRefreshCookie()
-            => _httpContextAccessor.HttpContext?.Response.Cookies.Delete(
-                _jwtOptions.RefreshCookie.Name, BuildCookieOptions());
 
         // ────────────────────────────────────────────────────────────
         // Register
@@ -84,8 +109,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             try
             {
                 var companyExist = await _context.Companies
-                    .Where(x => (x.Email.ToLower().Trim() == request.Company.Email.ToLower().Trim())
-                             || (x.PhoneNumber.ToLower().Trim() == request.Company.Phone.ToLower().Trim()))
+                    .Where(x => x.Email.ToLower().Trim() == request.Company.Email.ToLower().Trim()
+                             || x.PhoneNumber.ToLower().Trim() == request.Company.Phone.ToLower().Trim())
                     .FirstOrDefaultAsync();
 
                 if (companyExist != null)
@@ -133,22 +158,10 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 var id = Guid.Parse(user.Id);
 
                 var defaultEmployeeAccount = Employee.Create(
-                    id,
-                    user.FullName,
-                    "",
-                    user.Email,
-                    $"{initials}-ADMIN",
-                    adminPosition.Id,
-                    user.PhoneNumber ?? "",
-                    DateTime.UtcNow,
-                    0,
-                    Domain.Enums.EmployeeStatus.Active,
-                    company.Id,
-                    "",
-                    true,
-                    DateTime.UtcNow,
-                    id,
-                    id.ToString());
+                    id, user.FullName, "", user.Email,
+                    $"{initials}-ADMIN", adminPosition.Id, user.PhoneNumber ?? "",
+                    DateTime.UtcNow, 0, Domain.Enums.EmployeeStatus.Active,
+                    company.Id, "", true, DateTime.UtcNow, id, id.ToString());
 
                 var positionRoutes = await _context.PositionRoutes
                     .Where(x => x.PositionId == adminPosition.Id)
@@ -199,18 +212,18 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     throw new Exception("Invalid email or password");
                 }
 
-                var (deviceInfo, ip) = GetClientInfo();
+                // Wipe any legacy cookies first, then write the fresh one.
+                ClearRefreshCookieAtAllPaths();
 
-                // Single write: GenerateAuthResponseAsync saves the refresh token.
-                // Do NOT also call UpdateAsync here — that triggers ConcurrencyStamp conflicts.
+                var (deviceInfo, ip) = GetClientInfo();
                 var tokens = await _tokenService.GenerateAuthResponseAsync(user, deviceInfo, ip);
 
-                // Best-effort audit timestamp (fire-and-forget, isolated from the token save).
+                // Best-effort audit timestamp, isolated from the token save.
                 user.UpdatedAt = DateTime.UtcNow;
                 var stampResult = await _userManager.UpdateAsync(user);
                 if (!stampResult.Succeeded)
                 {
-                    _logger.LogWarning("Failed to update LastLogin for {Email}: {Errors}",
+                    _logger.LogWarning("Failed to update UpdatedAt for {Email}: {Errors}",
                         user.Email, string.Join(", ", stampResult.Errors.Select(e => e.Description)));
                 }
 
@@ -269,7 +282,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 };
 
                 WriteRefreshCookie(tokens.RefreshToken, tokens.RefreshTokenExpires);
-
                 _logger.LogInformation("User logged in: {Email}", user.Email);
                 return response;
             }
@@ -290,12 +302,11 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 throw new Exception("Refresh token not provided");
 
             var (deviceInfo, ip) = GetClientInfo();
-
-            // Atomic rotate. Returns null on: not found / revoked / expired / lost race / save failed.
             var rotated = await _tokenService.TryRefreshAsync(refreshToken, deviceInfo, ip);
+
             if (rotated is null)
             {
-                ClearRefreshCookie();
+                ClearRefreshCookieAtAllPaths();
                 throw new Exception("Invalid or expired refresh token");
             }
 
@@ -349,18 +360,21 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 Locations           = locations,
                 Routes              = routes,
                 IsCreator           = user.Id == employee?.CreatedBy.ToString(),
-                AccessToken         = rotated.NewAccessToken,
+                AccessToken         = rotated.AccessToken,
                 AccessTokenExpires  = DateTime.UtcNow.AddMinutes(_jwtOptions.TokenExpirationMinutes),
-                RefreshToken        = rotated.NewRefreshToken,
-                RefreshTokenExpires = rotated.NewRefreshTokenExpires
+                RefreshToken        = rotated.RefreshToken,
+                RefreshTokenExpires = rotated.RefreshTokenExpires
             };
 
-            WriteRefreshCookie(rotated.NewRefreshToken, rotated.NewRefreshTokenExpires);
+            // Clear any legacy cookies at other paths, then write at the canonical path.
+            ClearRefreshCookieAtAllPaths();
+            WriteRefreshCookie(rotated.RefreshToken, rotated.RefreshTokenExpires);
+
             return response;
         }
 
         // ────────────────────────────────────────────────────────────
-        // Logout
+        // Logout — deletes every possible cookie path
         // ────────────────────────────────────────────────────────────
 
         public async Task LogoutAsync(string userId, string accessToken, string? refreshToken)
@@ -375,9 +389,8 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 await _signInManager.SignOutAsync();
 
-                // Clear cookie. `BuildCookieOptions` matches what we used to write it,
-                // so the browser removes the same cookie entry.
-                ClearRefreshCookie();
+                // Delete refresh_token at every path it could have been written to.
+                ClearRefreshCookieAtAllPaths();
 
                 _logger.LogInformation("User logged out: {UserId}", userId);
             }
@@ -400,13 +413,9 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     ?? throw new Exception("User not found");
 
                 var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
-
                 if (!result.Succeeded)
                     throw new Exception(
                         $"Password change failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-
-                // Optional: invalidate other sessions after a password change.
-                // await _tokenService.RevokeAllRefreshTokensAsync(userId);
             }
             catch (Exception ex)
             {
@@ -486,7 +495,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
 
                 _logger.LogInformation("Starting deletion for {UserId} ({Email})", userId, user.Email);
 
-                // Revoke sessions BEFORE deleting the user row (no FK dependency surprises).
                 await _tokenService.RevokeAllRefreshTokensAsync(userId);
 
                 foreach (var login in await _userManager.GetLoginsAsync(user))
@@ -530,8 +538,6 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             var resetProvider = _userManager.Options.Tokens.PasswordResetTokenProvider;
             var valid = await _userManager.VerifyUserTokenAsync(user, resetProvider, "ResetPassword", token);
 
-            _logger.LogInformation("ConfirmAccount: valid={Valid} for {Email}", valid, email);
-
             if (!valid)
                 throw new Exception("Invalid or expired token. Please request a new password reset.");
 
@@ -551,7 +557,7 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                 var encodedEmail = Uri.EscapeDataString(request.Email);
                 var resetUrl     = $"{_emailSettings.AppUrl}/set-password?token={encodedToken}&email={encodedEmail}";
 
-                // ... enqueue / send email with resetUrl ...
+                // ... send email ...
 
                 return new { message = "If your email is registered, you will receive a password reset link." };
             }
@@ -566,9 +572,9 @@ namespace WebApplication1.Services.ControllerServices.Implementations
         {
             try
             {
-                if (string.IsNullOrEmpty(request.Email) ||
-                    string.IsNullOrEmpty(request.Token) ||
-                    string.IsNullOrEmpty(request.NewPassword))
+                if (string.IsNullOrEmpty(request.Email)
+                    || string.IsNullOrEmpty(request.Token)
+                    || string.IsNullOrEmpty(request.NewPassword))
                     throw new Exception("All fields are required");
 
                 if (request.NewPassword.Length < 8)
@@ -585,22 +591,11 @@ namespace WebApplication1.Services.ControllerServices.Implementations
                     throw new Exception($"Password setup failed: {errors}");
                 }
 
-                // ResetPasswordAsync already confirms the email when the token was
-                // issued from GeneratePasswordResetTokenAsync. No extra confirm needed.
-
                 user.Status    = true;
                 user.UpdatedAt = DateTime.UtcNow;
+                await _userManager.UpdateAsync(user);
 
-                var update = await _userManager.UpdateAsync(user);
-                if (!update.Succeeded)
-                {
-                    _logger.LogWarning("Post-reset user update failed for {Email}: {Errors}",
-                        request.Email, string.Join(", ", update.Errors.Select(e => e.Description)));
-                }
-
-                // Invalidate any old sessions after a password reset.
                 await _tokenService.RevokeAllRefreshTokensAsync(user.Id);
-
                 _logger.LogInformation("Password set successfully for {Email}", request.Email);
             }
             catch (Exception ex)

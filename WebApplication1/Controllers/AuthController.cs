@@ -51,84 +51,151 @@ namespace WebApplication1.Controllers
         // ---------------------------------------------------------------------
         // Login
         // ---------------------------------------------------------------------
+        // [HttpPost("login")]
+        // [AllowAnonymous]
+        // public async Task<ActionResult<AuthResponseDTO>> Login([FromBody] LoginRequest request)
+        // {
+        //     try
+        //     {
+        //         var result = await _authService.LoginAsync(request);
+
+        //         // Cookies (browser transport)
+        //         _cookieHelper.SetRefreshToken(Response, result.RefreshToken);
+        //         // Uncomment if you also issue an access-token cookie:
+        //         // _cookieHelper.SetAccessToken(Response, result.AccessToken);
+
+        //         // Mobile transport — only if this request looks like a mobile client
+        //         if (IsMobileClient())
+        //             _cookieHelper.ExposeRefreshTokenToMobile(Response, result.RefreshToken);
+
+        //         // Never return the refresh token in the body to the browser
+        //         result.RefreshTokenExpires = DateTime.MinValue;
+        //         result.RefreshToken        = string.Empty;
+
+        //         return Ok(result);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Login failed for {Email}", request.Email);
+        //         return Unauthorized(new { message = ex.Message });
+        //     }
+        // }
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<ActionResult<AuthResponseDTO>> Login([FromBody] LoginRequest request)
         {
+            // Wipe any stale cookie at the transport layer, where it belongs.
+            _cookieHelper.ClearRefreshToken(Response);
+
+            AuthResponseDTO result;
             try
             {
-                var result = await _authService.LoginAsync(request);
-
-                // Cookies (browser transport)
-                _cookieHelper.SetRefreshToken(Response, result.RefreshToken);
-                // Uncomment if you also issue an access-token cookie:
-                // _cookieHelper.SetAccessToken(Response, result.AccessToken);
-
-                // Mobile transport — only if this request looks like a mobile client
-                if (IsMobileClient())
-                    _cookieHelper.ExposeRefreshTokenToMobile(Response, result.RefreshToken);
-
-                // Never return the refresh token in the body to the browser
-                result.RefreshTokenExpires = DateTime.MinValue;
-                result.RefreshToken        = string.Empty;
-
-                return Ok(result);
+                result = await _authService.LoginAsync(request);
             }
+            // catch (Exception ex)     // see C3
+            // {
+            //     return Unauthorized(new { message = ex.Message });
+            // }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login failed for {Email}", request.Email);
-                return Unauthorized(new { message = ex.Message });
+                return StatusCode(500, new { message = "An error occurred" });
             }
+
+            _cookieHelper.SetRefreshToken(Response, result.RefreshToken);
+
+            if (IsMobileClient())
+                _cookieHelper.ExposeRefreshTokenToMobile(Response, result.RefreshToken);
+
+            // Never leak the refresh token in the body to the browser.
+            result.RefreshTokenExpires = DateTime.MinValue;
+            result.RefreshToken        = string.Empty;
+
+            return Ok(result);
         }
 
         // ---------------------------------------------------------------------
         // Refresh
         // ---------------------------------------------------------------------
-        [HttpPost("refresh")]
+      [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<ActionResult<AuthResponseDTO>> RefreshToken()
         {
+            var refreshToken = _cookieHelper.GetRefreshToken(Request);
+            if (string.IsNullOrEmpty(refreshToken))
+                return Unauthorized(new { message = "Missing refresh token" });
+
+            AuthResponseDTO result;
             try
             {
-                var refreshToken = _cookieHelper.GetRefreshToken(Request);
-                if (string.IsNullOrEmpty(refreshToken))
-                    return Unauthorized(new { message = "Missing refresh token" });
-
-                var result = await _authService.RefreshTokenAsync(refreshToken);
-
-                // Rotate: set the new cookie
-                _cookieHelper.SetRefreshToken(Response, result.RefreshToken);
-                // _cookieHelper.SetAccessToken(Response, result.AccessToken);
-
-                if (IsMobileClient())
-                    _cookieHelper.ExposeRefreshTokenToMobile(Response, result.RefreshToken);
-
-                result.RefreshTokenExpires = DateTime.MinValue;
-                result.RefreshToken        = string.Empty;
-
-                return Ok(result);
+                result = await _authService.RefreshTokenAsync(refreshToken);
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = ex.Message });
+                _logger.LogWarning(ex, "Refresh failed");
+                // A failed refresh means the session is gone — clear the cookie.
+                _cookieHelper.ClearRefreshToken(Response);
+                return Unauthorized(new { message = "Session expired" });
             }
+
+            _cookieHelper.SetRefreshToken(Response, result.RefreshToken);
+
+            if (IsMobileClient())
+                _cookieHelper.ExposeRefreshTokenToMobile(Response, result.RefreshToken);
+
+            result.RefreshTokenExpires = DateTime.MinValue;
+            result.RefreshToken        = string.Empty;
+
+            return Ok(result);
         }
 
         // ---------------------------------------------------------------------
         // Logout
         // ---------------------------------------------------------------------
-       [HttpPost("logout")]
-        [Authorize]
+
+        [HttpPost("logout")]
+        [AllowAnonymous]                               // ← no Bearer required
         public async Task<IActionResult> Logout()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
-            var access = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
-            var refresh = Request.Cookies[_jwtOptions.RefreshCookie.Name]
-                        ?? Request.Headers[_jwtOptions.RefreshHeaderName].FirstOrDefault();
+            // [Authorize] is gone, so claims may be empty. Use what's available.
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                    ?? User.FindFirst("sub")?.Value
+                    ?? string.Empty;
 
-            await _authService.LogoutAsync(userId, access, refresh);
-            return Ok(new { message = "Logged out" });
+            var access = Request.Headers.Authorization.ToString()
+                                .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
+                                .Trim();
+
+            var refresh = _cookieHelper.GetRefreshToken(Request)
+                    ?? Request.Headers[_jwtOptions.RefreshHeaderName].FirstOrDefault();
+
+            // Best-effort revoke — never fail the user's logout.
+            try
+            {
+                await _authService.LogoutAsync(userId, access, refresh);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Logout revoke failed (ignored)");
+            }
+
+            // ⬇️ The line that was missing entirely
+            _cookieHelper.ClearRefreshToken(Response);
+
+            return NoContent();                        // idempotent, no body
         }
+    //    [HttpPost("logout")]
+    //     [Authorize]
+    //     public async Task<IActionResult> Logout()
+    //     {
+    //         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+    //         var access = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+    //         var refresh = Request.Cookies[_jwtOptions.RefreshCookie.Name]
+    //                     ?? Request.Headers[_jwtOptions.RefreshHeaderName].FirstOrDefault();
+
+    //         await _authService.LogoutAsync(userId, access, refresh);
+    //         return Ok(new { message = "Logged out" });
+    //     }
         // ---------------------------------------------------------------------
         // Profile
         // ---------------------------------------------------------------------
