@@ -35,6 +35,25 @@ namespace WebApplication1.Controllers
             _transactionRepository = transactionRepository;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<GetTransactionDto>>> GetTransactionDashboardData([FromRoute] Guid locationId)
+        {
+            try
+            {
+
+                // var user = await _userRepository.GetUserByRefreshTokenAsync();
+               
+
+                var results = await _transactionService.GetTransactionDash(locationId);
+
+                return Ok(results);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("{id:Guid}/location/{locationId:Guid}")]
         public async Task<ActionResult<GetTransactionDto>> GetTransactionDetails([FromRoute] Guid id, [FromRoute] Guid locationId)
         {

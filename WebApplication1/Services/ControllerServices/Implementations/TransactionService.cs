@@ -1506,6 +1506,104 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             }
         }
 
-      
+        public async Task<IEnumerable<GetTransactionDto>> GetTransactionDash(Guid locationId)
+{
+    // 1. Start with the filter so we don't load the whole DB
+    var query = _context.Transactions
+        .AsNoTracking()
+        .Where(t => t.LocationId == locationId) // Filter first!
+        .Include(c => c.Location)
+        .Include(p => p.TransactionPayments)
+            .ThenInclude(p => p.Coupon)
+        .Include(t => t.TransactionItems)
+            .ThenInclude(ti => ti.Item)
+                .ThenInclude(x => x.StockLevel)
+        .Include(t => t.TransactionItems)
+            .ThenInclude(ti => ti.TransactionItemsDelivered)
+                .ThenInclude(d => d.TransactionItemReversals)
+        .Include(t => t.TransactionItems)
+            .ThenInclude(x => x.TransactionItemReceived)
+                .ThenInclude(d => d.TransactionItemReversals);
+            
+
+    // 2. Use AsSplitQuery to prevent the Cartesian Explosion
+    var rawData = await query
+        .AsSplitQuery()
+        .ToListAsync();
+
+    // 3. Project in memory (This is now lightning fast)
+    var returnData = rawData.Select(x => new GetTransactionDto
+    {
+        Id = x.Id,
+        TransactionCode = x.TransactionNumber,
+        LocationName = x.Location?.Name ?? "",
+        CreatedAt = x.CreatedAt,
+        TransactionDate = x.TransactionDate,
+        TotalAmount = x.TotalAmount,
+        LocationId = x.LocationId,
+
+        Items = x.TransactionItems?.Select(z => new GetTransactionItemDto
+        {
+            Id = z.Id,
+            ItemId = z.ItemId,
+            Name = z.Item?.Name,
+            Code = z.Item?.Code,
+            Quantity = z.Quantity,
+            UnitPrice = z.UnitPrice,
+            AvailableQuantity = z.Item?.StockLevel?.FirstOrDefault(s => s.LocationId == locationId)?.AvailableQuanity,
+            ActualQuantity = z.Item?.StockLevel?.FirstOrDefault(s => s.LocationId == locationId)?.ActualQuantity,
+
+            ItemsDelivered = z.TransactionItemsDelivered?
+                .OrderByDescending(d => d.DeliveryDate)
+                .Select(d => new GetTransactionItemsDeliveredDto
+                {
+                    DeliveryDate = d.DeliveryDate,
+                    DeliveryId = d.Id,
+                    Quantity = d.Quantity,
+                    Status = (d.SaleTransDeliveryRequestId.HasValue && d.SaleTransDeliveryRequestId.Value != Guid.Empty) 
+                             ? (d.IsDelivered ? "Delivered" : "Pending") 
+                             : "N/A",
+                    TransactionDeliveryRequestId = d.SaleTransDeliveryRequestId ?? Guid.Empty,
+                    ItemReversals = d.TransactionItemReversals?.Select(r => new TransactionItemsReversalDto
+                    {
+                        Quantity = r.Quantity,
+                        ReversalDate = r.ReversalDate,
+                        ReversalId = r.Id
+                    }).ToList() ?? new List<TransactionItemsReversalDto>()
+                }).ToList() ?? new List<GetTransactionItemsDeliveredDto>(),
+
+            ItemsReceived = z.TransactionItemReceived?.Select(d => new GetTransactionItemsReceivedDto
+            {
+                DeliveryDate = d.DateReceived,
+                DeliveryId = d.Id,
+                Quantity = d.Quantity,
+                TransactionDeliveryRequestId = d.BatchId,
+                ItemReversals = d.TransactionItemReversals?.Select(r => new TransactionItemsReversalDto
+                {
+                    Quantity = r.Quantity,
+                    ReversalDate = r.ReversalDate,
+                    ReversalId = r.Id,
+                }).ToList() ?? new List<TransactionItemsReversalDto>()
+            }).ToList() ?? new List<GetTransactionItemsReceivedDto>()
+        }).ToList() ?? new List<GetTransactionItemDto>(),
+
+        Payments = x.TransactionPayments?.Select(z => new GetTransactionPaymentsDto
+        {
+            PaymentDate = z.PaymentDate,
+            Amount = z.Amount,
+            PaymentMethodName = z.PaymentMethod.ToString(),
+            PaymentMethod = z.PaymentMethod,
+            TransactionId = z.TransactionId,
+            Coupon = z.Coupon != null ? new GetPaymentCouponDto
+            {
+                Amount = z.Coupon.Amount,
+                Code = z.Coupon.Code
+            } : null
+        }).ToList() ?? new List<GetTransactionPaymentsDto>()
+    }).ToList();
+
+    return returnData;
+}
+    
     }
 }

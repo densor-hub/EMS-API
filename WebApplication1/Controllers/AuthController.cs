@@ -99,7 +99,7 @@ namespace WebApplication1.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login failed for {Email}", request.Email);
-                return StatusCode(500, new { message = "An error occurred" });
+                return StatusCode(500, new { message = ex?.Message ?? "An error occurred" });
             }
 
             _cookieHelper.SetRefreshToken(Response, result.RefreshToken);

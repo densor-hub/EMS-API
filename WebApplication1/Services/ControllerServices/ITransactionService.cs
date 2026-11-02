@@ -10,6 +10,7 @@ namespace WebApplication1.Services.ControllerServices
     public interface ITransactionService
     {
         Task<GetTransactionDto> GetTransactionDetails(Guid transactionId, Guid locationId);
+        Task<IEnumerable<GetTransactionDto>> GetTransactionDash(Guid locationId);
         //Task<Transaction> CreateGeneralTransactionAsync(CreateTransactionDto createDto, Location location);
         Task<(Transaction transaction, ApplicationUser user, Payment payment)> AddPaymentExternalCallAsync(Transaction transaction, TransactionPaymentsDto createDto, TransactionResultsType? transResult);
 
