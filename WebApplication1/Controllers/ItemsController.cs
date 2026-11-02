@@ -52,11 +52,13 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
-                if(user == null) { throw new Exception("Unauthorized"); }
+                // var user = await _userRepository.GetUserByRefreshTokenAsync();
+                // if(user == null) { throw new Exception("Unauthorized"); }
+                var location = await _appDbContext.Locations
+                .Where(x=> x.Id == filter.LocationId).FirstOrDefaultAsync();
 
                 var items = _itemRepository.GetAllAsync(true);
-                items = items.Where(x =>  x.CompanyId == user.CompanyId
+                items = items.Where(x =>  x.CompanyId == (location != null ? location.CompanyId : Guid.Empty)
                         && x.GeneralStatus != GeneralStatus.SoftDeleted
                         && x.StockLevel.Any(x=> x.LocationId == filter.LocationId && x.AvailableQuanity > 0)
                         && !(x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => _lockedItemStatuses.Contains((int)x.Status)))))
