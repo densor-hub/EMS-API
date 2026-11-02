@@ -121,11 +121,12 @@ namespace WebApplication1.Controllers
         {
             try
             {
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
-
+                //var user = await _userRepository.GetUserByRefreshTokenAsync();
+                var location = await _appDbContext.Locations
+                .Where(x=> x.Id == filter.LocationId).FirstOrDefaultAsync();
                 var items = _itemRepository.GetAllAsync(false);
                 items = items.Where(x =>
-                     x.CompanyId == user.CompanyId
+                      x.CompanyId == (location != null ? location.CompanyId : Guid.Empty)
                      && x.GeneralStatus != GeneralStatus.SoftDeleted
                      && x.ItemLocations.Any(x => x.LocationId == filter.LocationId) // && x.Status
                      //  && !(x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => lockedItemStatuses.Contains((int)x.Status)))))
@@ -185,13 +186,16 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
     try
     {
         var user = await _userRepository.GetUserByRefreshTokenAsync();
-        if (user == null) throw new Exception("Unauthorized");
+        // if (user == null) throw new Exception("Unauthorized");
 
-        if (user.CompanyId == null)
-            return BadRequest(new { Message = "User has no company assigned" });
+        // if (user.CompanyId == null)
+        //     return BadRequest(new { Message = "User has no company assigned" });
+        
+         var location = await _appDbContext.Locations
+                .Where(x=> x.Id == filter.LocationId).FirstOrDefaultAsync();
 
         // Unwrap nullable to plain Guid before the query
-        var companyId = user?.CompanyId.Value;
+        var companyId =   location != null ? location.CompanyId : Guid.Empty;
         Console.WriteLine($"CompnayId {companyId}");
         var locationId = filter?.LocationId;   // already non-nullable
          Console.WriteLine($"locationId {locationId}");
@@ -268,10 +272,13 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             {
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
 
+                var location = await _appDbContext.Locations
+                .Where(x=> x.Id == filter.LocationId).FirstOrDefaultAsync();
+
                 var lockedItemStatuses = new List<int> { (int)StocktakeSubmissionStatusEnum.Pending, (int)StocktakeSubmissionStatusEnum.Declined };
                 var items = _itemRepository.GetAllAsync(false);
                 items = items.Where(x =>
-                    x.CompanyId == user.CompanyId
+                         x.CompanyId == (location != null ? location.CompanyId : Guid.Empty)
                     && x.GeneralStatus != GeneralStatus.SoftDeleted
                     && (x.StockLockDownItems.Any(sld => (!sld.Submissions.Any() || sld.Submissions.Any(x => lockedItemStatuses.Contains((int)x.Status)))))
                      && x.ItemLocations.Any(x => x.LocationId == filter.LocationId && x.Status)
@@ -336,6 +343,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
             {
 
                 var user = await _userRepository.GetUserByRefreshTokenAsync();
+                
 
                 var items = _itemRepository.GetAllAsync(false);
                 items = items.Where(x => x.CompanyId == user.CompanyId && x.Id == id);
@@ -373,6 +381,7 @@ public async Task<ActionResult<List<GetItemsResponseDTO>>> GetAllForPurchaseTran
         {
             try
             {
+                
                 // Guard against empty location GUIDs
                 if (locationId == Guid.Empty)
                     return BadRequest(new { error = "A valid locationId is required." });
