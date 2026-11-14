@@ -277,19 +277,38 @@ namespace WebApplication1.Services
                     }
                 },
             },
+            
+            new MenuDefinition
+            {
+                Id = Guid.Parse("d6e5f8eb-e906-4125-8d9f-833c5a84b456"),
+                Title = "Views",
+                Path = "/views",
+                Level = 10,
+                 Children = new List<MenuDefinition>
+                {
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("e5aed833-463e-4052-a2ee-dfa0b81adcc3"),
+                        Title = "Items",
+                        Path = "/views/items",
+                        Level = 10.1,
+                    },
+                   
+                },
+            },
             new MenuDefinition
             {
                 Id = Guid.Parse("3a4b5c6d-7e8f-4a9b-9c0d-1e2f3a4b5c6d"),
                 Title = "Reports",
                 Path = "/reports",
-                Level = 9,
+                Level = 11,
             },
             new MenuDefinition
             {
                 Id = Guid.Parse("0ed7f127-faef-4150-b209-61336408b178"),
                 Title = "Settings",
                 Path = "/settings",
-                Level = 10,
+                Level = 12,
             },
         };
 

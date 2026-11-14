@@ -50,12 +50,12 @@ namespace WebApplication1.Controllers
             {
                 try
                 {
-                    var user = await _userRepository.GetUserByRefreshTokenAsync();
+                   // var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-                if (user is null)
-                {
-                    return BadRequest("User not found");
-                }
+                // if (user is null)
+                // {
+                //     return BadRequest("User not found");
+                // }
                     var appRoutes =  _context.ApplicationRoutes
                     .Include(x=> x.Children)
                     .Where(x=> x.ParentId == Guid.Empty || x.Parent == null).AsNoTracking();
