@@ -47,6 +47,13 @@ namespace WebApplication1.Services
                         Path = "/sales/customer-sales",
                         Level = 2.3,
                     },
+                    new MenuDefinition
+                    {
+                        Id = Guid.Parse("4a4eec51-af21-4905-97c9-f87793d57184"),
+                        Title = "Analytics",
+                        Path = "/sales/analytics",
+                        Level = 2.3,
+                    },
                 },
             },
             new MenuDefinition

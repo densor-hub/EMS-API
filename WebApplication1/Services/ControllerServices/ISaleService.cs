@@ -12,6 +12,7 @@ namespace WebApplication1.Services.ControllerServices
         Task<decimal> GetTotalSalesAmountAsync(DateTime startDate, DateTime endDate);
         Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber);
         Task<List<GetSaleBackLogDto>> GetSaleDeliveryBacklog(Guid locationId, DateTime? date = null);
+        Task<List<GetDailySalesDto>> GetSalesForTheDay( Guid locationId, DateTime? date = null, Guid? officerId = null);
 
     }
 }

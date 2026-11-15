@@ -59,4 +59,26 @@ namespace WebApplication1.Domain.DTO
         public bool HasSystemCustomer { get; set; }
 
     }
+
+    
+    public class GetDailySalesDto
+    {
+        public string TransactionNumber { get; set; }
+        public int DailyCountNumber { get; set; }
+        public DateOnly SaleDate { get; set; }
+        public Guid SaleDeliveryRequestId { get; set; }
+        public DateTime CreatedAt { get; set;}
+        public bool IsDelivered { get; set; }
+         public decimal TotalAmount { get; set; }
+        public bool HasSystemCustomer { get; set; }
+        public Guid? CustomerId {get; set;}
+        public string? CustomerName {get; set;}
+        public decimal AmountPaid {get; set; }
+        public string RequestedByUser {get; set;}
+        public string CommittedByUser {get; set;}
+        public string RequestedById {get; set;}
+        public string CommittedById {get; set;}
+        public bool IsFullyPaid { get; set; }
+
+    }
 }

@@ -118,6 +118,66 @@ namespace WebApplication1.Services.ControllerServices.Implementations
             }).ToListAsync();
         }
 
+ public async Task<List<GetDailySalesDto>> GetSalesForTheDay(
+    Guid locationId, DateTime? date = null, Guid? officerId = null)
+{
+    var targetDate = (date ?? DateTime.UtcNow).ToUniversalTime();
+    var dayStart   = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 0, 0, 0, DateTimeKind.Utc);
+    var dayEnd     = dayStart.AddDays(1);
+    var saleDay    = DateOnly.FromDateTime(dayStart);
+
+    var q = _context.SaleTransDeliveryRequests
+        .AsNoTracking()
+        .Where(x => x.DateOnly == saleDay && x.LocationId == locationId);
+
+    if (officerId.HasValue)
+    {
+        q = q.Where(x =>
+            x.CreatedById == officerId.Value.ToString() ||
+            x.UpdatedById == officerId.Value.ToString());
+    }
+
+    return await q
+        .OrderBy(x => x.CreatedAt)
+        .Select(x => new GetDailySalesDto
+        {
+            SaleDate              = x.DateOnly,
+            DailyCountNumber      = x.IncrementalId,
+            TransactionNumber     = x.Sale.Transaction.TransactionNumber,
+            SaleDeliveryRequestId = x.Id,
+            CreatedAt             = x.CreatedAt,
+            IsDelivered           = x.IsDelivered,
+            HasSystemCustomer     = x.Sale.CustomerId != null,
+
+            TotalAmount        = x.Sale.Transaction.TotalAmount,
+            AmountPaid         = x.Sale.Transaction.TransactionPayments
+                                    .Where(p => p.CreatedAt >= dayStart && p.CreatedAt < dayEnd)
+                                    .Sum(p => (decimal?)p.Amount) ?? 0m,
+            // TotalPaidAllTime   = x.Sale.Transaction.TransactionPayments
+            //                         .Sum(p => (decimal?)p.Amount) ?? 0m,
+            // OutstandingBalance = x.Sale.Transaction.TotalAmount
+            //                    - (x.Sale.Transaction.TransactionPayments
+            //                         .Sum(p => (decimal?)p.Amount) ?? 0m),
+            IsFullyPaid        = x.Sale.Transaction.TotalAmount
+                               <= (x.Sale.Transaction.TransactionPayments
+                                    .Sum(p => (decimal?)p.Amount) ?? 0m),
+
+            RequestedByUser = x.CreatedByUser.FullName,
+            CommittedByUser = x.UpdatedByUser.FullName,
+            CustomerId      = x.Sale.CustomerId,
+            CustomerName    = x.Sale.Customer != null
+                                ? x.Sale.Customer.FirstName + " " + x.Sale.Customer.LastName
+                                : "",
+            CommittedById   = x.UpdatedById,
+            RequestedById   = x.CreatedById,
+
+            // Why did this row match the officer filter?
+            // (Case A: both → prefer "Committer" since the money event is the commit.)
+         
+        })
+        .ToListAsync();
+}
+
         public async Task<GetSalesReceiptDto> GenerateReceipt(Guid? saleTransDeliveryRequestId, string transNumber)
         {
             var user = await _user.GetUserByRefreshTokenAsync();

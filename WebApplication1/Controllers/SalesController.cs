@@ -63,6 +63,24 @@ namespace WebApplication1.Controllers
 
         }
 
+    [HttpGet("DailySales/{locationId:Guid}")]
+        public async Task<ActionResult<IEnumerable<GetDailySalesDto>>> GetDailySales([FromRoute] Guid locationId,[FromQuery] DateTime? date = null, Guid? officerId = null)
+        {
+            try
+            {
+                //var validGuid = Guid.TryParse(deliveryRequestId, out var id);
+
+
+                var sales = await _saleService.GetSalesForTheDay(locationId, date, officerId);
+                return Ok(sales);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
 
         [HttpPost("General")]
         public async Task<ActionResult<TransactionCreatedReturnDataDto>> Create([FromBody] CreateTransactionDto createDto)
@@ -150,5 +168,9 @@ namespace WebApplication1.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        
+
+
     }
 }
