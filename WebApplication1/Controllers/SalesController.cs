@@ -104,9 +104,9 @@ namespace WebApplication1.Controllers
                 createDto.BusinessPartnerId = Guid.Empty;
                 createDto.TransactionResultsType = TransactionResultsType.Deposit;
 
-                var user = await _userRepository.GetUserByRefreshTokenAsync();
+             //   var user = await _userRepository.GetUserByRefreshTokenAsync();
 
-
+               // if (user)
                 //use configuration to select which best fits
                 var results = await _transactionService.CompleteTransationProcess(createDto, TransactionResultsType.Deposit); // Deposit becuase initail payment for QrCode, debit is done when Stock Person generates receipt
 

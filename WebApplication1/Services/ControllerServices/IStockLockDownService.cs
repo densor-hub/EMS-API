@@ -21,7 +21,5 @@ namespace WebApplication1.Services.ControllerServices
         IQueryable<StockLockDownItem> GetItemsWithPendingSubmissionsAsync(List<Guid> itemIds);
         Task<IEnumerable<CommentResponseDto>> GetComments(Guid StockLockDownRequestId);
 
-
-
     }
 }
